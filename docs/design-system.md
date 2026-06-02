@@ -19,16 +19,13 @@ Both token files are imported at the top of `src/styles.css`. They are **additiv
 
 ---
 
-## 2. Themes
+## 2. Theme
 
-Four themes, switched via `data-theme` on `:root`:
+**One theme: Forest.** Set as `data-theme="forest"` on `:root` (the single default in `useTheme.ts`).
 
-- **Light** (default, no attribute) — the everyday warm-neutral glass look.
-- **Dream** (`data-theme="dream"`) — pale, soft, airy, heavenly. Pastel cyan→lilac→pink accents.
-- **Forest** (`data-theme="forest"`) — warm milk glass with sage, moss, and olive accents.
-- **Moon** (`data-theme="moon"`) — dark blue leaning, magical but adult, readable. Mint→violet→indigo accents, never neon. (`data-theme="dark"` is a legacy alias.)
+- **Forest** — warm milk glass with sage, moss, and olive accents.
 
-**Every component must work in all four.** Because primitives read semantic tokens (`--c-*`), they re-theme automatically. Do not write `:root[data-theme=...] .my-component { color: ... }` overrides for new components — fix the token instead.
+Light / Dream / Moon (and the `dark` alias) are **deprecated** — do not build, test, or style for them. Their old `:root[data-theme="…"]` blocks were lifted out of `src/styles.css` into `archive/legacy-themes.css` (a reference snapshot — not imported, not built; don't read or extend it). Because primitives read semantic tokens (`--c-*`), build everything against the tokens — never hardcode Forest's colors, and do not write `:root[data-theme=...] .my-component { … }` overrides; fix the token instead.
 
 ---
 
@@ -71,7 +68,7 @@ There is **no `.ui-btn`**. The canonical button components already exist and are
 (`.task-modal__submit` is the older, chunkier 42px twin — same gradient; prefer `.task-add`.)
 - **Round "+" add icon** → `.add-icon-btn` — the single shared 34px gradient circle with a centered `+`. Markup: `<button class="add-icon-btn"><span aria-hidden>+</span></button>`. Used for the Add-task modal queue and the goal "add task" row; fix it once here and it applies everywhere.
 
-Rules: one primary action per area; reuse these classes directly; **never** invent a new button style or a `PrimaryButton`/`SaveButton`/`DeleteButton`. These classes already theme correctly for Light/Dream/Forest/Moon.
+Rules: one primary action per area; reuse these classes directly; **never** invent a new button style or a `PrimaryButton`/`SaveButton`/`DeleteButton`. These classes already read the Forest tokens correctly.
 
 ### IconButton — `.ui-icon-btn` (scaffold; not yet adopted)
 `.ui-icon-btn--{ghost|subtle|danger|accent}` × `.ui-icon-btn--{sm|md}`. For edit/delete/focus/more/reorder.
@@ -128,7 +125,7 @@ Composed from primitives; keep their structure consistent:
 1. Can it be **composed from existing primitives**? If yes, do that.
 2. Can an existing component take a new **variant**? Prefer that over a new component.
 3. Is it a genuinely new pattern, or a one-off? One-offs need a clear product reason.
-4. Does it work in **Light, Dream, Forest, and Moon** with zero theme-specific overrides?
+4. Does it read correctly in **Forest** using only tokens, with zero hardcoded colors or theme overrides?
 5. Did you add an example to `docs/ui-gallery` / Storybook (see §8)?
 
 If it consumes a raw hex, an arbitrary px, or a custom box-shadow — stop and use a token.
@@ -137,7 +134,7 @@ If it consumes a raw hex, an arbitrary px, or a custom box-shadow — stop and u
 
 ## 8. Examples / Storybook
 
-There is no Storybook yet. Minimal recommended setup: add `@storybook/react-vite` and write stories per primitive (`Button`, `IconButton`, `Card`, `Modal`, `Field`, `Badge`, `Progress`, `EmptyState`, `PageHeader`, `SectionHeader`) and per app component (`TaskRow`, `GoalCard`, `GoalTaskRow`, `TimerWidget`, `AlertsWidget`). Each story should show: default · all variants · disabled/error/loading · all themes · long content · empty state · edge cases. Until then, `docs/ui-gallery.html` (static) is an acceptable lightweight stand-in.
+There is no Storybook yet. Minimal recommended setup: add `@storybook/react-vite` and write stories per primitive (`Button`, `IconButton`, `Card`, `Modal`, `Field`, `Badge`, `Progress`, `EmptyState`, `PageHeader`, `SectionHeader`) and per app component (`TaskRow`, `GoalCard`, `GoalTaskRow`, `TimerWidget`, `AlertsWidget`). Each story should show: default · all variants · disabled/error/loading · long content · empty state · edge cases. Until then, `docs/ui-gallery.html` (static) is an acceptable lightweight stand-in.
 
 ---
 

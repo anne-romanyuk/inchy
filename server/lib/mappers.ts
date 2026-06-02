@@ -18,6 +18,7 @@ export type NoteRow = {
   title: string;
   body: string;
   category: string;
+  pinned: number;
   created_at: string;
   updated_at: string;
 };
@@ -28,6 +29,7 @@ export function toNote(row: NoteRow): Note {
     title: row.title,
     body: row.body,
     category: row.category ?? "",
+    pinned: row.pinned === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

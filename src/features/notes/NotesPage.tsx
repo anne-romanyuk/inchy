@@ -8,7 +8,7 @@ import { useNotes, useSaveNotes } from "./useNotes";
 
 const MAX_TITLE = MAX_NOTE_TITLE_LENGTH;
 const CATEGORY_OPTIONS = ["All categories", "Personal", "Work", "Ideas", "Health"] as const;
-const DATE_OPTIONS = ["Any time", "Last 30 days", "Favorites"] as const;
+const DATE_OPTIONS = ["Any time", "Last 30 days", "Pinned"] as const;
 const EmojiPicker = lazy(() => import("emoji-picker-react"));
 const NOTE_DATE_FORMAT = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
 const NOTE_TIME_FORMAT = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
@@ -26,6 +26,7 @@ type EditorFormat = "bold" | "italic" | "underline" | "unorderedList" | "ordered
 type PendingNotesAction =
   | { type: "select"; noteId: string }
   | { type: "new" }
+  | { type: "close" }
   | { type: "route" }
   | null;
 
@@ -167,18 +168,6 @@ function makeId(): string {
   return `note-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function makeDefault(): Note {
-  const now = new Date().toISOString();
-  return {
-    id: makeId(),
-    title: "Morning Routine Refresh",
-    body: "",
-    category: "Health",
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
 function noteActivityTime(note: Note): number {
   const updated = Date.parse(note.updatedAt ?? "");
   const created = Date.parse(note.createdAt ?? "");
@@ -230,8 +219,8 @@ function noteExcerpt(note: Note) {
   return source.replace(/\s+/g, " ").slice(0, 86);
 }
 
-function isFavorite(note: Note) {
-  return /(^|\s)(favorite|pinned|important|starred)(\s|$)/i.test(`${note.title} ${noteBodyPlainText(note.body)}`);
+function isPinned(note: Note) {
+  return note.pinned === true;
 }
 
 function Icon({ name }: { name: string }) {
@@ -357,6 +346,19 @@ function Icon({ name }: { name: string }) {
           <circle cx="18" cy="12" r="1" />
         </svg>
       );
+    case "Close":
+      return (
+        <svg {...common}>
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      );
+    case "Pin":
+      return (
+        <svg {...common}>
+          <path d="M9 4h6l-1 6 3 3v2H7v-2l3-3-1-6Z" />
+          <path d="M12 15v5" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -374,7 +376,8 @@ export function NotesPage() {
   const [dateRange, setDateRange] = useState<(typeof DATE_OPTIONS)[number]>("Any time");
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [cardMenuId, setCardMenuId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingNotesAction>(null);
   const [activeFormats, setActiveFormats] = useState<Record<EditorFormat, boolean>>({
     bold: false,
@@ -391,21 +394,22 @@ export function NotesPage() {
   const lastEditorBodyRef = useRef("");
   const dirtyRef = useRef(false);
   const pendingActionRef = useRef<PendingNotesAction>(null);
+  const activeIdRef = useRef(activeId);
+  const persistRef = useRef<((next: Note[], preferredActiveId?: string) => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (serverNotes !== undefined && working === null) {
-      const seeded = serverNotes.length > 0 ? serverNotes : [makeDefault()];
-      setWorking(seeded);
-      setActiveId(seeded[0].id);
+      // Start with no note open — the editor stays closed until the user opens
+      // one from the list or creates a new note.
+      setWorking(serverNotes);
     }
   }, [serverNotes, working]);
 
   const notes = working ?? [];
-  const activeIndex = useMemo(() => {
-    const i = notes.findIndex((n) => n.id === activeId);
-    return i >= 0 ? i : 0;
-  }, [notes, activeId]);
-  const activeNote = notes[activeIndex] ?? notes[0];
+  const activeNote = useMemo(
+    () => (activeId ? notes.find((n) => n.id === activeId) : undefined),
+    [notes, activeId],
+  );
   const activeCategory = activeNote ? noteCategory(activeNote) : "Personal";
 
   const dirty = useMemo(
@@ -414,6 +418,7 @@ export function NotesPage() {
   );
   dirtyRef.current = dirty;
   pendingActionRef.current = pendingAction;
+  activeIdRef.current = activeId;
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) =>
     currentLocation.pathname !== nextLocation.pathname && pendingActionRef.current === null && dirtyRef.current,
@@ -437,17 +442,32 @@ export function NotesPage() {
           note.title.toLowerCase().includes(query) ||
           noteText.includes(query);
         const matchesCategory = category === "All categories" || noteCategory(note) === category;
-        const matchesDate = dateRange !== "Favorites" || isFavorite(note);
+        const matchesDate = dateRange !== "Pinned" || isPinned(note);
         return matchesSearch && matchesCategory && matchesDate;
       })
-      .sort((a, b) => noteActivityTime(b) - noteActivityTime(a));
+      .sort(
+        (a, b) =>
+          Number(isPinned(b)) - Number(isPinned(a)) || noteActivityTime(b) - noteActivityTime(a),
+      );
   }, [category, dateRange, notes, search]);
 
   useEffect(() => {
     setCategoryMenuOpen(false);
     setEmojiPickerOpen(false);
-    setDeleteConfirmOpen(false);
+    setDeleteTargetId(null);
   }, [activeNote?.id]);
+
+  // Close an open card kebab menu on any outside click.
+  useEffect(() => {
+    if (!cardMenuId) return;
+    const onDown = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest(".notes-card-menu")) {
+        setCardMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [cardMenuId]);
 
   useEffect(() => {
     if (!categoryMenuOpen && !emojiPickerOpen) return;
@@ -569,23 +589,24 @@ export function NotesPage() {
     setEmojiPickerOpen(false);
   }, [handleEditorInput, rememberEditorSelection]);
 
-  const deleteActiveNote = useCallback(() => {
-    if (!activeNote) return;
+  // Pin/unpin and delete from the card menu persist immediately (the editor is
+  // closed by default, so these don't rely on the editor's Save button).
+  const togglePinNote = useCallback((noteId: string) => {
+    setCardMenuId(null);
+    const next = (working ?? []).map((note) =>
+      note.id === noteId ? { ...note, pinned: !note.pinned } : note,
+    );
+    void persistRef.current?.(next, activeIdRef.current);
+  }, [working]);
 
-    setWorking((current) => {
-      const remaining = (current ?? []).filter((note) => note.id !== activeNote.id);
-      if (remaining.length === 0) {
-        const fallback = { ...makeDefault(), title: "", category: activeNote.category ?? "Personal" };
-        setActiveId(fallback.id);
-        return [fallback];
-      }
-
-      const nextActive = remaining[Math.max(0, Math.min(activeIndex, remaining.length - 1))];
-      setActiveId(nextActive.id);
-      return remaining;
-    });
-    setDeleteConfirmOpen(false);
-  }, [activeIndex, activeNote]);
+  const confirmDeleteNote = useCallback(() => {
+    if (!deleteTargetId) return;
+    const next = (working ?? []).filter((note) => note.id !== deleteTargetId);
+    // If the open note is the one being removed, close the editor.
+    const preferred = deleteTargetId === activeIdRef.current ? "" : activeIdRef.current;
+    setDeleteTargetId(null);
+    void persistRef.current?.(next, preferred);
+  }, [deleteTargetId, working]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -615,9 +636,9 @@ export function NotesPage() {
   }, [blocker.state, pendingAction?.type]);
 
   const resetToServerNotes = useCallback(() => {
-    const base = serverNotes && serverNotes.length > 0 ? serverNotes : [makeDefault()];
+    const base = serverNotes ?? [];
     setWorking(base);
-    if (!base.some((n) => n.id === activeId)) setActiveId(base[0].id);
+    if (!base.some((n) => n.id === activeId)) setActiveId("");
     return base;
   }, [activeId, serverNotes]);
 
@@ -628,6 +649,7 @@ export function NotesPage() {
       title: "",
       body: "",
       category: category === "All categories" ? "Personal" : category,
+      pinned: false,
       createdAt: now,
       updatedAt: now,
     };
@@ -645,12 +667,16 @@ export function NotesPage() {
         title: n.title,
         body: sanitizeNoteHtml(n.body),
         category: n.category ?? noteCategory(n),
+        pinned: n.pinned ?? false,
       })),
     );
-    const saved = result.notes.length > 0 ? result.notes : [makeDefault()];
+    const saved = result.notes;
     setWorking(saved);
-    setActiveId(saved.some((n) => n.id === preferredActiveId) ? preferredActiveId : saved[0].id);
+    // Keep the requested note open if it still exists, otherwise close the editor
+    // (an empty preferred id intentionally means "no note open").
+    setActiveId(saved.some((n) => n.id === preferredActiveId) ? preferredActiveId : "");
   }, [activeId, saveNotes]);
+  persistRef.current = persist;
 
   const requestNotesAction = useCallback((action: Exclude<PendingNotesAction, null>) => {
     if (action.type === "select" && action.noteId === activeId) return;
@@ -665,6 +691,16 @@ export function NotesPage() {
   }, [activeId, createNewNote]);
 
   const openNewNote = () => requestNotesAction({ type: "new" });
+
+  // Close (X) the editor. If there are unsaved edits, ask first; otherwise just
+  // close back to the empty placeholder.
+  const requestCloseEditor = useCallback(() => {
+    if (!dirtyRef.current) {
+      setActiveId("");
+      return;
+    }
+    setPendingAction({ type: "close" });
+  }, []);
 
   const handleSave = () => {
     if (!working) return;
@@ -687,6 +723,11 @@ export function NotesPage() {
 
     if (action.type === "new") {
       createNewNote();
+      return;
+    }
+
+    if (action.type === "close") {
+      setActiveId("");
       return;
     }
 
@@ -713,7 +754,8 @@ export function NotesPage() {
     if (!working) return;
 
     const action = pendingAction;
-    const preferredActiveId = action?.type === "select" ? action.noteId : activeId;
+    const preferredActiveId =
+      action?.type === "select" ? action.noteId : action?.type === "close" ? "" : activeId;
     await persist(working, preferredActiveId);
     finishPendingAction(action);
     setPendingAction(null);
@@ -736,7 +778,9 @@ export function NotesPage() {
       ? "You have unsaved changes in this note before creating a new one."
       : pendingAction?.type === "select"
         ? "You have unsaved changes in this note before switching notes."
-        : "You have unsaved changes in this note before leaving Notes.";
+        : pendingAction?.type === "close"
+          ? "You have unsaved changes in this note before closing it."
+          : "You have unsaved changes in this note before leaving Notes.";
 
   if (working === null) {
     return (
@@ -944,16 +988,70 @@ export function NotesPage() {
               ) : (
                 filteredNotes.map((note) => {
                   const currentCategory = noteCategory(note);
+                  const pinned = isPinned(note);
+                  const menuOpen = cardMenuId === note.id;
+                  const openNote = () => requestNotesAction({ type: "select", noteId: note.id });
                   return (
-                    <button
+                    <div
                       key={note.id}
-                      type="button"
-                      className={`notes-list-card ui-card ui-card--interactive ${note.id === activeNote?.id ? "is-active" : ""}`.trim()}
-                      onClick={() => requestNotesAction({ type: "select", noteId: note.id })}
+                      role="button"
+                      tabIndex={0}
+                      className={`notes-list-card ui-card ui-card--interactive ${note.id === activeNote?.id ? "is-active" : ""} ${pinned ? "is-pinned" : ""}`.trim()}
+                      onClick={openNote}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openNote();
+                        }
+                      }}
                     >
-                      <span className="notes-list-card__pin" aria-hidden="true">
-                        <Icon name={isFavorite(note) ? "Star" : "More"} />
-                      </span>
+                      {pinned && (
+                        <span className="notes-list-card__pin" aria-label="Pinned note">
+                          <Icon name="Pin" />
+                        </span>
+                      )}
+                      <div className="notes-card-menu">
+                        <button
+                          type="button"
+                          className="ui-icon-btn ui-icon-btn--sm ui-icon-btn--subtle notes-card-menu__trigger"
+                          aria-label="Note actions"
+                          aria-haspopup="menu"
+                          aria-expanded={menuOpen}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setCardMenuId(menuOpen ? null : note.id);
+                          }}
+                        >
+                          <Icon name="More" />
+                        </button>
+                        {menuOpen && (
+                          <div className="notes-card-menu__dropdown" role="menu" onClick={(event) => event.stopPropagation()}>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="notes-card-menu__item"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                togglePinNote(note.id);
+                              }}
+                            >
+                              <Icon name="Pin" /> {pinned ? "Unpin note" : "Pin note"}
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="notes-card-menu__item notes-card-menu__item--danger"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setCardMenuId(null);
+                                setDeleteTargetId(note.id);
+                              }}
+                            >
+                              <Icon name="Trash" /> Delete note
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       <strong>{note.title || "Untitled"}</strong>
                       <span>{noteExcerpt(note)}...</span>
                       <span className="notes-list-card__meta">
@@ -962,7 +1060,7 @@ export function NotesPage() {
                         </span>
                         <small>{formatNoteDate(note)}</small>
                       </span>
-                    </button>
+                    </div>
                   );
                 })
               )}
@@ -970,7 +1068,6 @@ export function NotesPage() {
 
             <section className="notes-editor-compose" aria-label="Selected note editor">
               {activeNote ? (
-                <>
                   <article className="notes-entry-card notes-editor-card ui-card ui-card--elevated">
                     <header className="notes-entry-card__meta">
                       <div className="notes-entry-card__meta-main">
@@ -1021,11 +1118,12 @@ export function NotesPage() {
                       </div>
                       <button
                         type="button"
-                        className="ui-icon-btn ui-icon-btn--danger notes-entry-delete"
-                        aria-label="Delete note"
-                        onClick={() => setDeleteConfirmOpen(true)}
+                        className="ui-icon-btn notes-entry-close"
+                        aria-label="Close note"
+                        title="Close note"
+                        onClick={requestCloseEditor}
                       >
-                        <Icon name="Trash" />
+                        <Icon name="Close" />
                       </button>
                     </header>
 
@@ -1130,91 +1228,97 @@ export function NotesPage() {
                         </button>
                       </div>
                     </footer>
-                    {deleteConfirmOpen && (
-                      <div
-                        className="pomodoro-confirm-overlay notes-delete-confirm"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Confirm note deletion"
-                      >
-                        <div className="pomodoro-confirm__card">
-                          <div className="pomodoro-confirm__icon" aria-hidden="true">
-                            <Icon name="Trash" />
-                          </div>
-                          <div className="pomodoro-confirm__content">
-                            <h3>Delete note?</h3>
-                            <p>This will remove the current note from the list.</p>
-                          </div>
-                          <div className="pomodoro-confirm__actions">
-                            <button
-                              type="button"
-                              className="pomodoro-btn pomodoro-btn--ghost-text"
-                              onClick={() => setDeleteConfirmOpen(false)}
-                            >
-                              Cancel
-                            </button>
-                            <button type="button" className="goal-ghost-button goal-ghost-button--danger" onClick={deleteActiveNote}>
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {unsavedDialogOpen && (
-                      <div
-                        className="pomodoro-confirm-overlay notes-unsaved-confirm"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Unsaved changes"
-                      >
-                        <div className="pomodoro-confirm__card">
-                          <div className="pomodoro-confirm__icon" aria-hidden="true">
-                            <Icon name="Note" />
-                          </div>
-                          <div className="pomodoro-confirm__content">
-                            <h3>Unsaved changes</h3>
-                            <p>{pendingActionText} Save them before leaving, or discard the changes?</p>
-                          </div>
-                          <div className="pomodoro-confirm__actions">
-                            <button
-                              type="button"
-                              className="pomodoro-btn pomodoro-btn--ghost-text"
-                              onClick={closePendingAction}
-                              disabled={saving}
-                            >
-                              Stay
-                            </button>
-                            <button
-                              type="button"
-                              className="goal-ghost-button goal-ghost-button--danger"
-                              onClick={discardPendingAction}
-                              disabled={saving}
-                            >
-                              Discard changes
-                            </button>
-                            <button
-                              type="button"
-                              className="task-add"
-                              onClick={() => {
-                                void savePendingAction();
-                              }}
-                              disabled={saving}
-                            >
-                              {saving ? "Saving..." : "Save changes"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </article>
-                </>
               ) : (
                 <div className="ui-empty notes-editor-empty">
                   <div className="ui-empty__art" aria-hidden="true">
                     <Icon name="Note" />
                   </div>
-                  <h2 className="ui-empty__title">Select a note</h2>
-                  <p className="ui-empty__text">Choose a note from the list or create a new one.</p>
+                  <h2 className="ui-empty__title">No note open</h2>
+                  <p className="ui-empty__text">Open a note from the list, or create a new one.</p>
+                </div>
+              )}
+
+              {deleteTargetId !== null && (
+                <div
+                  className="pomodoro-confirm-overlay notes-delete-confirm"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Confirm note deletion"
+                >
+                  <div className="pomodoro-confirm__card">
+                    <div className="pomodoro-confirm__icon" aria-hidden="true">
+                      <Icon name="Trash" />
+                    </div>
+                    <div className="pomodoro-confirm__content">
+                      <h3>Delete note?</h3>
+                      <p>This will remove the note from the list. This can't be undone.</p>
+                    </div>
+                    <div className="pomodoro-confirm__actions">
+                      <button
+                        type="button"
+                        className="pomodoro-btn pomodoro-btn--ghost-text"
+                        onClick={() => setDeleteTargetId(null)}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="goal-ghost-button goal-ghost-button--danger"
+                        onClick={confirmDeleteNote}
+                        disabled={saving}
+                      >
+                        {saving ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {unsavedDialogOpen && (
+                <div
+                  className="pomodoro-confirm-overlay notes-unsaved-confirm"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Unsaved changes"
+                >
+                  <div className="pomodoro-confirm__card">
+                    <div className="pomodoro-confirm__icon" aria-hidden="true">
+                      <Icon name="Note" />
+                    </div>
+                    <div className="pomodoro-confirm__content">
+                      <h3>Unsaved changes</h3>
+                      <p>{pendingActionText} Save them before leaving, or discard the changes?</p>
+                    </div>
+                    <div className="pomodoro-confirm__actions">
+                      <button
+                        type="button"
+                        className="pomodoro-btn pomodoro-btn--ghost-text"
+                        onClick={closePendingAction}
+                        disabled={saving}
+                      >
+                        Stay
+                      </button>
+                      <button
+                        type="button"
+                        className="goal-ghost-button goal-ghost-button--danger"
+                        onClick={discardPendingAction}
+                        disabled={saving}
+                      >
+                        Discard changes
+                      </button>
+                      <button
+                        type="button"
+                        className="task-add"
+                        onClick={() => {
+                          void savePendingAction();
+                        }}
+                        disabled={saving}
+                      >
+                        {saving ? "Saving..." : "Save changes"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </section>

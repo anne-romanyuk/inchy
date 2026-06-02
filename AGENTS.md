@@ -19,7 +19,7 @@ magical, adult, non-corporate** — do not redesign it into something "new".
    Cancel/ghost → `.pomodoro-btn .pomodoro-btn--ghost-text` (quiet muted text by
      default; on hover the text brightens to `--c-text-primary` with a soft
      `--c-surface-soft` pill — this hover lives on the primitive itself in
-     `src/styles.css`, themed for all four themes, so reuse the class as-is and
+     `src/styles.css`, driven by tokens, so reuse the class as-is and
      do NOT re-style hover per screen). Used by every Cancel / dismiss button:
      goal task inline edit (`.goal-detail-task__cancel`), goal modal & goal
      date-picker (Today/Clear) in `GoalsPage.tsx` / `GoalDatePicker.tsx`,
@@ -35,7 +35,8 @@ magical, adult, non-corporate** — do not redesign it into something "new".
 5. For app-specific UI, reuse the TaskRow / GoalCard / GoalTaskRow / TimerWidget /
    AlertsWidget structures where applicable.
 6. Do not create one-off visual styles for a single screen unless there is a clear product reason.
-7. Any new component must support Light, Dream, and Moon themes (test all three).
+7. The app ships **one theme only: Forest** (`<html data-theme="forest">`, the default in
+   `useTheme.ts`). Build for Forest using tokens — do **not** add other-theme variants.
 8. Any new state must define default, hover, active, disabled, focus, and error behavior where relevant.
 9. All destructive actions use the danger semantic system and must NOT be visually aggressive
    unless a confirmation is required — delete icons stay neutral until hover/focus.
@@ -55,8 +56,8 @@ magical, adult, non-corporate** — do not redesign it into something "new".
 - make action icons different sizes across screens
 - create badges with custom one-off colors — use `.ui-badge` tones
 - create modals with a different header/body/footer structure
-- add `:root[data-theme=...] .my-component` hacks inside components — fix the token instead
-- introduce UI that only works in Light theme
+- add `:root[data-theme=...] .my-component` hacks — there is only the Forest theme; fix the token instead
+- hardcode Forest's colors directly — always go through the design tokens
 - use styling that feels childish or overly decorative
 
 ### Before creating ANY new UI component, answer:
@@ -64,16 +65,21 @@ magical, adult, non-corporate** — do not redesign it into something "new".
 1. Can this be composed from existing primitives?
 2. Can an existing component be extended with a variant instead?
 3. Is this a genuinely new pattern or a one-off custom?
-4. Does it work in all three themes with no theme-specific overrides?
+4. Does it read correctly in the Forest theme using only tokens (no hardcoded colors)?
 5. Is an example/story added to the documentation?
 
 If a change consumes a raw hex, an arbitrary px value, or a custom card box-shadow, stop and use a token.
 
 ### Notes for this codebase
 
-- Styling is global CSS class based (`src/styles.css`, ~11k lines) — no CSS-in-JS.
+- Styling is global CSS class based (`src/styles.css`, ~11.5k lines, Forest-only) — no CSS-in-JS.
+  (Deprecated multi-theme overrides are parked in `archive/legacy-themes.css`, unused.)
 - Legacy bespoke classes still exist (`task-add`, `goal-primary-button`, `pomodoro-confirm__button`,
   `goal-modal__*`, `task-modal__*`, `goal-health-pill`, `needs-attention__*`, …). They are being
   migrated to `.ui-*` primitives. When you touch one, migrate it; do not add new bespoke variants.
-- Themes: Light = no attribute (`light`), Dream = `data-theme="dream"`, Moon = `data-theme="moon"`
-  (`dark` is a dead legacy alias — do not target it for new work).
+- Theme: **Forest only** (`data-theme="forest"`, hard-set in `index.html`; no live theme switcher).
+  Light / Dream / Moon / `dark` are **deprecated** — do not build, test, or add styles for them.
+  Their old `:root[data-theme="dream|moon|dark"]` overrides were lifted out of `src/styles.css`
+  into **`archive/legacy-themes.css`** (a reference snapshot — NOT imported, NOT part of the build,
+  do not read/edit it for normal work). Don't restore or extend them. Forest values live in
+  `src/styles/design-tokens.css` (+ the `--pomodoro-grad-*` block at the top of `src/styles.css`).

@@ -15,7 +15,7 @@ noteRoutes.use("*", requireUser);
 
 function listNotes(userId: string): NoteRow[] {
   return db
-    .prepare("SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC")
+    .prepare("SELECT * FROM notes WHERE user_id = ? ORDER BY pinned DESC, updated_at DESC, created_at DESC")
     .all(userId) as NoteRow[];
 }
 
@@ -73,8 +73,8 @@ noteRoutes.openapi(saveNotesRoute, (c) => {
     db.prepare("DELETE FROM notes WHERE user_id = ?").run(userId);
 
     const insert = db.prepare(
-      `INSERT INTO notes (id, user_id, position, title, body, category, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO notes (id, user_id, position, title, body, category, pinned, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
 
     notes.forEach((note, index) => {
@@ -89,7 +89,7 @@ noteRoutes.openapi(saveNotesRoute, (c) => {
         (previous.category ?? "") === category
           ? previous.updated_at
           : now;
-      insert.run(id, userId, index, note.title, note.body, category, createdAt, updatedAt);
+      insert.run(id, userId, index, note.title, note.body, category, note.pinned ? 1 : 0, createdAt, updatedAt);
     });
   });
 

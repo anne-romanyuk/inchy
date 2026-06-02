@@ -8,7 +8,7 @@ This project has a unified design system. Before writing or changing any UI:
 
 - **Rules:** `AGENTS.md` (UI Agent Skill — the binding rules).
 - **Reference:** `docs/design-system.md`.
-- **Tokens:** `src/styles/design-tokens.css` — colors/spacing/radius/typography/shadows, per theme.
+- **Tokens:** `src/styles/design-tokens.css` — colors/spacing/radius/typography/shadows (Forest theme).
 - **Primitives:** `src/styles/ui-components.css` — `.ui-card`, `.ui-modal`, `.ui-badge`,
   `.ui-field`, `.ui-progress`, `.ui-page-header`, `.ui-section-header`, `.ui-empty`.
 - **Buttons:** no `.ui-btn` — reuse existing components: primary/save/add →
@@ -16,10 +16,13 @@ This project has a unified design system. Before writing or changing any UI:
   `.pomodoro-btn .pomodoro-btn--ghost-text`, destructive → `.goal-ghost-button .goal-ghost-button--danger`.
 
 Core principles: use tokens, never hardcode colors/spacing/shadows; reuse primitives before
-inventing; every component must work in Light / Dream (`data-theme="dream"`) / Moon
-(`data-theme="moon"`); preserve the soft, airy, calm, slightly-magical-but-adult personality;
-one primary action per area; destructive actions stay quiet until intent. **Every new screen is a
-composition of existing components, not a new visual invention.**
+inventing; the app ships **one theme only — Forest** (`data-theme="forest"`), so build for Forest
+via tokens and do not add Light/Dream/Moon variants (those are deprecated; their old
+`:root[data-theme=…]` blocks were moved to `archive/legacy-themes.css`, which is NOT imported
+and should not be read/edited for normal work); preserve the soft,
+airy, calm, slightly-magical-but-adult personality; one primary action per area; destructive actions
+stay quiet until intent. **Every new screen is a composition of existing components, not a new
+visual invention.**
 
 ## Project layout
 

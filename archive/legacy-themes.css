@@ -1,0 +1,3271 @@
+/* =============================================================================
+   ARCHIVED LEGACY THEME OVERRIDES — Light / Dream / Moon / dark
+   -----------------------------------------------------------------------------
+   The app ships ONE theme: Forest (`data-theme="forest"`). These
+   `:root[data-theme="dream|moon|dark"]` rule blocks were lifted out of
+   `src/styles.css` on 2026-06-02 so the live stylesheet stays lean.
+
+   This file is NOT imported by the app and is NOT part of the build. It is
+   kept only as a reference snapshot in case a multi-theme mode returns.
+   Do not edit or analyze it as part of normal UI work.
+   ============================================================================= */
+
+:root[data-theme="dark"] {
+  --pomodoro-grad-start: #9bffcf;
+  --pomodoro-grad-mid: #bf95e6;
+  --pomodoro-grad-end: #7a71ff;
+  color-scheme: dark;
+}
+
+:root[data-theme="dream"] {
+  --pomodoro-grad-start: #b8edff;
+  --pomodoro-grad-mid: #d8b6ff;
+  --pomodoro-grad-end: #f4bee8;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] .profile-dropdown__avatar-disc,
+:root[data-theme="dark"] .profile-dropdown__panel-disc {
+  background-image: linear-gradient(
+    180deg,
+    rgba(255,182,211,0.6) 0%,
+    rgba(122,113,255,0.62) 34%,
+    rgba(43,39,76,0.68) 68%,
+    rgba(10,16,36,0.72) 100%
+  );
+}
+
+:root[data-theme="dark"] .profile-dropdown__avatar-btn {
+  background:
+    radial-gradient(120% 120% at 30% 25%, #6a4f88 0%, #4a3a72 55%, #322457 100%);
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .profile-dropdown__menu-btn,
+:root[data-theme="dark"] .profile-dropdown__item--toggle .theme-toggle {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(232, 226, 248, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .theme-toggle__option {
+  color: rgba(220, 224, 250, 0.66);
+}
+
+:root[data-theme="dark"] .theme-toggle input:not(:checked) + .theme-toggle__track .theme-toggle__option--light,
+:root[data-theme="dark"] .theme-toggle input:checked + .theme-toggle__track .theme-toggle__option--dark {
+  color: rgba(237, 239, 255, 0.94);
+}
+
+:root[data-theme="dark"] .profile-dropdown__menu-btn:hover,
+:root[data-theme="dark"] .profile-dropdown__menu-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.26);
+  color: #fff;
+}
+
+:root[data-theme="dark"] .category-toggle__arrow {
+  color: rgba(228, 226, 248, 0.7);
+}
+
+:root[data-theme="dark"] .category-toggle__arrow:hover {
+  color: rgb(255, 255, 255);
+}
+
+:root[data-theme="dark"] .category-toggle {
+  background: rgba(20, 24, 46, 0.8);
+  box-shadow:
+    5px 6px 12px rgba(0, 0, 0, 0.32),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.14),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme="dark"] .category-toggle__track {
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 182, 211, 0.18), transparent 34%),
+    radial-gradient(circle at 82% 50%, rgba(155, 255, 207, 0.2), transparent 36%),
+    linear-gradient(135deg, rgba(11, 18, 39, 0.9), rgba(43, 39, 76, 0.84));
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.42),
+    inset -1px -1px 8px rgba(171, 148, 255, 0.22),
+    0 0 22px rgba(155, 255, 207, 0.16);
+}
+
+:root[data-theme="dark"] .category-toggle__option {
+  color: rgba(210, 216, 244, 0.62);
+}
+
+:root[data-theme="dark"] .category-toggle__option.is-active {
+  color: rgb(20, 24, 46);
+}
+
+:root[data-theme="dark"] .category-toggle__thumb {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.66), transparent 34%),
+    linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  box-shadow:
+    0 0 14px rgba(155, 255, 207, 0.5),
+    0 0 20px rgba(255, 182, 211, 0.42),
+    3px 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme="dark"] .app-scroll {
+  scrollbar-color: rgba(155, 255, 207, 0.72) transparent;
+}
+
+:root[data-theme="dark"] .app-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 0 10px rgba(122, 113, 255, 0.34);
+}
+
+:root[data-theme="dark"] .app-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #c4ffe2 0%, #d6b6ff 54%, #a094ff 100%);
+}
+
+:root[data-theme="dark"] .tasks-table-header {
+  border-bottom-color: rgba(237, 239, 255, 0.16);
+}
+
+:root[data-theme="dark"] .tasks-table-header__label {
+  color: rgba(237, 239, 255, 0.62);
+}
+
+:root[data-theme="dark"] .tasks-table-header__sort:hover {
+  background: rgba(237, 239, 255, 0.06);
+}
+
+:root[data-theme="dark"] .tasks-table-header__sort:hover .tasks-table-header__label,
+:root[data-theme="dark"] .tasks-table-header__sort.is-active .tasks-table-header__label {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .tasks-sort-arrows__svg path {
+  fill: rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .tasks-sort-arrows__svg.is-asc .tasks-sort-arrows__up,
+:root[data-theme="dark"] .tasks-sort-arrows__svg.is-desc .tasks-sort-arrows__down {
+  fill: rgba(255, 182, 213, 0.96);
+}
+
+:root[data-theme="dark"] .task-drag-handle {
+  color: rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .task-drag-handle:hover {
+  color: rgba(237, 239, 255, 0.7);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(241, 148, 194, 0.08)),
+    rgba(226, 222, 232, 0.14);
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.2),
+    inset 2px 2px 7px rgba(115, 115, 115, 0.06);
+}
+
+:root[data-theme="dark"] .checkbox-wrapper {
+  --gradient: linear-gradient(43deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  --lift-color: rgba(0, 0, 0, 0.5);
+  --inner-color: rgba(237, 239, 255, 0.92);
+  --inner-shadow: rgba(122, 113, 255, 0.46);
+  --inner-shadow-hover: rgba(155, 255, 207, 0.5);
+}
+
+:root[data-theme="dark"] .checkbox-wrapper input[type="checkbox"]:checked + label {
+  box-shadow:
+    0 calc(var(--size) * 0.18) calc(var(--size) * 0.3) rgba(0, 0, 0, 0.5),
+    0 calc(var(--size) * 0.08) calc(var(--size) * 0.18) rgba(122, 113, 255, 0.34);
+}
+
+:root[data-theme="dark"] .checkbox-wrapper input[type="checkbox"]:focus-visible + label {
+  outline-color: rgba(155, 255, 207, 0.6);
+}
+:root[data-theme="dark"] .task-category {
+  background: rgba(174, 137, 230, 0.18);
+  color: rgba(220, 198, 248, 0.95);
+}
+
+:root[data-theme="dark"] .task-category--peach  { background: rgba(250, 180, 140, 0.22); color: rgb(255, 215, 188); }
+:root[data-theme="dark"] .task-category--sky    { background: rgba(150, 195, 240, 0.24); color: rgb(198, 224, 255); }
+:root[data-theme="dark"] .task-category--lemon  { background: rgba(232, 215, 140, 0.22); color: rgb(245, 232, 188); }
+:root[data-theme="dark"] .task-category--teal   { background: rgba(140, 210, 200, 0.22); color: rgb(196, 240, 232); }
+:root[data-theme="dark"] .task-category--amber  { background: rgba(245, 190, 120, 0.22); color: rgb(255, 220, 178); }
+:root[data-theme="dark"] .task-category--indigo { background: rgba(150, 158, 230, 0.24); color: rgb(206, 212, 255); }
+:root[data-theme="dark"] .task-category--slate  { background: rgba(170, 180, 200, 0.22); color: rgb(212, 220, 236); }
+
+:root[data-theme="dark"] .task-item.is-focus-active {
+  background:
+    radial-gradient(circle at 16% 50%, rgba(155, 255, 207, 0.16), transparent 36%),
+    linear-gradient(135deg, rgba(155, 255, 207, 0.13), rgba(191, 149, 230, 0.17) 54%, rgba(122, 113, 255, 0.2)),
+    rgba(17, 23, 45, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.38),
+    0 10px 22px -18px rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(122, 113, 255, 0.18),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.1),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .task-focus {
+  background:
+    linear-gradient(135deg, rgba(155, 255, 207, 0.18), rgba(191, 149, 230, 0.2) 54%, rgba(122, 113, 255, 0.24)),
+    rgba(17, 23, 45, 0.24);
+  color: rgba(255, 182, 211, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(237, 239, 255, 0.12),
+    4px 5px 10px -8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(237, 239, 255, 0.14);
+}
+
+:root[data-theme="dark"] .task-focus.is-active {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  color: #0f1530;
+}
+
+:root[data-theme="dark"] .task-focus:hover {
+  color: rgba(255, 182, 211, 0.92);
+  box-shadow:
+    0 8px 18px -12px rgba(122, 113, 255, 0.5),
+    0 0 0 1px rgba(237, 239, 255, 0.12),
+    inset 0 1px 0 rgba(237, 239, 255, 0.14);
+}
+
+:root[data-theme="dark"] .task-focus::after {
+  background:
+    radial-gradient(circle, rgba(237, 239, 255, 0.18) 0 42%, transparent 68%),
+    linear-gradient(135deg, rgba(155, 255, 207, 0.24), rgba(191, 149, 230, 0.24) 54%, rgba(122, 113, 255, 0.3));
+}
+
+:root[data-theme="dark"] .task-focus__ping {
+  background: rgba(122, 113, 255, 0.28);
+}
+
+:root[data-theme="dark"] .task-focus__glow {
+  background: linear-gradient(135deg, rgba(155, 255, 207, 0.3), rgba(122, 113, 255, 0.34));
+}
+
+:root[data-theme="dark"] .task-item.is-editing {
+  z-index: 6;
+  background:
+    radial-gradient(circle at 18% 50%, rgba(155, 255, 207, 0.12), transparent 36%),
+    linear-gradient(135deg, rgba(155, 255, 207, 0.1), rgba(191, 149, 230, 0.16) 54%, rgba(122, 113, 255, 0.16)),
+    rgba(17, 23, 45, 0.46);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.34),
+    0 12px 24px -18px rgba(0, 0, 0, 0.72),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.1),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .task-edit-field input,
+:root[data-theme="dark"] .task-edit-field select,
+:root[data-theme="dark"] .task-edit-field .task-modal__dropdown-trigger {
+  background: rgba(17, 23, 45, 0.54);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 0, 0, 0.22),
+    inset -3px -3px 8px rgba(237, 239, 255, 0.08);
+}
+
+:root[data-theme="dark"] .task-edit-field input:hover,
+:root[data-theme="dark"] .task-edit-field select:hover,
+:root[data-theme="dark"] .task-edit-field .task-modal__dropdown-trigger:hover,
+:root[data-theme="dark"] .task-edit-field input:focus,
+:root[data-theme="dark"] .task-edit-field select:focus,
+:root[data-theme="dark"] .task-edit-field .task-modal__dropdown-trigger:focus-visible {
+  background: rgba(24, 31, 58, 0.72);
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 0, 0, 0.2),
+    inset -3px -3px 8px rgba(237, 239, 255, 0.1),
+    0 0 0 2px rgba(155, 255, 207, 0.18);
+}
+
+:root[data-theme="dark"] .task-edit-field .task-modal__combobox-list {
+  background:
+    linear-gradient(145deg, rgba(29, 35, 64, 0.98), rgba(35, 31, 61, 0.98) 48%, rgba(42, 35, 74, 0.97)),
+    rgb(29, 35, 64);
+  box-shadow:
+    0 0 0 1px rgba(237, 239, 255, 0.16),
+    14px 18px 32px -14px rgba(0, 0, 0, 0.62),
+    inset -1px -1px 8px rgba(237, 239, 255, 0.08),
+    inset 2px 2px 8px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme="dark"] .task-action {
+  color: rgba(210, 216, 244, 0.45);
+}
+
+:root[data-theme="dark"] .task-action:hover {
+  background: rgba(122, 113, 255, 0.22);
+  color: rgba(255, 200, 220, 0.95);
+}
+
+:root[data-theme="dark"] .task-action--save:hover {
+  background: rgba(155, 255, 207, 0.16);
+  color: rgba(155, 255, 207, 0.96);
+}
+
+:root[data-theme="dark"] body {
+  background: #050814;
+  color: rgba(237, 239, 255, 0.9);
+}
+
+:root[data-theme="dark"] .fluid-gradient {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(91, 84, 214, 0.24), transparent 34%),
+    linear-gradient(135deg, #050814 0%, #0a1024 48%, #151229 100%);
+}
+
+:root[data-theme="dark"] .fluid-gradient__layer {
+  filter: blur(108px);
+  opacity: 0.88;
+}
+
+:root[data-theme="dark"] .fluid-gradient__layer--coral {
+  background: radial-gradient(circle at 80% 50%, rgba(255, 182, 211, 0.46) 0%, transparent 48%);
+}
+
+:root[data-theme="dark"] .fluid-gradient__layer--pink {
+  background: radial-gradient(circle at 22% 80%, rgba(155, 255, 207, 0.36) 0%, transparent 46%);
+}
+
+:root[data-theme="dark"] .fluid-gradient__layer--violet {
+  background: radial-gradient(circle at 48% 20%, rgba(122, 113, 255, 0.54) 0%, transparent 50%);
+}
+
+:root[data-theme="dark"] .soft-modal__panel,
+:root[data-theme="dark"] .home-loading,
+:root[data-theme="dark"] .tasks-panel {
+  background:
+    linear-gradient(135deg, rgba(34, 39, 67, 0.78), rgba(25, 24, 45, 0.72)),
+    rgba(12, 16, 34, 0.74);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.2),
+    18px 24px 44px -16px rgba(0, 0, 0, 0.62),
+    -6px -6px 24px -18px rgba(186, 176, 255, 0.32),
+    inset -2px -2px 12px rgba(178, 167, 255, 0.1),
+    inset 2px 2px 12px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="dark"] .tasks-panel--today {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 182, 211, 0.16), transparent 36%),
+    radial-gradient(circle at 92% 10%, rgba(122, 113, 255, 0.24), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(155, 255, 207, 0.05) 48%, rgba(122, 113, 255, 0.08));
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.16),
+    18px 24px 44px -18px rgba(0, 0, 0, 0.56),
+    0 0 34px rgba(122, 113, 255, 0.12),
+    inset 0 1px 0 rgba(237, 239, 255, 0.12);
+}
+
+:root[data-theme="dark"] .task-modal-overlay {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 182, 211, 0.16), transparent 34%),
+    radial-gradient(circle at 94% 12%, rgba(122, 113, 255, 0.2), transparent 38%),
+    linear-gradient(145deg, rgba(22, 26, 50, 0.96), rgba(20, 23, 44, 0.95));
+  color: rgba(237, 239, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(237, 239, 255, 0.12),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .task-modal__header h2,
+:root[data-theme="dark"] .default-task-pool h3,
+:root[data-theme="dark"] .default-task-pool strong {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .task-modal__save-default,
+:root[data-theme="dark"] .default-task-pool span,
+:root[data-theme="dark"] .default-task-pool p,
+:root[data-theme="dark"] .task-modal__queue-empty {
+  color: rgba(210, 216, 244, 0.64);
+}
+
+:root[data-theme="dark"] .task-modal__title-input,
+:root[data-theme="dark"] .task-modal__meta-row input,
+:root[data-theme="dark"] .task-modal__meta-row select,
+:root[data-theme="dark"] .task-modal__dropdown-trigger,
+:root[data-theme="dark"] .task-modal__close,
+:root[data-theme="dark"] .task-modal__queue-item,
+:root[data-theme="dark"] .task-modal__queue-item button,
+:root[data-theme="dark"] .default-task-pool li {
+  background: rgba(12, 17, 36, 0.42);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.26),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.12);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list {
+  background:
+    linear-gradient(145deg, rgba(22, 26, 50, 0.88), rgba(20, 23, 44, 0.84)),
+    rgba(12, 17, 36, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.16),
+    12px 16px 28px -14px rgba(0, 0, 0, 0.56),
+    inset -1px -1px 8px rgba(171, 148, 255, 0.1),
+    inset 2px 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list button {
+  color: rgba(237, 239, 255, 0.9);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list button:hover,
+:root[data-theme="dark"] .task-modal__combobox-list button:focus-visible {
+  background: rgba(155, 255, 207, 0.1);
+}
+
+:root[data-theme="dark"] .default-task-pool .default-task-pool__delete {
+  background: rgba(255, 182, 211, 0.16);
+  color: rgb(255, 139, 178);
+  box-shadow:
+    0 4px 8px -5px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+:root[data-theme="dark"] .default-task-pool .default-task-pool__delete:hover,
+:root[data-theme="dark"] .default-task-pool .default-task-pool__delete:focus-visible {
+  background: rgba(255, 182, 211, 0.28);
+  color: rgb(255, 200, 220);
+}
+
+:root[data-theme="dark"] .task-add,
+:root[data-theme="dark"] .task-modal__queue-add,
+:root[data-theme="dark"] .task-modal__submit,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete),
+:root[data-theme="dark"] .character-onboarding__confirm {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  color: #0f1530;
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.55),
+    0 6px 16px -6px rgba(122, 113, 255, 0.55),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .task-add:hover,
+:root[data-theme="dark"] .task-add:focus-visible,
+:root[data-theme="dark"] .task-modal__queue-add:hover,
+:root[data-theme="dark"] .task-modal__queue-add:focus-visible,
+:root[data-theme="dark"] .task-modal__submit:hover,
+:root[data-theme="dark"] .task-modal__submit:focus-visible,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete):hover,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete):focus-visible,
+:root[data-theme="dark"] .character-onboarding__confirm:hover,
+:root[data-theme="dark"] .character-onboarding__confirm:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.55),
+    0 6px 16px -6px rgba(122, 113, 255, 0.55),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .task-modal__title-input::placeholder,
+:root[data-theme="dark"] .task-modal__meta-row input::placeholder {
+  color: rgba(210, 216, 244, 0.42);
+}
+
+:root[data-theme="dark"] .task-modal__queue-item strong {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .task-modal__queue-item span {
+  color: rgba(210, 216, 244, 0.6);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list {
+  background: rgba(20, 24, 46, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.2),
+    12px 16px 28px -14px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(237, 239, 255, 0.08);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list button {
+  color: rgba(237, 239, 255, 0.9);
+}
+
+:root[data-theme="dark"] .task-modal__combobox-list button:hover,
+:root[data-theme="dark"] .task-modal__combobox-list button:focus-visible {
+  background: rgba(151, 142, 255, 0.22);
+}
+
+:root[data-theme="dark"] .soft-modal__title,
+:root[data-theme="dark"] .tasks-shell,
+:root[data-theme="dark"] .dashboard-title,
+:root[data-theme="dark"] .tasks-title {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .soft-modal__field,
+:root[data-theme="dark"] .soft-modal__characters legend,
+:root[data-theme="dark"] .home-loading {
+  color: rgba(210, 216, 244, 0.7);
+}
+
+:root[data-theme="dark"] .soft-modal__field input {
+  background: rgba(9, 13, 29, 0.54);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.34),
+    inset -2px -2px 8px rgba(171, 148, 255, 0.14);
+}
+
+:root[data-theme="dark"] .soft-modal__field input::placeholder {
+  color: rgba(210, 216, 244, 0.38);
+}
+
+:root[data-theme="dark"] .soft-modal__field input:hover,
+:root[data-theme="dark"] .soft-modal__field input:focus {
+  background: rgba(17, 23, 45, 0.72);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 8px rgba(171, 148, 255, 0.16),
+    0 0 0 2px rgba(155, 255, 207, 0.16);
+}
+
+:root[data-theme="dark"] .soft-modal__password-toggle {
+  color: rgba(210, 216, 244, 0.52);
+}
+
+:root[data-theme="dark"] .soft-modal__password-toggle:hover,
+:root[data-theme="dark"] .soft-modal__password-toggle:focus-visible,
+:root[data-theme="dark"] .soft-modal__password-toggle[aria-pressed="true"] {
+  background: rgba(155, 255, 207, 0.1);
+  color: rgb(155, 255, 207);
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.28),
+    inset -1px -1px 4px rgba(171, 148, 255, 0.18);
+}
+
+:root[data-theme="dark"] .soft-modal__divider,
+:root[data-theme="dark"] .soft-modal__helper {
+  color: rgba(210, 216, 244, 0.58);
+}
+
+:root[data-theme="dark"] .soft-modal__divider::before,
+:root[data-theme="dark"] .soft-modal__divider::after {
+  background: rgba(210, 216, 244, 0.16);
+  box-shadow: 0 1px rgba(171, 148, 255, 0.08);
+}
+
+:root[data-theme="dark"] .soft-modal__auth-link,
+:root[data-theme="dark"] .soft-modal__status {
+  color: rgb(155, 255, 207);
+}
+
+:root[data-theme="dark"] .app-sidebar {
+  background:
+    radial-gradient(circle at 78% 82%, rgba(255, 182, 211, 0.13), transparent 30%),
+    linear-gradient(180deg, rgba(24, 27, 53, 0.86) 0%, rgba(13, 18, 39, 0.82) 54%, rgba(11, 14, 31, 0.9) 100%),
+    rgba(8, 12, 28, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.18),
+    18px 20px 36px -12px rgba(0, 0, 0, 0.52),
+    inset -2px -2px 12px rgba(178, 167, 255, 0.08),
+    inset 2px 2px 12px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="dark"] .floating-user-menu__dropdown {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(255, 182, 211, 0.2), transparent 30%),
+    linear-gradient(145deg, rgba(43, 39, 76, 0.96) 0%, rgba(30, 35, 66, 0.92) 48%, rgba(14, 18, 39, 0.96) 100%),
+    rgba(10, 14, 31, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.2),
+    14px 18px 30px -14px rgba(0, 0, 0, 0.68),
+    0 0 32px rgba(122, 113, 255, 0.12),
+    inset -2px -2px 12px rgba(178, 167, 255, 0.1),
+    inset 2px 2px 12px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="dark"] .home-user__button {
+  background:
+    radial-gradient(circle at 38% 32%, rgba(155, 255, 207, 0.24), transparent 35%),
+    linear-gradient(135deg, rgba(255, 182, 211, 0.42), rgba(122, 113, 255, 0.36));
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.16),
+    0 0 24px rgba(255, 182, 211, 0.12),
+    inset -2px -2px 9px rgba(178, 167, 255, 0.1),
+    inset 2px 2px 9px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .home-user__button:hover,
+:root[data-theme="dark"] .home-user__button:focus-visible,
+:root[data-theme="dark"] .home-user__button[aria-expanded="true"] {
+  background:
+    radial-gradient(circle at 38% 32%, rgba(155, 255, 207, 0.28), transparent 35%),
+    linear-gradient(135deg, rgba(255, 182, 211, 0.5), rgba(122, 113, 255, 0.44));
+  box-shadow:
+    0 0 0 8px rgba(255, 182, 211, 0.08),
+    0 0 24px rgba(155, 255, 207, 0.14),
+    inset -2px -2px 9px rgba(178, 167, 255, 0.12),
+    inset 2px 2px 9px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .sidebar-nav :is(button, a),
+:root[data-theme="dark"] .task-title,
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .floating-user-menu__item {
+  color: rgba(220, 224, 250, 0.7);
+}
+
+:root[data-theme="dark"] .floating-user-menu__item,
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .task-item {
+  background: rgba(12, 17, 36, 0.5);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.26),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.12);
+}
+
+:root[data-theme="dark"] .floating-user-menu__item:hover,
+:root[data-theme="dark"] .floating-user-menu__item:focus-visible,
+:root[data-theme="dark"] .theme-toggle:hover,
+:root[data-theme="dark"] .theme-toggle:has(input:focus-visible),
+:root[data-theme="dark"] .sidebar-nav :is(button, a):hover,
+:root[data-theme="dark"] .sidebar-nav :is(button, a):focus-visible {
+  background: rgba(155, 255, 207, 0.1);
+  color: rgb(155, 255, 207);
+  box-shadow:
+    0 0 18px rgba(155, 255, 207, 0.12),
+    inset -1px -1px 5px rgba(171, 148, 255, 0.12),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="dark"] .home-user__button,
+:root[data-theme="dark"] .avatar-preview span {
+  color: rgba(237, 239, 255, 0.82);
+}
+
+:root[data-theme="dark"] .avatar-preview,
+:root[data-theme="dark"] .tasks-count {
+  background: rgba(37, 42, 72, 0.72);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.14),
+    3px 3px 10px rgba(0, 0, 0, 0.34),
+    -1px -1px 8px rgba(171, 148, 255, 0.12);
+}
+
+:root[data-theme="dark"] .sidebar-nav :is(button, a).is-active,
+:root[data-theme="dark"] .task-add,
+:root[data-theme="dark"] .task-checkbox input:checked + .task-checkmark,
+:root[data-theme="dark"] .character-onboarding__confirm {
+  background:
+    linear-gradient(135deg, rgba(255, 182, 211, 0.38), rgba(155, 255, 207, 0.34)),
+    rgba(122, 113, 255, 0.2);
+  color: rgba(237, 239, 255, 0.94);
+  box-shadow:
+    0 0 18px rgba(155, 255, 207, 0.16),
+    0 0 20px rgba(255, 182, 211, 0.12),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.14),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.16);
+}
+
+:root[data-theme="dark"] .task-add:hover,
+:root[data-theme="dark"] .task-add:focus-visible {
+  box-shadow:
+    inset 2px 2px 8px rgba(0, 0, 0, 0.24),
+    inset -1px -1px 6px rgba(155, 255, 207, 0.2),
+    0 0 22px rgba(255, 182, 211, 0.18);
+}
+
+:root[data-theme="dark"] .task-add,
+:root[data-theme="dark"] .task-modal__queue-add,
+:root[data-theme="dark"] .task-modal__submit,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete),
+:root[data-theme="dark"] .character-onboarding__confirm {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  color: #0f1530;
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.55),
+    0 6px 16px -6px rgba(122, 113, 255, 0.55),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .task-add:hover,
+:root[data-theme="dark"] .task-add:focus-visible,
+:root[data-theme="dark"] .task-modal__queue-add:hover,
+:root[data-theme="dark"] .task-modal__queue-add:focus-visible,
+:root[data-theme="dark"] .task-modal__submit:hover,
+:root[data-theme="dark"] .task-modal__submit:focus-visible,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete):hover,
+:root[data-theme="dark"] .default-task-pool button:not(.default-task-pool__delete):focus-visible,
+:root[data-theme="dark"] .character-onboarding__confirm:hover,
+:root[data-theme="dark"] .character-onboarding__confirm:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.55),
+    0 6px 16px -6px rgba(122, 113, 255, 0.55),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .task-checkmark {
+  background: rgba(12, 17, 36, 0.72);
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.34),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.14);
+}
+
+:root[data-theme="dark"] .task-checkbox input:checked + .task-checkmark::after {
+  border-color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .task-item.is-completed .task-title,
+:root[data-theme="dark"] .tasks-empty {
+  color: rgba(210, 216, 244, 0.46);
+}
+
+:root[data-theme="dark"] .task-priority--low {
+  background: rgba(155, 255, 207, 0.16);
+  color: rgb(155, 255, 207);
+}
+
+:root[data-theme="dark"] .task-priority--medium {
+  background: rgba(171, 148, 255, 0.18);
+  color: rgb(205, 198, 255);
+}
+
+:root[data-theme="dark"] .task-priority--high {
+  background: rgba(255, 182, 211, 0.18);
+  color: rgb(255, 205, 224);
+}
+
+:root[data-theme="dark"] .character-onboarding {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .character-onboarding__kicker {
+  color: rgba(210, 216, 244, 0.68);
+}
+
+:root[data-theme="dark"] .character-onboarding__title {
+  text-shadow:
+    0 0 18px rgba(155, 255, 207, 0.18),
+    0 20px 38px rgba(0, 0, 0, 0.46);
+}
+
+:root[data-theme="dark"] .character-onboarding__option {
+  background: rgba(17, 23, 45, 0.62);
+  color: rgba(210, 216, 244, 0.64);
+  box-shadow:
+    8px 12px 28px -16px rgba(0, 0, 0, 0.6),
+    inset -2px -2px 10px rgba(171, 148, 255, 0.1),
+    inset 2px 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme="dark"] .character-onboarding__option:hover,
+:root[data-theme="dark"] .character-onboarding__option:focus-visible,
+:root[data-theme="dark"] .character-onboarding__option.is-selected {
+  background: rgba(155, 255, 207, 0.14);
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .character-preview::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: min(192px, 78%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 182, 211, 0.42) 0 18%, rgba(155, 255, 207, 0.28) 34%, rgba(122, 113, 255, 0.18) 52%, transparent 74%);
+  filter: blur(22px);
+  opacity: 0.95;
+  transform: translate(-50%, -44%);
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .character-preview img {
+  filter:
+    drop-shadow(0 11px 8px rgba(83, 61, 121, 0.12))
+    drop-shadow(0 18px 18px rgba(118, 88, 145, 0.07));
+}
+
+/* Dark theme */
+:root[data-theme="dark"] .pomodoro-panel {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(255, 182, 211, 0.16), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(122, 113, 255, 0.22), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(155, 255, 207, 0.05) 48%, rgba(122, 113, 255, 0.08));
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.16),
+    18px 24px 44px -18px rgba(0, 0, 0, 0.56),
+    0 0 34px rgba(122, 113, 255, 0.12),
+    inset 0 1px 0 rgba(237, 239, 255, 0.12);
+}
+
+:root[data-theme="dark"] .pomodoro-ring__track {
+  stroke: rgba(151, 142, 255, 0.2);
+}
+
+:root[data-theme="dark"] .pomodoro-ring__tick {
+  stroke: rgba(210, 216, 244, 0.4);
+}
+
+:root[data-theme="dark"] .pomodoro-ring__kicker,
+:root[data-theme="dark"] .pomodoro-ring__focus-label,
+:root[data-theme="dark"] .pomodoro-settings__label {
+  color: rgba(210, 216, 244, 0.7);
+}
+
+:root[data-theme="dark"] .pomodoro-ring__time,
+:root[data-theme="dark"] .pomodoro-settings__value,
+:root[data-theme="dark"] .pomodoro-ring__focus input {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .pomodoro-ring__focus {
+  background: rgba(12, 17, 36, 0.5);
+  box-shadow:
+    inset -1px -1px 5px rgba(151, 142, 255, 0.18),
+    inset 2px 2px 6px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme="dark"] .pomodoro-cycle {
+  background: transparent;
+  color: rgba(237, 239, 255, 0.86);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .pomodoro-cycle__dot {
+  background: rgba(12, 17, 36, 0.4);
+  box-shadow:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.28),
+    inset -1px -1px 5px rgba(171, 148, 255, 0.1),
+    0 0 0 2px rgba(151, 142, 255, 0.24);
+}
+
+:root[data-theme="dark"] .pomodoro-cycle__dot.is-complete {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  box-shadow:
+    0 5px 12px -6px rgba(0, 0, 0, 0.78),
+    0 0 14px rgba(122, 113, 255, 0.34),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .pomodoro-btn--ghost {
+  background: rgba(12, 17, 36, 0.5);
+  color: rgba(237, 239, 255, 0.9);
+  box-shadow:
+    inset -2px -2px 7px rgba(171, 148, 255, 0.16),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.32),
+    6px 7px 14px -8px rgba(0, 0, 0, 0.42);
+}
+
+:root[data-theme="dark"] .pomodoro-btn--primary {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  color: #0f1530;
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.55),
+    0 6px 16px -6px rgba(122, 113, 255, 0.55),
+    inset 0 1px 0 rgba(237, 239, 255, 0.34);
+}
+
+:root[data-theme="dark"] .pomodoro-btn--primary svg {
+  fill: #0f1530;
+}
+
+:root[data-theme="dark"] .pomodoro-btn--ghost-text {
+  color: rgba(210, 216, 244, 0.7);
+}
+
+:root[data-theme="dark"] .pomodoro-settings__slider input[type="range"] {
+  background: linear-gradient(90deg, rgba(122, 113, 255, 0.4), rgba(155, 255, 207, 0.4));
+}
+
+:root[data-theme="dark"] .pomodoro-settings-overlay {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(255, 182, 211, 0.18), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(122, 113, 255, 0.22), transparent 40%),
+    linear-gradient(145deg, rgba(22, 26, 50, 0.96), rgba(20, 23, 44, 0.95));
+  box-shadow:
+    inset 0 1px 0 rgba(237, 239, 255, 0.12),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .pomodoro-settings__header h3 {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .theme-toggle__option {
+  color: rgba(220, 224, 250, 0.72);
+}
+
+:root[data-theme="dark"] .theme-toggle__option.is-active {
+  color: rgba(248, 250, 255, 0.98);
+}
+
+:root[data-theme="dream"] .theme-toggle__option {
+  color: rgba(86, 94, 140, 0.76);
+}
+
+:root[data-theme="dream"] .theme-toggle__option.is-active {
+  color: rgb(80, 87, 131);
+}
+
+/* ─────────── Dream theme ─────────── */
+
+:root[data-theme="dream"] .home-content {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="dream"] body {
+  background:
+    linear-gradient(180deg, #eef5ff 0%, #ecf2ff 44%, #f7f2ff 100%);
+  color: rgb(79, 88, 126);
+}
+
+:root[data-theme="dream"] .fluid-gradient {
+  opacity: 0.9;
+}
+
+:root[data-theme="dream"] .fluid-gradient__layer--coral {
+  background: radial-gradient(circle at 82% 54%, rgba(255, 220, 232, 0.84) 0%, transparent 54%);
+}
+
+:root[data-theme="dream"] .fluid-gradient__layer--pink {
+  background: radial-gradient(circle at 18% 84%, rgba(191, 237, 255, 0.76) 0%, transparent 54%);
+}
+
+:root[data-theme="dream"] .fluid-gradient__layer--violet {
+  background: radial-gradient(circle at 50% 18%, rgba(216, 182, 255, 0.82) 0%, transparent 54%);
+}
+
+:root[data-theme="dream"] .home-page::before {
+  content: "";
+  position: fixed;
+  inset: auto 0 -2vh 0;
+  height: 34vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.94;
+  background:
+    radial-gradient(ellipse at 12% 100%, rgba(255, 255, 255, 0.92) 0 18%, transparent 22%),
+    radial-gradient(ellipse at 26% 100%, rgba(255, 255, 255, 0.78) 0 15%, transparent 20%),
+    radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.9) 0 18%, transparent 22%),
+    radial-gradient(ellipse at 76% 100%, rgba(255, 255, 255, 0.82) 0 15%, transparent 20%),
+    radial-gradient(ellipse at 92% 100%, rgba(255, 255, 255, 0.88) 0 18%, transparent 23%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.12));
+  filter: blur(2px);
+}
+
+:root[data-theme="dream"] .home-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+  background:
+    radial-gradient(circle at 74% 8%, rgba(255, 255, 255, 0.88) 0 0.12rem, transparent 0.18rem),
+    radial-gradient(circle at 78% 10%, rgba(255, 255, 255, 0.72) 0 0.09rem, transparent 0.16rem),
+    radial-gradient(circle at 82% 6%, rgba(255, 244, 255, 0.7) 0 0.11rem, transparent 0.18rem),
+    radial-gradient(circle at 4% 72%, rgba(216, 182, 255, 0.28) 0 0.14rem, transparent 0.22rem),
+    radial-gradient(circle at 95% 78%, rgba(184, 237, 255, 0.24) 0 0.14rem, transparent 0.22rem);
+}
+
+:root[data-theme="dream"] .app-sidebar {
+  position: sticky;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(244, 246, 255, 0.76) 42%, rgba(233, 239, 255, 0.82) 100%),
+    rgba(245, 246, 255, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.58),
+    20px 26px 40px -18px rgba(128, 143, 191, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -24px 42px rgba(200, 210, 255, 0.24);
+}
+
+:root[data-theme="dream"] .app-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="dream"] .app-sidebar::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  right: -18px;
+  bottom: 18px;
+  height: 230px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 14% 100%, rgba(184, 237, 255, 0.3) 0 20%, transparent 24%),
+    radial-gradient(ellipse at 32% 100%, rgba(216, 182, 255, 0.26) 0 14%, transparent 18%),
+    radial-gradient(ellipse at 52% 100%, rgba(244, 190, 232, 0.2) 0 14%, transparent 18%),
+    radial-gradient(ellipse at 44% 88%, rgba(255, 255, 255, 0.6) 0 18%, transparent 24%);
+  filter: blur(1px);
+}
+
+:root[data-theme="dream"] .app-sidebar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 6%, rgba(255, 255, 255, 0.62) 0 4%, transparent 12%),
+    radial-gradient(circle at 22% 92%, rgba(216, 182, 255, 0.18) 0 8%, transparent 18%);
+}
+
+:root[data-theme="dream"] .sidebar-brand::before {
+  background:
+    radial-gradient(ellipse at 24% 46%, rgba(184, 237, 255, 0.7) 0 12%, rgba(184, 237, 255, 0.28) 34%, rgba(184, 237, 255, 0.08) 54%, transparent 76%),
+    radial-gradient(ellipse at 76% 42%, rgba(216, 182, 255, 0.74) 0 14%, rgba(216, 182, 255, 0.34) 36%, rgba(216, 182, 255, 0.1) 58%, transparent 78%),
+    radial-gradient(ellipse at 52% 72%, rgba(244, 190, 232, 0.62) 0 12%, rgba(244, 190, 232, 0.24) 36%, rgba(244, 190, 232, 0.08) 58%, transparent 80%);
+}
+
+:root[data-theme="dream"] .sidebar-brand::after {
+  background:
+    radial-gradient(ellipse at 34% 46%, rgba(255, 255, 255, 0.36) 0 16%, rgba(255, 255, 255, 0.14) 42%, transparent 72%),
+    radial-gradient(ellipse at 64% 54%, rgba(255, 255, 255, 0.24) 0 14%, rgba(255, 255, 255, 0.08) 44%, transparent 74%);
+}
+
+:root[data-theme="dream"] .sidebar-nav :is(button, a) {
+  background: rgba(255, 255, 255, 0.42);
+  color: rgba(90, 99, 144, 0.88);
+  box-shadow:
+    6px 10px 18px -14px rgba(128, 143, 191, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme="dream"] .sidebar-nav :is(button, a).is-active {
+  background: linear-gradient(135deg, rgba(255, 239, 246, 0.9), rgba(223, 232, 255, 0.98));
+  color: rgb(98, 101, 166);
+  box-shadow:
+    10px 14px 20px -16px rgba(146, 159, 209, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 0 0 1px rgba(226, 220, 255, 0.62);
+}
+
+:root[data-theme="dream"] .character-preview::before {
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(181, 201, 255, 0.26), rgba(181, 201, 255, 0.1) 40%, transparent 66%),
+    radial-gradient(ellipse at 52% 50%, rgba(216, 182, 255, 0.18), rgba(216, 182, 255, 0.06) 58%, transparent 78%);
+}
+
+:root[data-theme="dream"] .character-preview::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 116px;
+  height: 116px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(210, 202, 255, 0.6);
+  box-shadow:
+    0 0 0 8px rgba(255, 255, 255, 0.22),
+    0 0 0 18px rgba(220, 232, 255, 0.12);
+  opacity: 0.72;
+}
+
+:root[data-theme="dream"] .tasks-shell {
+  color: rgb(88, 95, 136);
+}
+
+:root[data-theme="dream"] .dashboard-title,
+:root[data-theme="dream"] .tasks-title {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .tasks-count,
+:root[data-theme="dream"] .pomodoro-cycle {
+  color: rgba(83, 88, 129, 0.92);
+}
+
+:root[data-theme="dream"] .tasks-panel,
+:root[data-theme="dream"] .home-loading,
+:root[data-theme="dream"] .soft-modal__panel {
+  background: rgba(248, 250, 255, 0.68);
+  box-shadow:
+    14px 20px 34px -18px rgba(128, 143, 191, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -20px 36px rgba(225, 233, 255, 0.28);
+}
+
+:root[data-theme="dream"] .tasks-panel--today,
+:root[data-theme="dream"] .pomodoro-panel {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(184, 237, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(216, 182, 255, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(240, 244, 255, 0.66) 48%, rgba(248, 239, 255, 0.62));
+  backdrop-filter: blur(36px) saturate(1.18);
+  -webkit-backdrop-filter: blur(36px) saturate(1.18);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.68),
+    18px 24px 42px -20px rgba(128, 143, 191, 0.22),
+    0 0 24px rgba(216, 182, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    inset 0 -22px 44px rgba(216, 224, 255, 0.22);
+}
+
+:root[data-theme="dream"] .task-add,
+:root[data-theme="dream"] .pomodoro-btn--primary,
+:root[data-theme="dream"] .category-toggle__thumb,
+:root[data-theme="dream"] .pomodoro-cycle__dot.is-complete {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+}
+
+:root[data-theme="dream"] .task-add,
+:root[data-theme="dream"] .pomodoro-btn--ghost,
+:root[data-theme="dream"] .profile-dropdown__menu-btn,
+:root[data-theme="dream"] .profile-dropdown__item--toggle .theme-toggle {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .task-add {
+  box-shadow:
+    10px 14px 24px -16px rgba(128, 143, 191, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+:root[data-theme="dream"] .task-add:hover,
+:root[data-theme="dream"] .task-add:focus-visible {
+  box-shadow:
+    12px 16px 26px -16px rgba(128, 143, 191, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 0 0 1px rgba(216, 182, 255, 0.24);
+}
+
+:root[data-theme="dream"] .profile-dropdown__avatar-disc,
+:root[data-theme="dream"] .profile-dropdown__panel-disc {
+  background-image: linear-gradient(
+    180deg,
+    rgba(184,237,255,0.62) 0%,
+    rgba(216,182,255,0.62) 42%,
+    rgba(244,190,232,0.66) 100%
+  );
+}
+
+:root[data-theme="dream"] .profile-dropdown__avatar-btn {
+  background:
+    radial-gradient(120% 120% at 30% 25%, #ffffff 0%, #e7f2ff 45%, #d6e2ff 100%);
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.56),
+    0 4px 10px rgba(120, 135, 186, 0.22);
+}
+
+:root[data-theme="dream"] .profile-dropdown__menu-btn,
+:root[data-theme="dream"] .profile-dropdown__item--toggle .theme-toggle {
+  background: rgba(255, 255, 255, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 2px 10px rgba(128, 143, 191, 0.14);
+}
+
+:root[data-theme="dream"] .profile-dropdown__menu-btn:hover,
+:root[data-theme="dream"] .profile-dropdown__menu-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.78);
+  color: rgb(87, 95, 140);
+}
+
+:root[data-theme="dream"] .tasks-table-header,
+:root[data-theme="dream"] .tasks-table-header__label {
+  color: rgba(94, 102, 148, 0.82);
+}
+
+:root[data-theme="dream"] .task-item,
+:root[data-theme="dream"] .task-modal__queue-item,
+:root[data-theme="dream"] .default-task-pool li {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 8px 18px -18px rgba(128, 143, 191, 0.22);
+}
+
+:root[data-theme="dream"] .task-item.is-focus-active {
+  background: rgba(239, 245, 255, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root[data-theme="dream"] .task-focus {
+  color: rgb(117, 101, 173);
+}
+
+:root[data-theme="dream"] .task-focus.is-active,
+:root[data-theme="dream"] .task-focus:hover {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.28),
+    0 10px 18px -14px rgba(128, 143, 191, 0.26);
+}
+
+:root[data-theme="dream"] .pomodoro-cycle__dot {
+  background: rgba(241, 245, 255, 0.8);
+  box-shadow:
+    inset 1px 1px 4px rgba(128, 143, 191, 0.1),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.82),
+    0 0 0 2px rgba(216, 182, 255, 0.16);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__tick {
+  stroke: rgba(110, 121, 175, 0.26);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__track {
+  stroke: rgba(232, 239, 255, 0.92);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__handle {
+  fill: #ffffff;
+  stroke: rgba(216, 182, 255, 0.96);
+  filter: drop-shadow(0 4px 10px rgba(184, 237, 255, 0.36));
+}
+
+:root[data-theme="dream"] .pomodoro-ring__handle-dot {
+  fill: rgba(184, 237, 255, 0.98);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__kicker,
+:root[data-theme="dream"] .pomodoro-ring__time,
+:root[data-theme="dream"] .pomodoro-ring__focus input,
+:root[data-theme="dream"] .pomodoro-cycle,
+:root[data-theme="dream"] .pomodoro-btn--ghost {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__focus {
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 10px 18px -18px rgba(128, 143, 191, 0.22);
+}
+
+:root[data-theme="dream"] .pomodoro-btn--ghost {
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    6px 7px 14px -8px rgba(128, 143, 191, 0.18);
+}
+
+:root[data-theme="dream"] .pomodoro-btn--primary {
+  color: #fff;
+  box-shadow:
+    0 14px 30px -10px rgba(184, 237, 255, 0.45),
+    0 6px 16px -6px rgba(216, 182, 255, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme="dream"] .pomodoro-settings-overlay {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(184, 237, 255, 0.28), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(216, 182, 255, 0.24), transparent 40%),
+    linear-gradient(145deg, rgba(250, 252, 255, 0.98), rgba(242, 246, 255, 0.97) 48%, rgba(248, 241, 255, 0.95));
+}
+
+:root[data-theme="dream"] .pomodoro-confirm-overlay {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(184, 237, 255, 0.24), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(216, 182, 255, 0.22), transparent 40%),
+    rgba(245, 249, 255, 0.78);
+}
+
+:root[data-theme="dream"] .pomodoro-confirm__card {
+  background:
+    radial-gradient(circle at 14% 4%, rgba(184, 237, 255, 0.22), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(241, 246, 255, 0.78));
+  box-shadow:
+    0 18px 34px -22px rgba(128, 143, 191, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.58);
+}
+
+:root[data-theme="dream"] .pomodoro-confirm__icon,
+:root[data-theme="dream"] .pomodoro-confirm__button--primary {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+}
+
+:root[data-theme="dream"] .pomodoro-confirm__content h3 {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .pomodoro-confirm__content p,
+:root[data-theme="dream"] .pomodoro-confirm__button--ghost {
+  color: rgba(83, 88, 129, 0.76);
+}
+
+/* ── Cross-theme parity: the same elements that were re-themed for forest also
+   kept the hardcoded pink brand gradient/glow in dream & moon. Align them with
+   each theme's own accent so nothing glows magenta out of palette. ───────── */
+
+/* Dream */
+:root[data-theme="dream"] .add-to-today__btn {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -12px color-mix(in srgb, var(--c-accent) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+:root[data-theme="dream"] .add-to-today__btn:hover:not(:disabled),
+:root[data-theme="dream"] .add-to-today__btn:focus-visible:not(:disabled) {
+  box-shadow:
+    0 14px 28px -12px color-mix(in srgb, var(--c-accent) 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme="dream"] .goal-journey__progress b,
+:root[data-theme="dream"] .goal-progress span {
+  background: var(--c-accent-gradient);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-accent) 38%, transparent);
+}
+
+:root[data-theme="dream"] .goal-detail-task.is-complete .goal-detail-task__check {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 6px 14px -8px color-mix(in srgb, var(--c-accent) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme="dream"] .pomodoro-ring__progress {
+  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--c-accent) 32%, transparent));
+}
+
+/* Moon */
+:root[data-theme="moon"] .add-to-today__btn {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 244, 255, 0.28);
+}
+
+:root[data-theme="moon"] .add-to-today__btn:hover:not(:disabled),
+:root[data-theme="moon"] .add-to-today__btn:focus-visible:not(:disabled) {
+  box-shadow:
+    0 14px 28px -12px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 rgba(255, 244, 255, 0.34);
+}
+
+:root[data-theme="moon"] .goal-journey__progress b,
+:root[data-theme="moon"] .goal-progress span {
+  background: var(--c-accent-gradient);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-accent) 42%, transparent);
+}
+
+:root[data-theme="moon"] .goal-detail-task.is-complete .goal-detail-task__check {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 6px 14px -8px rgba(0, 0, 0, 0.55),
+    0 0 16px color-mix(in srgb, var(--c-accent) 34%, transparent),
+    inset 0 1px 0 rgba(255, 244, 255, 0.3);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__progress {
+  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--c-accent) 40%, transparent));
+}
+
+/* ─────────── Moon theme (dark, magical mockup-inspired) ─────────── */
+:root[data-theme="moon"] {
+  --pomodoro-grad-start: #f3d6ff;
+  --pomodoro-grad-mid: #b388ff;
+  --pomodoro-grad-end: #6d56d8;
+  color-scheme: dark;
+}
+
+:root[data-theme="moon"] .theme-toggle__option {
+  color: rgba(229, 221, 255, 0.68);
+}
+
+:root[data-theme="moon"] .theme-toggle__option.is-active {
+  color: rgba(255, 248, 255, 0.98);
+}
+
+:root[data-theme="moon"] body {
+  background:
+    radial-gradient(circle at 88% 8%, rgba(110, 73, 180, 0.28), transparent 20%),
+    radial-gradient(circle at 10% 86%, rgba(80, 54, 142, 0.22), transparent 28%),
+    linear-gradient(180deg, #08071b 0%, #0d0a27 46%, #070817 100%);
+  color: rgba(239, 234, 255, 0.92);
+}
+
+:root[data-theme="moon"] .moon-theme-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+:root[data-theme="moon"] .moon-theme-background__stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.54;
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="moon"] .moon-theme-background__moon {
+  position: absolute;
+  top: 22px;
+  right: 26px;
+  width: clamp(112px, 11vw, 176px);
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 20px rgba(180, 125, 255, 0.24));
+}
+
+:root[data-theme="moon"] .home-content {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="moon"] .fluid-gradient {
+  opacity: 0.62;
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="moon"] .fluid-gradient__layer--coral {
+  background: radial-gradient(circle at 82% 54%, rgba(112, 73, 190, 0.58) 0%, transparent 54%);
+}
+
+:root[data-theme="moon"] .fluid-gradient__layer--pink {
+  background: radial-gradient(circle at 16% 86%, rgba(71, 58, 144, 0.56) 0%, transparent 54%);
+}
+
+:root[data-theme="moon"] .fluid-gradient__layer--violet {
+  background: radial-gradient(circle at 48% 14%, rgba(179, 136, 255, 0.46) 0%, transparent 56%);
+}
+
+:root[data-theme="moon"] .home-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 45% 100%, rgba(67, 44, 112, 0.32) 0 18%, transparent 30%),
+    radial-gradient(ellipse at 86% 95%, rgba(117, 80, 188, 0.16) 0 12%, transparent 26%),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: auto, auto, 78px 78px, 78px 78px;
+  opacity: 0.85;
+}
+
+:root[data-theme="moon"] .home-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.78;
+  background:
+    radial-gradient(circle at 79% 14%, rgba(248, 223, 255, 0.72) 0 0.1rem, transparent 0.18rem),
+    radial-gradient(circle at 83% 10%, rgba(217, 190, 255, 0.56) 0 0.08rem, transparent 0.15rem),
+    radial-gradient(circle at 91% 38%, rgba(248, 223, 255, 0.48) 0 0.1rem, transparent 0.18rem),
+    radial-gradient(circle at 7% 72%, rgba(179, 136, 255, 0.42) 0 0.12rem, transparent 0.22rem),
+    radial-gradient(circle at 28% 9%, rgba(248, 223, 255, 0.42) 0 0.1rem, transparent 0.2rem);
+}
+
+:root[data-theme="moon"] .app-sidebar {
+  position: sticky;
+  background:
+    radial-gradient(circle at 58% 80%, rgba(161, 103, 255, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(34, 27, 61, 0.52) 0%, rgba(14, 12, 35, 0.78) 48%, rgba(9, 8, 25, 0.9) 100%),
+    rgba(11, 9, 31, 0.76);
+  border-radius: 0 34px 34px 0;
+  box-shadow:
+    0 0 0 1px rgba(202, 171, 255, 0.18),
+    22px 28px 42px -18px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 239, 255, 0.08),
+    inset 0 -28px 46px rgba(71, 49, 128, 0.18);
+}
+
+:root[data-theme="moon"] .app-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="moon"] .app-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: auto -18px 0 -24px;
+  z-index: 0;
+  height: 275px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 46% 92%, rgba(68, 44, 115, 0.72) 0 17%, transparent 32%),
+    radial-gradient(ellipse at 26% 96%, rgba(42, 33, 88, 0.76) 0 15%, transparent 28%),
+    radial-gradient(ellipse at 70% 98%, rgba(92, 61, 145, 0.56) 0 13%, transparent 25%);
+  filter: blur(1px);
+}
+
+:root[data-theme="moon"] .app-sidebar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 244, 255, 0.12), transparent 18%, transparent 82%, rgba(127, 93, 198, 0.1)),
+    radial-gradient(circle at 48% 7%, rgba(232, 203, 255, 0.16) 0 8%, transparent 18%);
+}
+
+:root[data-theme="moon"] .sidebar-moon-decor {
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: 12px;
+  z-index: 0;
+  display: block;
+  width: calc(100% + 16px);
+  max-width: none;
+  opacity: 0.78;
+  filter: drop-shadow(0 0 18px rgba(179, 136, 255, 0.22));
+  pointer-events: none;
+}
+
+:root[data-theme="moon"] .sidebar-brand::before {
+  background:
+    radial-gradient(ellipse at 24% 46%, rgba(242, 214, 255, 0.3) 0 12%, rgba(178, 126, 255, 0.16) 34%, transparent 76%),
+    radial-gradient(ellipse at 76% 42%, rgba(145, 100, 255, 0.34) 0 14%, rgba(102, 76, 190, 0.16) 36%, transparent 78%),
+    radial-gradient(ellipse at 52% 72%, rgba(85, 57, 145, 0.32) 0 12%, rgba(67, 47, 120, 0.1) 36%, transparent 80%);
+  opacity: 1;
+}
+
+:root[data-theme="moon"] .sidebar-brand img {
+  filter: brightness(1.08) contrast(1.04) drop-shadow(0 0 10px rgba(232, 203, 255, 0.18));
+}
+
+:root[data-theme="moon"] .sidebar-nav :is(button, a) {
+  background: rgba(23, 18, 48, 0.44);
+  color: rgba(228, 220, 255, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.06),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.18),
+    0 8px 18px -18px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="moon"] .sidebar-nav :is(button, a):hover,
+:root[data-theme="moon"] .sidebar-nav :is(button, a):focus-visible {
+  background: rgba(93, 64, 154, 0.26);
+  color: rgba(255, 247, 255, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(202, 171, 255, 0.13),
+    0 0 20px rgba(179, 136, 255, 0.12),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+
+:root[data-theme="moon"] .sidebar-nav :is(button, a).is-active {
+  background:
+    radial-gradient(circle at 18% 50%, rgba(255, 239, 255, 0.28), transparent 36%),
+    linear-gradient(135deg, rgba(109, 86, 216, 0.66), rgba(64, 44, 116, 0.72));
+  color: rgba(255, 250, 255, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(229, 199, 255, 0.24),
+    0 0 22px rgba(179, 136, 255, 0.26),
+    inset 0 1px 0 rgba(255, 244, 255, 0.22);
+}
+
+:root[data-theme="moon"] .character-preview::before,
+:root[data-theme="moon"] .sidebar-character::before {
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(179, 136, 255, 0.22), rgba(179, 136, 255, 0.08) 46%, transparent 70%),
+    radial-gradient(ellipse at 52% 60%, rgba(248, 223, 255, 0.12), transparent 76%);
+}
+
+:root[data-theme="moon"] .tasks-shell,
+:root[data-theme="moon"] .dashboard-title,
+:root[data-theme="moon"] .tasks-title,
+:root[data-theme="moon"] .soft-modal__title {
+  color: rgba(243, 237, 255, 0.94);
+}
+
+:root[data-theme="moon"] .tasks-count,
+:root[data-theme="moon"] .pomodoro-cycle,
+:root[data-theme="moon"] .soft-modal__field,
+:root[data-theme="moon"] .soft-modal__characters legend,
+:root[data-theme="moon"] .home-loading {
+  color: rgba(223, 214, 251, 0.72);
+}
+
+:root[data-theme="moon"] .tasks-panel,
+:root[data-theme="moon"] .home-loading,
+:root[data-theme="moon"] .soft-modal__panel {
+  background:
+    radial-gradient(circle at 92% 8%, rgba(169, 117, 255, 0.12), transparent 38%),
+    linear-gradient(145deg, rgba(28, 24, 58, 0.62), rgba(13, 11, 35, 0.72) 48%, rgba(11, 10, 29, 0.78));
+  backdrop-filter: blur(30px) saturate(1.12);
+  -webkit-backdrop-filter: blur(30px) saturate(1.12);
+  box-shadow:
+    0 0 0 1px rgba(199, 169, 255, 0.18),
+    18px 24px 42px -20px rgba(0, 0, 0, 0.72),
+    0 0 26px rgba(179, 136, 255, 0.09),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08),
+    inset 0 -22px 44px rgba(64, 48, 116, 0.16);
+}
+
+:root[data-theme="moon"] .tasks-panel--today,
+:root[data-theme="moon"] .pomodoro-panel {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(243, 214, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(134, 96, 224, 0.2), transparent 40%),
+    linear-gradient(145deg, rgba(30, 25, 61, 0.6), rgba(12, 10, 35, 0.76) 48%, rgba(10, 9, 27, 0.82));
+  border-color: rgba(207, 178, 255, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.15),
+    20px 26px 44px -20px rgba(0, 0, 0, 0.76),
+    0 0 28px rgba(179, 136, 255, 0.1),
+    inset 0 1px 0 rgba(255, 244, 255, 0.09),
+    inset 0 -24px 48px rgba(72, 52, 132, 0.16);
+}
+
+:root[data-theme="moon"] .task-add,
+:root[data-theme="moon"] .pomodoro-btn--primary,
+:root[data-theme="moon"] .task-modal__queue-add,
+:root[data-theme="moon"] .task-modal__submit,
+:root[data-theme="moon"] .default-task-pool button:not(.default-task-pool__delete),
+:root[data-theme="moon"] .character-onboarding__confirm,
+:root[data-theme="moon"] .category-toggle__thumb,
+:root[data-theme="moon"] .pomodoro-cycle__dot.is-complete,
+:root[data-theme="moon"] .task-checkbox input:checked + .task-checkmark,
+:root[data-theme="moon"] .checkbox-wrapper input[type="checkbox"]:checked + label {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  color: #120d2a;
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.62),
+    0 6px 18px -6px rgba(179, 136, 255, 0.5),
+    0 0 22px rgba(243, 214, 255, 0.12),
+    inset 0 1px 0 rgba(255, 248, 255, 0.42);
+}
+
+:root[data-theme="moon"] .task-add:hover,
+:root[data-theme="moon"] .task-add:focus-visible,
+:root[data-theme="moon"] .pomodoro-btn--primary:hover,
+:root[data-theme="moon"] .pomodoro-btn--primary:focus-visible {
+  box-shadow:
+    0 16px 34px -10px rgba(0, 0, 0, 0.7),
+    0 0 26px rgba(179, 136, 255, 0.32),
+    inset 0 1px 0 rgba(255, 248, 255, 0.5);
+}
+
+:root[data-theme="moon"] .task-add,
+:root[data-theme="moon"] .pomodoro-btn--ghost,
+:root[data-theme="moon"] .profile-dropdown__menu-btn,
+:root[data-theme="moon"] .profile-dropdown__item--toggle .theme-toggle {
+  color: rgba(242, 235, 255, 0.9);
+}
+
+:root[data-theme="moon"] .profile-dropdown__avatar-disc,
+:root[data-theme="moon"] .profile-dropdown__panel-disc {
+  background-image: linear-gradient(180deg, rgba(243, 214, 255, 0.5) 0%, rgba(179, 136, 255, 0.48) 46%, rgba(69, 50, 125, 0.7) 100%);
+  filter: drop-shadow(0 0 18px rgba(179, 136, 255, 0.22));
+}
+
+:root[data-theme="moon"] .profile-dropdown__avatar-btn {
+  background:
+    radial-gradient(120% 120% at 30% 25%, rgba(255, 246, 255, 0.92) 0%, rgba(179, 136, 255, 0.4) 44%, rgba(38, 28, 78, 0.92) 100%);
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 248, 255, 0.16),
+    0 0 0 1px rgba(207, 178, 255, 0.22),
+    0 0 24px rgba(179, 136, 255, 0.18),
+    0 6px 12px rgba(0, 0, 0, 0.44);
+}
+
+:root[data-theme="moon"] .profile-dropdown__menu-btn,
+:root[data-theme="moon"] .profile-dropdown__item--toggle .theme-toggle {
+  background: rgba(21, 17, 46, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.07),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.22),
+    0 2px 12px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme="moon"] .profile-dropdown__menu-btn:hover,
+:root[data-theme="moon"] .profile-dropdown__menu-btn:focus-visible {
+  background: rgba(79, 55, 135, 0.34);
+  color: rgba(255, 248, 255, 0.96);
+}
+
+:root[data-theme="moon"] .tasks-table-header,
+:root[data-theme="moon"] .tasks-table-header__label {
+  color: rgba(224, 216, 250, 0.68);
+}
+
+:root[data-theme="moon"] .task-item,
+:root[data-theme="moon"] .task-modal__queue-item,
+:root[data-theme="moon"] .default-task-pool li {
+  background: rgba(14, 12, 35, 0.54);
+  color: rgba(239, 234, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.06),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.2),
+    0 8px 18px -18px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-theme="moon"] .task-item:hover,
+:root[data-theme="moon"] .task-item.is-focus-active {
+  background: rgba(30, 24, 61, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.18),
+    0 0 22px rgba(179, 136, 255, 0.12),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+
+:root[data-theme="moon"] .task-title,
+:root[data-theme="moon"] .task-modal__queue-item strong,
+:root[data-theme="moon"] .default-task-pool strong {
+  color: rgba(245, 240, 255, 0.92);
+}
+
+:root[data-theme="moon"] .task-item.is-completed .task-title {
+  color: rgba(223, 214, 251, 0.54);
+}
+
+:root[data-theme="moon"] .task-category,
+:root[data-theme="moon"] .task-priority,
+:root[data-theme="moon"] .task-duration-pill,
+:root[data-theme="moon"] .avatar-preview,
+:root[data-theme="moon"] .tasks-count {
+  background: rgba(40, 31, 78, 0.64);
+  color: rgba(241, 235, 255, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.1),
+    inset 0 1px 0 rgba(255, 244, 255, 0.06);
+}
+
+:root[data-theme="moon"] .task-focus {
+  color: rgb(222, 190, 255);
+}
+
+:root[data-theme="moon"] .task-focus.is-active,
+:root[data-theme="moon"] .task-focus:hover {
+  background: rgba(39, 29, 78, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.18),
+    0 0 22px rgba(179, 136, 255, 0.2);
+}
+
+:root[data-theme="moon"] .category-toggle,
+:root[data-theme="moon"] .category-toggle__track {
+  background: rgba(12, 10, 32, 0.64);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.35),
+    inset -1px -1px 7px rgba(179, 136, 255, 0.12),
+    0 0 18px rgba(179, 136, 255, 0.08);
+}
+
+:root[data-theme="moon"] .category-toggle__option {
+  color: rgba(223, 214, 251, 0.62);
+}
+
+:root[data-theme="moon"] .category-toggle__option.is-active {
+  color: rgba(255, 248, 255, 0.96);
+}
+
+:root[data-theme="moon"] .pomodoro-cycle__dot {
+  background: rgba(18, 14, 43, 0.84);
+  box-shadow:
+    inset 1px 1px 4px rgba(0, 0, 0, 0.28),
+    inset -1px -1px 5px rgba(179, 136, 255, 0.14),
+    0 0 0 2px rgba(207, 178, 255, 0.12);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__tick {
+  stroke: rgba(231, 221, 255, 0.28);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__track {
+  stroke: rgba(50, 38, 92, 0.92);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__handle {
+  fill: rgba(255, 246, 255, 0.94);
+  stroke: rgba(198, 160, 255, 0.96);
+  filter: drop-shadow(0 4px 12px rgba(179, 136, 255, 0.34));
+}
+
+:root[data-theme="moon"] .pomodoro-ring__handle-dot {
+  fill: rgba(179, 136, 255, 0.98);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__kicker,
+:root[data-theme="moon"] .pomodoro-ring__time,
+:root[data-theme="moon"] .pomodoro-ring__focus input,
+:root[data-theme="moon"] .pomodoro-cycle,
+:root[data-theme="moon"] .pomodoro-btn--ghost {
+  color: rgba(240, 234, 255, 0.92);
+}
+
+:root[data-theme="moon"] .pomodoro-ring__focus {
+  background: rgba(15, 12, 36, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.08),
+    0 10px 18px -18px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-theme="moon"] .pomodoro-btn--ghost {
+  background: rgba(19, 15, 43, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.08),
+    6px 7px 16px -10px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="moon"] .pomodoro-btn--ghost:hover,
+:root[data-theme="moon"] .pomodoro-btn--ghost:focus-visible {
+  background: rgba(62, 45, 112, 0.54);
+  color: rgba(255, 248, 255, 0.98);
+}
+
+:root[data-theme="moon"] .pomodoro-settings-overlay,
+:root[data-theme="moon"] .task-modal__combobox-list {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(179, 136, 255, 0.22), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(243, 214, 255, 0.12), transparent 40%),
+    linear-gradient(145deg, rgba(28, 23, 57, 0.98), rgba(14, 11, 36, 0.98) 48%, rgba(10, 9, 27, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.18),
+    16px 20px 36px -18px rgba(0, 0, 0, 0.74),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm-overlay {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(179, 136, 255, 0.2), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(243, 214, 255, 0.1), transparent 40%),
+    rgba(10, 9, 27, 0.7);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm__card {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(179, 136, 255, 0.2), transparent 36%),
+    linear-gradient(145deg, rgba(28, 23, 57, 0.98), rgba(14, 11, 36, 0.96));
+  box-shadow:
+    0 18px 36px -20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08),
+    0 0 0 1px rgba(207, 178, 255, 0.18);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm__icon,
+:root[data-theme="moon"] .pomodoro-confirm__button--primary {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  color: rgba(255, 248, 255, 0.98);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm__content h3 {
+  color: rgba(245, 240, 255, 0.94);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm__content p {
+  color: rgba(229, 221, 255, 0.72);
+}
+
+:root[data-theme="moon"] .pomodoro-confirm__button--ghost {
+  background: rgba(19, 15, 43, 0.68);
+  color: rgba(229, 221, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.08),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="moon"] input,
+:root[data-theme="moon"] select,
+:root[data-theme="moon"] textarea,
+:root[data-theme="moon"] .task-modal__dropdown-trigger,
+:root[data-theme="moon"] .task-edit-field input,
+:root[data-theme="moon"] .task-edit-field select {
+  background: rgba(11, 9, 30, 0.62);
+  color: rgba(242, 236, 255, 0.92);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.32),
+    inset -2px -2px 8px rgba(179, 136, 255, 0.1);
+}
+
+:root[data-theme="moon"] input::placeholder,
+:root[data-theme="moon"] textarea::placeholder {
+  color: rgba(223, 214, 251, 0.4);
+}
+
+:root[data-theme="moon"] input:hover,
+:root[data-theme="moon"] input:focus,
+:root[data-theme="moon"] select:hover,
+:root[data-theme="moon"] select:focus,
+:root[data-theme="moon"] textarea:hover,
+:root[data-theme="moon"] textarea:focus,
+:root[data-theme="moon"] .task-modal__dropdown-trigger:hover,
+:root[data-theme="moon"] .task-modal__dropdown-trigger:focus-visible {
+  background: rgba(22, 17, 48, 0.78);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.28),
+    inset -2px -2px 8px rgba(179, 136, 255, 0.13),
+    0 0 0 2px rgba(179, 136, 255, 0.14);
+}
+
+:root[data-theme="moon"] .task-category--peach  { background: rgba(243, 188, 255, 0.16); color: rgb(249, 221, 255); }
+:root[data-theme="moon"] .task-category--sky    { background: rgba(160, 145, 255, 0.18); color: rgb(216, 209, 255); }
+:root[data-theme="moon"] .task-category--lemon  { background: rgba(225, 200, 255, 0.14); color: rgb(242, 225, 255); }
+:root[data-theme="moon"] .task-category--teal   { background: rgba(172, 155, 255, 0.16); color: rgb(226, 219, 255); }
+:root[data-theme="moon"] .task-category--amber  { background: rgba(202, 149, 255, 0.16); color: rgb(235, 211, 255); }
+:root[data-theme="moon"] .task-category--indigo { background: rgba(121, 100, 224, 0.22); color: rgb(221, 214, 255); }
+:root[data-theme="moon"] .task-category--slate  { background: rgba(180, 170, 210, 0.16); color: rgb(226, 220, 240); }
+
+
+/* ─────────── Dream + Moon theme harmonization patch ─────────── */
+
+:root[data-theme="dream"] .sidebar-nav :is(button, a):hover,
+:root[data-theme="dream"] .sidebar-nav :is(button, a):focus-visible {
+  background: rgba(255, 255, 255, 0.72);
+  color: rgb(98, 101, 166);
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.22),
+    10px 14px 20px -16px rgba(146, 159, 209, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+:root[data-theme="dream"] .task-modal-overlay {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(184, 237, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 92% 12%, rgba(216, 182, 255, 0.24), transparent 40%),
+    linear-gradient(145deg, rgba(251, 253, 255, 0.98), rgba(240, 245, 255, 0.97) 52%, rgba(248, 241, 255, 0.96));
+  color: rgb(83, 88, 129);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -22px 44px rgba(214, 224, 255, 0.14);
+}
+
+:root[data-theme="dream"] .soft-modal__title,
+:root[data-theme="dream"] .tasks-shell,
+:root[data-theme="dream"] .dashboard-title,
+:root[data-theme="dream"] .tasks-title,
+:root[data-theme="dream"] .task-modal__header h2,
+:root[data-theme="dream"] .default-task-pool h3,
+:root[data-theme="dream"] .default-task-pool strong,
+:root[data-theme="dream"] .task-modal__queue-item strong,
+:root[data-theme="dream"] .pomodoro-settings__header h3,
+:root[data-theme="dream"] .task-title,
+:root[data-theme="dream"] .task-title__text,
+:root[data-theme="dream"] .character-onboarding {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .soft-modal__field,
+:root[data-theme="dream"] .soft-modal__characters legend,
+:root[data-theme="dream"] .soft-modal__divider,
+:root[data-theme="dream"] .soft-modal__helper,
+:root[data-theme="dream"] .task-modal__save-default,
+:root[data-theme="dream"] .default-task-pool span,
+:root[data-theme="dream"] .default-task-pool p,
+:root[data-theme="dream"] .task-modal__queue-empty,
+:root[data-theme="dream"] .task-modal__queue-item span,
+:root[data-theme="dream"] .tasks-empty,
+:root[data-theme="dream"] .tasks-status,
+:root[data-theme="dream"] .avatar-preview span,
+:root[data-theme="dream"] .pomodoro-ring__focus-label,
+:root[data-theme="dream"] .pomodoro-settings__label,
+:root[data-theme="dream"] .pomodoro-btn--ghost-text,
+:root[data-theme="dream"] .character-onboarding__kicker,
+:root[data-theme="dream"] .character-onboarding__option span,
+:root[data-theme="dream"] .soft-modal__status,
+:root[data-theme="dream"] .default-task-pool__pending {
+  color: rgba(94, 102, 148, 0.74);
+}
+
+:root[data-theme="dream"] .soft-modal__field input,
+:root[data-theme="dream"] .task-modal__title-input,
+:root[data-theme="dream"] .task-modal__meta-row input,
+:root[data-theme="dream"] .task-modal__meta-row select,
+:root[data-theme="dream"] textarea,
+:root[data-theme="dream"] .task-modal__dropdown-trigger,
+:root[data-theme="dream"] .task-edit-field input,
+:root[data-theme="dream"] .task-edit-field select,
+:root[data-theme="dream"] .task-edit-field .task-modal__dropdown-trigger,
+:root[data-theme="dream"] .task-modal__close,
+:root[data-theme="dream"] .task-modal__queue-item,
+:root[data-theme="dream"] .task-modal__queue-item button,
+:root[data-theme="dream"] .default-task-pool li,
+:root[data-theme="dream"] .character-onboarding__option {
+  background: rgba(255, 255, 255, 0.56);
+  color: rgb(83, 88, 129);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 2px 2px 8px rgba(201, 212, 255, 0.18),
+    0 10px 18px -18px rgba(128, 143, 191, 0.26);
+}
+
+:root[data-theme="dream"] .soft-modal__field input::placeholder,
+:root[data-theme="dream"] .task-modal__title-input::placeholder,
+:root[data-theme="dream"] .task-modal__meta-row input::placeholder,
+:root[data-theme="dream"] textarea::placeholder {
+  color: rgba(94, 102, 148, 0.42);
+}
+
+:root[data-theme="dream"] .soft-modal__field input:hover,
+:root[data-theme="dream"] .soft-modal__field input:focus,
+:root[data-theme="dream"] .task-modal__title-input:hover,
+:root[data-theme="dream"] .task-modal__title-input:focus,
+:root[data-theme="dream"] .task-modal__meta-row input:hover,
+:root[data-theme="dream"] .task-modal__meta-row input:focus,
+:root[data-theme="dream"] .task-modal__meta-row select:hover,
+:root[data-theme="dream"] .task-modal__meta-row select:focus,
+:root[data-theme="dream"] textarea:hover,
+:root[data-theme="dream"] textarea:focus,
+:root[data-theme="dream"] .task-modal__dropdown-trigger:hover,
+:root[data-theme="dream"] .task-modal__dropdown-trigger:focus-visible,
+:root[data-theme="dream"] .task-edit-field input:hover,
+:root[data-theme="dream"] .task-edit-field input:focus,
+:root[data-theme="dream"] .task-edit-field select:hover,
+:root[data-theme="dream"] .task-edit-field select:focus,
+:root[data-theme="dream"] .task-edit-field .task-modal__dropdown-trigger:hover,
+:root[data-theme="dream"] .task-edit-field .task-modal__dropdown-trigger:focus-visible {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 2px 2px 8px rgba(201, 212, 255, 0.14),
+    0 0 0 2px rgba(216, 182, 255, 0.2);
+}
+
+:root[data-theme="dream"] .soft-modal__password-toggle {
+  color: rgba(94, 102, 148, 0.54);
+}
+
+:root[data-theme="dream"] .soft-modal__password-toggle:hover,
+:root[data-theme="dream"] .soft-modal__password-toggle:focus-visible,
+:root[data-theme="dream"] .soft-modal__password-toggle[aria-pressed="true"] {
+  background: rgba(216, 182, 255, 0.14);
+  color: rgb(117, 101, 173);
+  box-shadow:
+    inset 1px 1px 3px rgba(201, 212, 255, 0.18),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="dream"] .soft-modal__divider::before,
+:root[data-theme="dream"] .soft-modal__divider::after {
+  background: rgba(184, 196, 232, 0.22);
+  box-shadow: 0 1px rgba(255, 255, 255, 0.46);
+}
+
+:root[data-theme="dream"] .soft-modal__auth-link {
+  color: rgb(117, 101, 173);
+}
+
+:root[data-theme="dream"] .soft-modal__auth-link:hover,
+:root[data-theme="dream"] .soft-modal__auth-link:focus-visible {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .task-modal__combobox-list,
+:root[data-theme="dream"] .pomodoro-settings-overlay {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(184, 237, 255, 0.26), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(216, 182, 255, 0.22), transparent 40%),
+    linear-gradient(145deg, rgba(252, 253, 255, 0.98), rgba(243, 247, 255, 0.97) 48%, rgba(248, 241, 255, 0.96));
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.16),
+    16px 20px 36px -18px rgba(128, 143, 191, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dream"] .task-modal__combobox-list button {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .task-modal__combobox-list button:hover,
+:root[data-theme="dream"] .task-modal__combobox-list button:focus-visible {
+  background: rgba(216, 182, 255, 0.16);
+}
+
+:root[data-theme="dream"] .task-add,
+:root[data-theme="dream"] .task-modal__queue-add,
+:root[data-theme="dream"] .task-modal__submit,
+:root[data-theme="dream"] .default-task-pool button:not(.default-task-pool__delete),
+:root[data-theme="dream"] .character-onboarding__confirm,
+:root[data-theme="dream"] .task-checkbox input:checked + .task-checkmark,
+:root[data-theme="dream"] .checkbox-wrapper input[type="checkbox"]:checked + label {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  color: rgb(83, 88, 129);
+  box-shadow:
+    0 14px 30px -10px rgba(184, 237, 255, 0.36),
+    0 6px 16px -6px rgba(216, 182, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+:root[data-theme="dream"] .task-modal__queue-add:hover,
+:root[data-theme="dream"] .task-modal__queue-add:focus-visible,
+:root[data-theme="dream"] .task-modal__submit:hover,
+:root[data-theme="dream"] .task-modal__submit:focus-visible,
+:root[data-theme="dream"] .default-task-pool button:not(.default-task-pool__delete):hover,
+:root[data-theme="dream"] .default-task-pool button:not(.default-task-pool__delete):focus-visible,
+:root[data-theme="dream"] .character-onboarding__confirm:hover,
+:root[data-theme="dream"] .character-onboarding__confirm:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 16px 34px -10px rgba(184, 237, 255, 0.42),
+    0 6px 18px -6px rgba(216, 182, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+:root[data-theme="dream"] .default-task-pool .default-task-pool__delete {
+  background: rgba(255, 219, 232, 0.66);
+  color: rgb(174, 82, 120);
+  box-shadow:
+    0 8px 16px -10px rgba(184, 140, 170, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
+}
+
+:root[data-theme="dream"] .default-task-pool .default-task-pool__delete:hover,
+:root[data-theme="dream"] .default-task-pool .default-task-pool__delete:focus-visible {
+  background: rgba(255, 228, 238, 0.92);
+  color: rgb(142, 65, 75);
+}
+
+:root[data-theme="dream"] .task-checkmark {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 1px 1px 5px rgba(201, 212, 255, 0.18),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.82);
+}
+
+:root[data-theme="dream"] .task-checkbox input:checked + .task-checkmark::after {
+  border-color: rgba(255, 255, 255, 0.96);
+}
+
+:root[data-theme="dream"] .task-item:hover,
+:root[data-theme="dream"] .task-item:focus-within {
+  background: rgba(247, 250, 255, 0.76);
+}
+
+:root[data-theme="dream"] .task-item.is-completed .task-title,
+:root[data-theme="dream"] .tasks-empty {
+  color: rgba(94, 102, 148, 0.5);
+}
+
+:root[data-theme="dream"] .task-category,
+:root[data-theme="dream"] .task-priority,
+:root[data-theme="dream"] .task-duration-pill,
+:root[data-theme="dream"] .avatar-preview,
+:root[data-theme="dream"] .task-title__chip {
+  background: rgba(240, 244, 255, 0.84);
+  color: rgba(83, 88, 129, 0.86);
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+:root[data-theme="dream"] .task-priority--low {
+  background: rgba(191, 237, 255, 0.54);
+  color: rgb(62, 110, 146);
+}
+
+:root[data-theme="dream"] .task-priority--medium {
+  background: rgba(244, 236, 190, 0.62);
+  color: rgb(126, 106, 54);
+}
+
+:root[data-theme="dream"] .task-priority--high {
+  background: rgba(250, 214, 228, 0.72);
+  color: rgb(154, 80, 112);
+}
+
+:root[data-theme="dream"] .task-category--peach  { background: rgba(255, 225, 214, 0.76); color: rgb(148, 92, 74); }
+:root[data-theme="dream"] .task-category--sky    { background: rgba(214, 233, 255, 0.82); color: rgb(81, 114, 150); }
+:root[data-theme="dream"] .task-category--lemon  { background: rgba(246, 237, 200, 0.78); color: rgb(130, 108, 58); }
+:root[data-theme="dream"] .task-category--teal   { background: rgba(214, 240, 237, 0.82); color: rgb(67, 118, 118); }
+:root[data-theme="dream"] .task-category--amber  { background: rgba(255, 225, 184, 0.8); color: rgb(143, 96, 38); }
+:root[data-theme="dream"] .task-category--indigo { background: rgba(223, 226, 255, 0.82); color: rgb(88, 93, 154); }
+:root[data-theme="dream"] .task-category--slate  { background: rgba(223, 229, 241, 0.82); color: rgb(92, 106, 128); }
+
+:root[data-theme="dream"] .tasks-sort-arrows__svg path {
+  stroke: rgba(94, 102, 148, 0.46);
+}
+
+:root[data-theme="dream"] .tasks-sort-arrows__svg.is-asc .tasks-sort-arrows__up,
+:root[data-theme="dream"] .tasks-sort-arrows__svg.is-desc .tasks-sort-arrows__down {
+  stroke: rgb(117, 101, 173);
+}
+
+:root[data-theme="dream"] .task-drag-handle {
+  color: rgba(94, 102, 148, 0.42);
+}
+
+:root[data-theme="dream"] .task-drag-handle:hover {
+  color: rgba(117, 101, 173, 0.82);
+}
+
+:root[data-theme="dream"] .character-onboarding__title {
+  text-shadow:
+    0 2px 14px rgba(255, 255, 255, 0.52),
+    0 20px 38px rgba(184, 196, 232, 0.24);
+}
+
+:root[data-theme="dream"] .character-onboarding__option:hover,
+:root[data-theme="dream"] .character-onboarding__option:focus-visible,
+:root[data-theme="dream"] .character-onboarding__option.is-selected {
+  background: rgba(255, 255, 255, 0.8);
+  color: rgb(83, 88, 129);
+  box-shadow:
+    0 0 0 1px rgba(216, 182, 255, 0.18),
+    12px 16px 26px -18px rgba(128, 143, 191, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+:root[data-theme="dream"] .task-modal__error,
+:root[data-theme="dream"] .soft-modal__error {
+  color: rgb(174, 82, 120);
+}
+
+:root[data-theme="dream"] .pomodoro-settings__value,
+:root[data-theme="dream"] .pomodoro-ring__time,
+:root[data-theme="dream"] .pomodoro-ring__focus input {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .pomodoro-settings__slider input[type="range"] {
+  background: linear-gradient(90deg, rgba(216, 182, 255, 0.46), rgba(184, 237, 255, 0.62));
+}
+
+:root[data-theme="moon"] .task-modal-overlay {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(243, 214, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 94% 12%, rgba(109, 86, 216, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(22, 17, 46, 0.98), rgba(12, 10, 35, 0.97) 52%, rgba(8, 7, 27, 0.98));
+  color: rgba(242, 236, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 255, 0.1),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme="moon"] .soft-modal__field input,
+:root[data-theme="moon"] .task-modal__title-input,
+:root[data-theme="moon"] .task-modal__meta-row input,
+:root[data-theme="moon"] .task-modal__meta-row select,
+:root[data-theme="moon"] .task-edit-field input,
+:root[data-theme="moon"] .task-edit-field select,
+:root[data-theme="moon"] .task-edit-field .task-modal__dropdown-trigger,
+:root[data-theme="moon"] .task-modal__close,
+:root[data-theme="moon"] .task-modal__queue-item button,
+:root[data-theme="moon"] .default-task-pool li,
+:root[data-theme="moon"] .character-onboarding__option,
+:root[data-theme="moon"] .task-checkmark {
+  border-color: rgba(207, 178, 255, 0.12);
+}
+
+:root[data-theme="moon"] .soft-modal__title,
+:root[data-theme="moon"] .tasks-shell,
+:root[data-theme="moon"] .dashboard-title,
+:root[data-theme="moon"] .tasks-title,
+:root[data-theme="moon"] .task-modal__header h2,
+:root[data-theme="moon"] .default-task-pool h3,
+:root[data-theme="moon"] .default-task-pool strong,
+:root[data-theme="moon"] .task-modal__queue-item strong,
+:root[data-theme="moon"] .pomodoro-settings__header h3,
+:root[data-theme="moon"] .character-onboarding,
+:root[data-theme="moon"] .task-title,
+:root[data-theme="moon"] .task-title__text {
+  color: rgba(245, 240, 255, 0.94);
+}
+
+:root[data-theme="moon"] .soft-modal__field,
+:root[data-theme="moon"] .soft-modal__characters legend,
+:root[data-theme="moon"] .soft-modal__divider,
+:root[data-theme="moon"] .soft-modal__helper,
+:root[data-theme="moon"] .task-modal__save-default,
+:root[data-theme="moon"] .default-task-pool span,
+:root[data-theme="moon"] .default-task-pool p,
+:root[data-theme="moon"] .task-modal__queue-empty,
+:root[data-theme="moon"] .task-modal__queue-item span,
+:root[data-theme="moon"] .tasks-empty,
+:root[data-theme="moon"] .tasks-status,
+:root[data-theme="moon"] .avatar-preview span,
+:root[data-theme="moon"] .pomodoro-ring__focus-label,
+:root[data-theme="moon"] .pomodoro-settings__label,
+:root[data-theme="moon"] .pomodoro-btn--ghost-text,
+:root[data-theme="moon"] .character-onboarding__kicker,
+:root[data-theme="moon"] .character-onboarding__option span,
+:root[data-theme="moon"] .soft-modal__status,
+:root[data-theme="moon"] .default-task-pool__pending,
+:root[data-theme="moon"] .task-title__chip {
+  color: rgba(224, 216, 250, 0.76);
+}
+
+:root[data-theme="moon"] .soft-modal__field input::placeholder,
+:root[data-theme="moon"] .task-modal__title-input::placeholder,
+:root[data-theme="moon"] .task-modal__meta-row input::placeholder,
+:root[data-theme="moon"] textarea::placeholder {
+  color: rgba(223, 214, 251, 0.42);
+}
+
+:root[data-theme="moon"] .soft-modal__password-toggle {
+  color: rgba(223, 214, 251, 0.54);
+}
+
+:root[data-theme="moon"] .soft-modal__password-toggle:hover,
+:root[data-theme="moon"] .soft-modal__password-toggle:focus-visible,
+:root[data-theme="moon"] .soft-modal__password-toggle[aria-pressed="true"] {
+  background: rgba(179, 136, 255, 0.14);
+  color: rgba(245, 240, 255, 0.96);
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.28),
+    inset -1px -1px 4px rgba(243, 214, 255, 0.14);
+}
+
+:root[data-theme="moon"] .soft-modal__divider::before,
+:root[data-theme="moon"] .soft-modal__divider::after {
+  background: rgba(223, 214, 251, 0.14);
+  box-shadow: 0 1px rgba(243, 214, 255, 0.08);
+}
+
+:root[data-theme="moon"] .soft-modal__auth-link {
+  color: rgb(222, 190, 255);
+}
+
+:root[data-theme="moon"] .soft-modal__auth-link:hover,
+:root[data-theme="moon"] .soft-modal__auth-link:focus-visible {
+  color: rgba(255, 248, 255, 0.98);
+}
+
+:root[data-theme="moon"] .task-modal__header h2,
+:root[data-theme="moon"] .default-task-pool h3,
+:root[data-theme="moon"] .default-task-pool strong {
+  color: rgba(245, 240, 255, 0.94);
+}
+
+:root[data-theme="moon"] .task-modal__save-default,
+:root[data-theme="moon"] .default-task-pool span,
+:root[data-theme="moon"] .default-task-pool p,
+:root[data-theme="moon"] .task-modal__queue-empty {
+  color: rgba(224, 216, 250, 0.66);
+}
+
+:root[data-theme="moon"] .task-modal__combobox-list button {
+  color: rgba(242, 236, 255, 0.92);
+}
+
+:root[data-theme="moon"] .task-modal__combobox-list button:hover,
+:root[data-theme="moon"] .task-modal__combobox-list button:focus-visible {
+  background: rgba(179, 136, 255, 0.18);
+}
+
+:root[data-theme="moon"] .default-task-pool .default-task-pool__delete {
+  background: rgba(255, 171, 210, 0.14);
+  color: rgb(255, 185, 216);
+  box-shadow:
+    0 4px 10px -6px rgba(0, 0, 0, 0.74),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="moon"] .default-task-pool .default-task-pool__delete:hover,
+:root[data-theme="moon"] .default-task-pool .default-task-pool__delete:focus-visible {
+  background: rgba(255, 171, 210, 0.24);
+  color: rgb(255, 220, 235);
+}
+
+:root[data-theme="moon"] .task-checkbox input:checked + .task-checkmark::after {
+  border-color: rgba(255, 248, 255, 0.96);
+}
+
+:root[data-theme="moon"] .tasks-empty,
+:root[data-theme="moon"] .task-item.is-completed .task-title {
+  color: rgba(223, 214, 251, 0.52);
+}
+
+:root[data-theme="moon"] .task-title__chip,
+:root[data-theme="moon"] .task-duration-pill {
+  background: rgba(42, 33, 82, 0.74);
+}
+
+:root[data-theme="moon"] .task-priority--low {
+  background: rgba(136, 221, 196, 0.18);
+  color: rgb(191, 247, 230);
+}
+
+:root[data-theme="moon"] .task-priority--medium {
+  background: rgba(228, 208, 150, 0.18);
+  color: rgb(248, 232, 183);
+}
+
+:root[data-theme="moon"] .task-priority--high {
+  background: rgba(255, 171, 210, 0.18);
+  color: rgb(255, 210, 228);
+}
+
+:root[data-theme="moon"] .tasks-sort-arrows__svg path {
+  stroke: rgba(224, 216, 250, 0.42);
+}
+
+:root[data-theme="moon"] .tasks-sort-arrows__svg.is-asc .tasks-sort-arrows__up,
+:root[data-theme="moon"] .tasks-sort-arrows__svg.is-desc .tasks-sort-arrows__down {
+  stroke: rgba(243, 214, 255, 0.96);
+}
+
+:root[data-theme="moon"] .task-drag-handle {
+  color: rgba(224, 216, 250, 0.34);
+}
+
+:root[data-theme="moon"] .task-drag-handle:hover {
+  color: rgba(243, 214, 255, 0.82);
+}
+
+:root[data-theme="moon"] .character-onboarding__title {
+  text-shadow:
+    0 0 18px rgba(179, 136, 255, 0.2),
+    0 20px 38px rgba(0, 0, 0, 0.52);
+}
+
+:root[data-theme="moon"] .character-onboarding__option:hover,
+:root[data-theme="moon"] .character-onboarding__option:focus-visible,
+:root[data-theme="moon"] .character-onboarding__option.is-selected {
+  background: rgba(62, 45, 112, 0.56);
+  color: rgba(245, 240, 255, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.18),
+    12px 16px 26px -18px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 244, 255, 0.1);
+}
+
+:root[data-theme="moon"] .task-modal__error,
+:root[data-theme="moon"] .soft-modal__error {
+  color: rgb(255, 188, 216);
+}
+
+:root[data-theme="moon"] .pomodoro-settings__value,
+:root[data-theme="moon"] .pomodoro-ring__time,
+:root[data-theme="moon"] .pomodoro-ring__focus input {
+  color: rgba(245, 240, 255, 0.94);
+}
+
+:root[data-theme="moon"] .pomodoro-settings__slider input[type="range"] {
+  background: linear-gradient(90deg, rgba(109, 86, 216, 0.46), rgba(243, 214, 255, 0.5));
+}
+
+
+/* ─────────── Dream/Moon detail polish: checkbox, scroll, pulse, sliders, row actions ─────────── */
+
+:root[data-theme="dream"] .checkbox-wrapper {
+  --gradient: linear-gradient(43deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  --lift-color: rgba(128, 143, 191, 0.22);
+  --inner-color: rgba(255, 255, 255, 0.94);
+  --inner-shadow: rgba(184, 237, 255, 0.46);
+  --inner-shadow-hover: rgba(216, 182, 255, 0.56);
+}
+
+:root[data-theme="dream"] .checkbox-wrapper label {
+  background: var(--gradient);
+  box-shadow:
+    0 var(--shadow) var(--lift-color),
+    0 0 0 1px rgba(255, 255, 255, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+:root[data-theme="dream"] .checkbox-wrapper label:before {
+  background-color: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    inset 0 var(--shadow) var(--inner-shadow),
+    0 0 0 1px rgba(216, 182, 255, 0.12);
+}
+
+:root[data-theme="dream"] .app-scroll {
+  scrollbar-color: rgba(216, 182, 255, 0.72) transparent;
+}
+
+:root[data-theme="dream"] .app-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 0 10px rgba(216, 182, 255, 0.22);
+}
+
+:root[data-theme="dream"] .app-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d7f6ff 0%, #e4ccff 54%, #ffd9f2 100%);
+}
+
+:root[data-theme="dream"] .task-focus {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.54), transparent 36%),
+    linear-gradient(135deg, rgba(184, 237, 255, 0.66), rgba(216, 182, 255, 0.56) 52%, rgba(244, 190, 232, 0.58));
+  color: rgb(98, 101, 166);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.56),
+    0 6px 14px -10px rgba(128, 143, 191, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="dream"] .task-focus__ping {
+  background: rgba(216, 182, 255, 0.32);
+}
+
+:root[data-theme="dream"] .task-focus__glow,
+:root[data-theme="dream"] .task-focus::after {
+  background: linear-gradient(135deg, rgba(184, 237, 255, 0.38), rgba(216, 182, 255, 0.36) 54%, rgba(244, 190, 232, 0.34));
+}
+
+:root[data-theme="dream"] .task-focus.is-active {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  color: rgb(83, 88, 129);
+  box-shadow:
+    0 8px 18px -10px rgba(128, 143, 191, 0.38),
+    0 0 18px rgba(216, 182, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
+}
+
+:root[data-theme="dream"] .pomodoro-btn--primary.is-pulse {
+  animation-name: pomodoro-start-breath-dream;
+}
+
+:root[data-theme="dream"] .pomodoro-settings__slider input[type="range"]::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  border-color: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 4px 12px rgba(128, 143, 191, 0.32),
+    0 0 12px rgba(216, 182, 255, 0.24);
+}
+
+:root[data-theme="dream"] .pomodoro-settings__slider input[type="range"]::-moz-range-thumb {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  border-color: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 4px 12px rgba(128, 143, 191, 0.32),
+    0 0 12px rgba(216, 182, 255, 0.24);
+}
+
+:root[data-theme="moon"] .checkbox-wrapper {
+  --gradient: linear-gradient(43deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  --lift-color: rgba(0, 0, 0, 0.58);
+  --inner-color: rgba(18, 14, 43, 0.94);
+  --inner-shadow: rgba(243, 214, 255, 0.18);
+  --inner-shadow-hover: rgba(179, 136, 255, 0.38);
+}
+
+:root[data-theme="moon"] .checkbox-wrapper label {
+  background: var(--gradient);
+  box-shadow:
+    0 var(--shadow) var(--lift-color),
+    0 0 0 1px rgba(207, 178, 255, 0.24),
+    0 0 14px rgba(179, 136, 255, 0.1),
+    inset 0 1px 0 rgba(255, 244, 255, 0.24);
+}
+
+:root[data-theme="moon"] .checkbox-wrapper label:before {
+  background-color: rgba(16, 12, 38, 0.96);
+  box-shadow:
+    inset 0 var(--shadow) rgba(0, 0, 0, 0.34),
+    inset 0 -1px 5px var(--inner-shadow),
+    0 0 0 1px rgba(207, 178, 255, 0.14);
+}
+
+:root[data-theme="moon"] .app-scroll {
+  scrollbar-color: rgba(179, 136, 255, 0.74) transparent;
+}
+
+:root[data-theme="moon"] .app-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 255, 0.18),
+    0 0 12px rgba(179, 136, 255, 0.34);
+}
+
+:root[data-theme="moon"] .app-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ffe8ff 0%, #c5a3ff 52%, #8470ef 100%);
+}
+
+:root[data-theme="moon"] .task-focus {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 244, 255, 0.28), transparent 38%),
+    linear-gradient(135deg, rgba(243, 214, 255, 0.26), rgba(179, 136, 255, 0.24) 52%, rgba(109, 86, 216, 0.26));
+  color: rgba(243, 214, 255, 0.9);
+  opacity: 0.9;
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.2),
+    0 0 16px rgba(179, 136, 255, 0.12),
+    inset 0 1px 0 rgba(255, 244, 255, 0.12);
+}
+
+:root[data-theme="moon"] .task-focus__ping {
+  background: rgba(179, 136, 255, 0.32);
+}
+
+:root[data-theme="moon"] .task-focus__glow,
+:root[data-theme="moon"] .task-focus::after {
+  background: linear-gradient(135deg, rgba(243, 214, 255, 0.32), rgba(179, 136, 255, 0.36) 54%, rgba(109, 86, 216, 0.34));
+}
+
+:root[data-theme="moon"] .task-focus.is-active {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  color: #120d2a;
+  box-shadow:
+    0 10px 22px -10px rgba(0, 0, 0, 0.72),
+    0 0 24px rgba(179, 136, 255, 0.38),
+    0 0 0 1px rgba(243, 214, 255, 0.34),
+    inset 0 1px 0 rgba(255, 248, 255, 0.44);
+}
+
+:root[data-theme="moon"] .pomodoro-btn--primary.is-pulse {
+  animation-name: pomodoro-start-breath-moon;
+}
+
+:root[data-theme="moon"] .pomodoro-settings__slider input[type="range"]::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  border-color: rgba(255, 248, 255, 0.84);
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.54),
+    0 0 14px rgba(179, 136, 255, 0.42);
+}
+
+:root[data-theme="moon"] .pomodoro-settings__slider input[type="range"]::-moz-range-thumb {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  border-color: rgba(255, 248, 255, 0.84);
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.54),
+    0 0 14px rgba(179, 136, 255, 0.42);
+}
+
+:root[data-theme="moon"] .task-item .task-action {
+  opacity: 0.82;
+  color: rgba(231, 221, 255, 0.72);
+  background: rgba(39, 29, 78, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.12),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+
+:root[data-theme="moon"] .task-item:hover .task-action,
+:root[data-theme="moon"] .task-item:focus-within .task-action,
+:root[data-theme="moon"] .task-action:hover,
+:root[data-theme="moon"] .task-action:focus-visible {
+  opacity: 1;
+}
+
+:root[data-theme="moon"] .task-action--edit {
+  color: rgb(232, 220, 255);
+}
+
+:root[data-theme="moon"] .task-action--edit:hover,
+:root[data-theme="moon"] .task-action--edit:focus-visible {
+  background: rgba(179, 136, 255, 0.24);
+  color: rgba(255, 248, 255, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.24),
+    0 0 18px rgba(179, 136, 255, 0.18);
+}
+
+:root[data-theme="moon"] .task-action--delete,
+:root[data-theme="moon"] .task-action--cancel {
+  color: rgb(255, 190, 220);
+}
+
+:root[data-theme="moon"] .task-action--delete:hover,
+:root[data-theme="moon"] .task-action--delete:focus-visible,
+:root[data-theme="moon"] .task-action--cancel:hover,
+:root[data-theme="moon"] .task-action--cancel:focus-visible {
+  background: rgba(255, 171, 210, 0.22);
+  color: rgb(255, 230, 240);
+  box-shadow:
+    0 0 0 1px rgba(255, 190, 220, 0.24),
+    0 0 18px rgba(255, 171, 210, 0.16);
+}
+
+:root[data-theme="moon"] .task-action--save {
+  color: rgb(193, 247, 230);
+}
+
+:root[data-theme="moon"] .task-action--save:hover,
+:root[data-theme="moon"] .task-action--save:focus-visible {
+  background: rgba(136, 221, 196, 0.18);
+  color: rgb(226, 255, 246);
+}
+
+:root[data-theme="moon"] .task-item.is-focus-active {
+  background:
+    radial-gradient(circle at 14% 50%, rgba(243, 214, 255, 0.24), transparent 34%),
+    radial-gradient(circle at 92% 50%, rgba(179, 136, 255, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(61, 45, 114, 0.88), rgba(36, 27, 74, 0.9) 52%, rgba(19, 15, 45, 0.9));
+  box-shadow:
+    0 0 0 1px rgba(243, 214, 255, 0.36),
+    0 0 0 4px rgba(179, 136, 255, 0.08),
+    0 12px 28px -16px rgba(0, 0, 0, 0.78),
+    0 0 30px rgba(179, 136, 255, 0.24),
+    inset 0 1px 0 rgba(255, 244, 255, 0.12),
+    inset 0 -18px 34px rgba(109, 86, 216, 0.12);
+}
+
+:root[data-theme="moon"] .task-item.is-focus-active .task-title,
+:root[data-theme="moon"] .task-item.is-focus-active .task-title__text {
+  color: rgba(255, 248, 255, 0.98);
+}
+
+:root[data-theme="moon"] .task-item.is-focus-active .task-action {
+  background: rgba(243, 214, 255, 0.12);
+  color: rgba(255, 248, 255, 0.92);
+}
+
+:root[data-theme="dark"] .goal-kicker,
+:root[data-theme="dark"] .goals-page__subtitle,
+:root[data-theme="dark"] .goals-stat span,
+:root[data-theme="dark"] .goal-card__header p,
+:root[data-theme="dark"] .goal-deadline,
+:root[data-theme="dark"] .goal-steps span,
+:root[data-theme="dark"] .goal-field span,
+:root[data-theme="dark"] .goal-ghost-button,
+:root[data-theme="dark"] .goals-empty {
+  color: rgba(210, 216, 244, 0.66);
+}
+
+:root[data-theme="dark"] .goals-stat strong,
+:root[data-theme="dark"] .goal-card__header h2,
+:root[data-theme="dark"] .goal-steps strong,
+:root[data-theme="dark"] .goals-empty strong,
+:root[data-theme="dark"] .goal-modal__header h2,
+:root[data-theme="dark"] .goal-editor-section h3 {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .goals-stat,
+:root[data-theme="dark"] .goal-card,
+:root[data-theme="dark"] .goal-steps li,
+:root[data-theme="dark"] .goals-empty,
+:root[data-theme="dark"] .goal-editor-section,
+:root[data-theme="dark"] .goal-task-editor,
+:root[data-theme="dark"] .goal-input,
+:root[data-theme="dark"] .goal-icon-button,
+:root[data-theme="dark"] .goal-task-editor__drag,
+:root[data-theme="dark"] .goal-task-editor__remove,
+:root[data-theme="dark"] .goal-ghost-button {
+  background: rgba(12, 17, 36, 0.34);
+  color: rgba(237, 239, 255, 0.86);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.24),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.1);
+}
+
+:root[data-theme="dark"] .goal-pill,
+:root[data-theme="dark"] .goal-task-editor__number {
+  color: rgb(20, 24, 46);
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+}
+
+:root[data-theme="dark"] .goal-progress span,
+:root[data-theme="dark"] .goal-steps li.is-complete button,
+:root[data-theme="dark"] .goal-soft-button,
+:root[data-theme="dark"] .goal-primary-button {
+  background: linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+}
+
+:root[data-theme="dream"] .goal-kicker,
+:root[data-theme="dream"] .goals-page__subtitle,
+:root[data-theme="dream"] .goals-stat span,
+:root[data-theme="dream"] .goal-card__header p,
+:root[data-theme="dream"] .goal-deadline,
+:root[data-theme="dream"] .goal-steps span,
+:root[data-theme="dream"] .goal-field span,
+:root[data-theme="dream"] .goal-ghost-button,
+:root[data-theme="dream"] .goals-empty {
+  color: rgba(83, 88, 129, 0.62);
+}
+
+:root[data-theme="dream"] .goals-stat strong,
+:root[data-theme="dream"] .goal-card__header h2,
+:root[data-theme="dream"] .goal-steps strong,
+:root[data-theme="dream"] .goals-empty strong,
+:root[data-theme="dream"] .goal-modal__header h2,
+:root[data-theme="dream"] .goal-editor-section h3,
+:root[data-theme="dream"] .goal-input {
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="dream"] .goals-stat,
+:root[data-theme="dream"] .goal-card,
+:root[data-theme="dream"] .goal-steps li,
+:root[data-theme="dream"] .goals-empty,
+:root[data-theme="dream"] .goal-editor-section,
+:root[data-theme="dream"] .goal-task-editor,
+:root[data-theme="dream"] .goal-input,
+:root[data-theme="dream"] .goal-icon-button,
+:root[data-theme="dream"] .goal-task-editor__drag,
+:root[data-theme="dream"] .goal-task-editor__remove,
+:root[data-theme="dream"] .goal-ghost-button {
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow:
+    inset -1px -1px 8px rgba(255, 255, 255, 0.56),
+    inset 2px 2px 8px rgba(128, 143, 191, 0.08);
+}
+
+:root[data-theme="dream"] .goal-pill,
+:root[data-theme="dream"] .goal-task-editor__number,
+:root[data-theme="dream"] .goal-progress span,
+:root[data-theme="dream"] .goal-steps li.is-complete button,
+:root[data-theme="dream"] .goal-soft-button,
+:root[data-theme="dream"] .goal-primary-button {
+  background: linear-gradient(135deg, #b8edff 0%, #d8b6ff 54%, #f4bee8 100%);
+  color: rgb(83, 88, 129);
+}
+
+:root[data-theme="moon"] .goal-kicker,
+:root[data-theme="moon"] .goals-page__subtitle,
+:root[data-theme="moon"] .goals-stat span,
+:root[data-theme="moon"] .goal-card__header p,
+:root[data-theme="moon"] .goal-deadline,
+:root[data-theme="moon"] .goal-steps span,
+:root[data-theme="moon"] .goal-field span,
+:root[data-theme="moon"] .goal-ghost-button,
+:root[data-theme="moon"] .goals-empty {
+  color: rgba(223, 214, 251, 0.72);
+}
+
+:root[data-theme="moon"] .goals-stat strong,
+:root[data-theme="moon"] .goal-card__header h2,
+:root[data-theme="moon"] .goal-steps strong,
+:root[data-theme="moon"] .goals-empty strong,
+:root[data-theme="moon"] .goal-modal__header h2,
+:root[data-theme="moon"] .goal-editor-section h3,
+:root[data-theme="moon"] .goal-input {
+  color: rgba(243, 237, 255, 0.94);
+}
+
+:root[data-theme="moon"] .goals-stat,
+:root[data-theme="moon"] .goal-card,
+:root[data-theme="moon"] .goal-steps li,
+:root[data-theme="moon"] .goals-empty,
+:root[data-theme="moon"] .goal-editor-section,
+:root[data-theme="moon"] .goal-task-editor,
+:root[data-theme="moon"] .goal-input,
+:root[data-theme="moon"] .goal-icon-button,
+:root[data-theme="moon"] .goal-task-editor__drag,
+:root[data-theme="moon"] .goal-task-editor__remove,
+:root[data-theme="moon"] .goal-ghost-button {
+  background: rgba(21, 18, 48, 0.46);
+  color: rgba(243, 237, 255, 0.9);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.28),
+    inset -2px -2px 7px rgba(243, 214, 255, 0.08);
+}
+
+:root[data-theme="moon"] .goal-pill,
+:root[data-theme="moon"] .goal-task-editor__number,
+:root[data-theme="moon"] .goal-progress span,
+:root[data-theme="moon"] .goal-steps li.is-complete button,
+:root[data-theme="moon"] .goal-soft-button,
+:root[data-theme="moon"] .goal-primary-button {
+  background: linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  color: #120d2a;
+}
+
+:root[data-theme="moon"] .goal-icon-button--danger,
+:root[data-theme="moon"] .goal-task-editor__remove {
+  color: #ffc2d1;
+}
+
+:root[data-theme="dark"] .goal-modal.tasks-panel,
+:root[data-theme="dark"] .goal-modal.tasks-panel--today {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 182, 211, 0.16), transparent 34%),
+    radial-gradient(circle at 94% 12%, rgba(122, 113, 255, 0.2), transparent 38%),
+    linear-gradient(145deg, rgba(22, 26, 50, 0.96), rgba(20, 23, 44, 0.95));
+  color: rgba(237, 239, 255, 0.92);
+  box-shadow:
+    0 22px 56px -26px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(237, 239, 255, 0.12),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dream"] .goal-modal.tasks-panel,
+:root[data-theme="dream"] .goal-modal.tasks-panel--today {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(184, 237, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 94% 12%, rgba(216, 182, 255, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(252, 253, 255, 0.97), rgba(244, 247, 255, 0.96) 48%, rgba(249, 242, 255, 0.95));
+  color: rgb(83, 88, 129);
+  box-shadow:
+    0 22px 56px -28px rgba(128, 143, 191, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -22px 44px rgba(216, 224, 255, 0.18);
+}
+
+:root[data-theme="moon"] .goal-modal.tasks-panel,
+:root[data-theme="moon"] .goal-modal.tasks-panel--today {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(243, 214, 255, 0.14), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(134, 96, 224, 0.22), transparent 40%),
+    linear-gradient(145deg, rgba(30, 25, 61, 0.96), rgba(12, 10, 35, 0.96) 48%, rgba(10, 9, 27, 0.95));
+  color: rgba(243, 237, 255, 0.94);
+  box-shadow:
+    0 22px 56px -24px rgba(0, 0, 0, 0.82),
+    inset 0 1px 0 rgba(255, 244, 255, 0.1),
+    inset 0 -24px 48px rgba(72, 52, 132, 0.18);
+}
+
+:root[data-theme="dark"] .goal-task-add-row,
+:root[data-theme="dream"] .goal-task-add-row,
+:root[data-theme="moon"] .goal-task-add-row {
+  background: inherit;
+}
+
+:root[data-theme="dark"] .goal-task-add-row {
+  background: rgba(237, 239, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(237, 239, 255, 0.08),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.14);
+}
+
+:root[data-theme="dream"] .goal-task-add-row {
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(171, 190, 232, 0.16),
+    inset -1px -1px 7px rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="moon"] .goal-task-add-row {
+  background: rgba(255, 244, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 255, 0.08),
+    inset 2px 2px 7px rgba(0, 0, 0, 0.2);
+}
+:root[data-theme="dark"] .today-side-widget {
+  background: rgba(20, 24, 46, 0.55);
+  color: rgba(220, 220, 250, 0.6);
+}
+
+:root[data-theme="dark"] .needs-attention {
+  background:
+    radial-gradient(circle at 84% 0%, rgba(255, 182, 211, 0.16), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(122, 113, 255, 0.22), transparent 40%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(155, 255, 207, 0.05) 48%, rgba(122, 113, 255, 0.08));
+  color: rgba(220, 220, 250, 0.85);
+}
+:root[data-theme="dream"] .needs-attention {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(184, 237, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(216, 182, 255, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(240, 244, 255, 0.66) 48%, rgba(248, 239, 255, 0.62));
+  backdrop-filter: blur(36px) saturate(1.18);
+  -webkit-backdrop-filter: blur(36px) saturate(1.18);
+  color: rgba(57, 57, 92, 0.9);
+}
+:root[data-theme="moon"] .needs-attention {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(243, 214, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(134, 96, 224, 0.2), transparent 40%),
+    linear-gradient(145deg, rgba(30, 25, 61, 0.6), rgba(12, 10, 35, 0.76) 48%, rgba(10, 9, 27, 0.82));
+  backdrop-filter: blur(30px) saturate(1.12);
+  -webkit-backdrop-filter: blur(30px) saturate(1.12);
+  color: rgba(228, 224, 250, 0.9);
+}
+:root[data-theme="moon"] .needs-attention__title h2,
+:root[data-theme="moon"] .needs-attention__item-title,
+:root[data-theme="moon"] .needs-attention__empty-text h2 {
+  color: rgba(238, 232, 255, 0.96);
+}
+:root[data-theme="moon"] .needs-attention__title p,
+:root[data-theme="moon"] .needs-attention__item-goal,
+:root[data-theme="moon"] .needs-attention__empty-text p {
+  color: rgba(214, 206, 244, 0.62);
+}
+:root[data-theme="moon"] .needs-attention__item {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+:root[data-theme="moon"] .needs-attention__item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+:root[data-theme="dark"] .needs-attention__title h2,
+:root[data-theme="dark"] .needs-attention__item-title,
+:root[data-theme="dark"] .needs-attention__empty-text h2 {
+  color: rgba(228, 228, 252, 0.95);
+}
+:root[data-theme="dark"] .needs-attention__title p,
+:root[data-theme="dark"] .needs-attention__item-goal,
+:root[data-theme="dark"] .needs-attention__empty-text p {
+  color: rgba(210, 210, 240, 0.6);
+}
+:root[data-theme="dark"] .needs-attention__item {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+:root[data-theme="dark"] .needs-attention__item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+:root[data-theme="dark"] .needs-attention__count--overdue,
+:root[data-theme="dark"] .needs-attention__group-label--overdue {
+  color: rgb(255, 150, 170);
+}
+:root[data-theme="dark"] .needs-attention__count--due-today,
+:root[data-theme="dark"] .needs-attention__group-label--due-today {
+  color: rgb(255, 184, 120);
+}
+:root[data-theme="dark"] .needs-attention__count--due-soon,
+:root[data-theme="dark"] .needs-attention__group-label--due-soon {
+  color: rgb(150, 195, 245);
+}
+
+:root[data-theme="dark"] .goal-journey,
+:root[data-theme="dark"] .goal-icon-choice,
+:root[data-theme="dark"] .goal-task-add-row,
+:root[data-theme="dark"] .goal-task-editor__icon,
+:root[data-theme="dark"] .goal-task-editor__popover,
+:root[data-theme="dark"] .goal-journey__selector,
+:root[data-theme="dark"] .goal-journey__date {
+  background: rgba(12, 17, 36, 0.34);
+  color: rgba(237, 239, 255, 0.86);
+}
+
+:root[data-theme="dark"] .goal-journey__header h2,
+:root[data-theme="dark"] .goal-journey-step strong,
+:root[data-theme="dark"] .goal-journey__progress {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .goal-journey__header p,
+:root[data-theme="dark"] .goal-journey-step > span:not(.goal-journey-step__badge),
+:root[data-theme="dark"] .goal-editor-hint {
+  color: rgba(210, 216, 244, 0.66);
+}
+
+:root[data-theme="dream"] .goal-journey,
+:root[data-theme="dream"] .goal-icon-choice,
+:root[data-theme="dream"] .goal-task-add-row,
+:root[data-theme="dream"] .goal-task-editor__icon,
+:root[data-theme="dream"] .goal-task-editor__popover,
+:root[data-theme="dream"] .goal-journey__selector,
+:root[data-theme="dream"] .goal-journey__date {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+:root[data-theme="moon"] .goal-journey,
+:root[data-theme="moon"] .goal-icon-choice,
+:root[data-theme="moon"] .goal-task-add-row,
+:root[data-theme="moon"] .goal-task-editor__icon,
+:root[data-theme="moon"] .goal-task-editor__popover,
+:root[data-theme="moon"] .goal-journey__selector,
+:root[data-theme="moon"] .goal-journey__date {
+  background: rgba(31, 40, 78, 0.36);
+  color: rgba(237, 239, 255, 0.88);
+}
+
+:root[data-theme="moon"] .goal-journey__header h2,
+:root[data-theme="moon"] .goal-journey-step strong,
+:root[data-theme="moon"] .goal-journey__progress {
+  color: rgba(248, 249, 255, 0.94);
+}
+
+:root[data-theme="moon"] .goal-journey__header p,
+:root[data-theme="moon"] .goal-journey-step > span:not(.goal-journey-step__badge),
+:root[data-theme="moon"] .goal-editor-hint {
+  color: rgba(211, 220, 255, 0.68);
+}
+
+/* Per-theme frame for ALL dashboard panels (tasks / pomodoro / goal / alerts).
+   These intentionally use the SAME soft, NO-horizontal-offset shape as the
+   light frame above — only theme-tinted. The previous per-theme shadows had a
+   large bottom-right offset (e.g. `20px 26px 44px`) plus a bright 1px ring,
+   which cast a visible rounded-rectangle "pad" to the bottom-right of each card
+   (most obvious on Dream/Moon). Keeping the offset at 0 and the spread tightly
+   negative keeps the shadow tucked under the card with no leaking pad. */
+:root[data-theme="dark"] .today-dashboard .tasks-panel--today,
+:root[data-theme="dark"] .today-dashboard .pomodoro-panel,
+:root[data-theme="dark"] .today-dashboard .today-goal-widget .goal-journey,
+:root[data-theme="dark"] .today-dashboard .needs-attention {
+  box-shadow:
+    0 0 0 1px rgba(151, 142, 255, 0.14),
+    0 18px 32px -28px rgba(0, 0, 0, 0.5),
+    0 8px 18px -16px rgba(122, 113, 255, 0.12),
+    inset 0 1px 0 rgba(237, 239, 255, 0.1);
+}
+:root[data-theme="dream"] .today-dashboard .tasks-panel--today,
+:root[data-theme="dream"] .today-dashboard .pomodoro-panel,
+:root[data-theme="dream"] .today-dashboard .today-goal-widget .goal-journey,
+:root[data-theme="dream"] .today-dashboard .needs-attention {
+  box-shadow: var(--today-widget-shadow);
+}
+:root[data-theme="moon"] .today-dashboard .tasks-panel--today,
+:root[data-theme="moon"] .today-dashboard .pomodoro-panel,
+:root[data-theme="moon"] .today-dashboard .today-goal-widget .goal-journey,
+:root[data-theme="moon"] .today-dashboard .needs-attention {
+  box-shadow: var(--today-widget-shadow);
+}
+
+:root[data-theme="dark"] .goal-list-card__link,
+:root[data-theme="dark"] .goal-detail-task,
+:root[data-theme="dark"] .goal-detail-editor__icon-wrap,
+:root[data-theme="dark"] .goal-detail-editor__icon,
+:root[data-theme="dark"] .goal-detail-editor__popover,
+:root[data-theme="dark"] .goal-detail-hero__stats > span:not(.goal-status-chip):not(.goal-health-alert),
+:root[data-theme="dark"] .goal-list-card__chevron {
+  background: rgba(12, 17, 36, 0.34);
+  color: rgba(237, 239, 255, 0.86);
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.24),
+    inset -2px -2px 7px rgba(171, 148, 255, 0.1);
+}
+
+:root[data-theme="dark"] .goal-list-card h2,
+:root[data-theme="dark"] .goal-list-card__progress-row strong,
+:root[data-theme="dark"] .goal-detail-hero__title-row h1,
+:root[data-theme="dark"] .goal-detail-section-header h2,
+:root[data-theme="dark"] .goal-detail-editor__header h2,
+:root[data-theme="dark"] .goal-detail-hero__progress-row strong,
+:root[data-theme="dark"] .goal-detail-task__main strong,
+:root[data-theme="dark"] .goal-detail-editor__icon-wrap strong {
+  color: rgba(237, 239, 255, 0.92);
+}
+
+:root[data-theme="dark"] .goal-list-card p,
+:root[data-theme="dark"] .goal-list-card__meta,
+:root[data-theme="dark"] .goal-detail-hero__description,
+:root[data-theme="dark"] .goal-detail-hero__progress-row,
+:root[data-theme="dark"] .goal-detail-task__main small,
+:root[data-theme="dark"] .goal-detail-editor__icon-wrap span,
+:root[data-theme="dark"] .goal-detail-editor__status,
+:root[data-theme="dark"] .goal-back-link {
+  color: rgba(210, 216, 244, 0.66);
+}
+
+:root[data-theme="dream"] .goal-list-card__link,
+:root[data-theme="dream"] .goal-detail-task,
+:root[data-theme="dream"] .goal-detail-editor__icon-wrap,
+:root[data-theme="dream"] .goal-detail-editor__icon,
+:root[data-theme="dream"] .goal-detail-editor__popover,
+:root[data-theme="dream"] .goal-detail-hero__stats > span:not(.goal-status-chip):not(.goal-health-alert),
+:root[data-theme="dream"] .goal-list-card__chevron {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+:root[data-theme="moon"] .goal-list-card__link,
+:root[data-theme="moon"] .goal-detail-task,
+:root[data-theme="moon"] .goal-detail-editor__icon-wrap,
+:root[data-theme="moon"] .goal-detail-editor__icon,
+:root[data-theme="moon"] .goal-detail-editor__popover,
+:root[data-theme="moon"] .goal-detail-hero__stats > span:not(.goal-status-chip):not(.goal-health-alert),
+:root[data-theme="moon"] .goal-list-card__chevron {
+  background: rgba(31, 40, 78, 0.36);
+  color: rgba(237, 239, 255, 0.88);
+}
+
+:root[data-theme="moon"] .goal-list-card h2,
+:root[data-theme="moon"] .goal-list-card__progress-row strong,
+:root[data-theme="moon"] .goal-detail-hero__title-row h1,
+:root[data-theme="moon"] .goal-detail-section-header h2,
+:root[data-theme="moon"] .goal-detail-editor__header h2,
+:root[data-theme="moon"] .goal-detail-hero__progress-row strong,
+:root[data-theme="moon"] .goal-detail-task__main strong,
+:root[data-theme="moon"] .goal-detail-editor__icon-wrap strong {
+  color: rgba(248, 249, 255, 0.94);
+}
+
+:root[data-theme="moon"] .goal-list-card p,
+:root[data-theme="moon"] .goal-list-card__meta,
+:root[data-theme="moon"] .goal-detail-hero__description,
+:root[data-theme="moon"] .goal-detail-hero__progress-row,
+:root[data-theme="moon"] .goal-detail-task__main small,
+:root[data-theme="moon"] .goal-detail-editor__icon-wrap span,
+:root[data-theme="moon"] .goal-detail-editor__status,
+:root[data-theme="moon"] .goal-back-link {
+  color: rgba(211, 220, 255, 0.68);
+}
+
+:root[data-theme="moon"] .goal-detail-task.is-complete .goal-detail-task__main strong,
+:root[data-theme="dark"] .goal-detail-task.is-complete .goal-detail-task__main strong {
+  color: rgba(237, 239, 255, 0.5);
+}
+
+:root[data-theme="dark"] .goal-detail-task__drag span,
+:root[data-theme="moon"] .goal-detail-task__drag span {
+  background: rgba(237, 239, 255, 0.5);
+  box-shadow: 0 7px 0 rgba(237, 239, 255, 0.5);
+}
+
+:root[data-theme="dark"] .goal-detail-task__deadline span,
+:root[data-theme="dark"] .goal-detail-task__status > span:first-child,
+:root[data-theme="moon"] .goal-detail-task__deadline span,
+:root[data-theme="moon"] .goal-detail-task__status > span:first-child {
+  color: rgba(210, 216, 244, 0.54);
+}
+
+:root[data-theme="dark"] .goal-detail-task__deadline strong,
+:root[data-theme="moon"] .goal-detail-task__deadline strong {
+  color: rgba(237, 239, 255, 0.78);
+}
+/* Keep the overdue date color in the moon theme (the rule above would
+   otherwise win on specificity). due-today / due-soon dates stay the default
+   color — only overdue is highlighted. */
+:root[data-theme="dark"] .goal-detail-task__deadline strong.is-overdue,
+:root[data-theme="moon"] .goal-detail-task__deadline strong.is-overdue {
+  color: #ff5353;
+}
+
+:root[data-theme="dark"] .goal-task-status,
+:root[data-theme="moon"] .goal-task-status {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(237, 239, 255, 0.78);
+}
+
+:root[data-theme="dream"] .today-dashboard {
+  --today-widget-bg:
+    radial-gradient(circle at 16% 0%, rgba(184, 237, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(216, 182, 255, 0.16), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(252, 253, 255, 0.72) 48%, rgba(255, 251, 255, 0.68));
+  --today-widget-backdrop: blur(36px) saturate(1.18);
+  --today-widget-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 18px 32px -28px rgba(128, 143, 191, 0.18),
+    0 8px 18px -16px rgba(216, 182, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -14px 28px rgba(216, 224, 255, 0.12);
+}
+
+:root[data-theme="moon"] .today-dashboard {
+  --today-widget-bg:
+    radial-gradient(circle at 14% 0%, rgba(243, 214, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(134, 96, 224, 0.2), transparent 40%),
+    linear-gradient(145deg, rgba(30, 25, 61, 0.62), rgba(12, 10, 35, 0.74) 48%, rgba(10, 9, 27, 0.8));
+  --today-widget-backdrop: blur(30px) saturate(1.12);
+  --today-widget-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.14),
+    0 18px 32px -28px rgba(0, 0, 0, 0.55),
+    0 8px 18px -16px rgba(179, 136, 255, 0.1),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+:root[data-theme="dream"] .notes-workspace {
+  --notes-widget-bg:
+    radial-gradient(circle at 16% 0%, rgba(184, 237, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(216, 182, 255, 0.16), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(252, 253, 255, 0.72) 48%, rgba(255, 251, 255, 0.68));
+  --notes-widget-backdrop: blur(36px) saturate(1.18);
+  --notes-widget-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 18px 32px -28px rgba(128, 143, 191, 0.18),
+    0 8px 18px -16px rgba(216, 182, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -14px 28px rgba(216, 224, 255, 0.12);
+}
+:root[data-theme="moon"] .notes-workspace {
+  --notes-widget-bg:
+    radial-gradient(circle at 14% 0%, rgba(243, 214, 255, 0.12), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(134, 96, 224, 0.2), transparent 40%),
+    linear-gradient(145deg, rgba(30, 25, 61, 0.62), rgba(12, 10, 35, 0.74) 48%, rgba(10, 9, 27, 0.8));
+  --notes-widget-backdrop: blur(30px) saturate(1.12);
+  --notes-widget-shadow:
+    0 0 0 1px rgba(207, 178, 255, 0.14),
+    0 18px 32px -28px rgba(0, 0, 0, 0.55),
+    0 8px 18px -16px rgba(179, 136, 255, 0.1),
+    inset 0 1px 0 rgba(255, 244, 255, 0.08);
+}
+:root[data-theme="dream"] .notes-entry-title,:root[data-theme="dream"] .notes-entry-title:hover,:root[data-theme="dream"] .notes-entry-title:focus,:root[data-theme="dream"] .notes-entry-title:focus-visible,:root[data-theme="moon"] .notes-entry-title,:root[data-theme="moon"] .notes-entry-title:hover,:root[data-theme="moon"] .notes-entry-title:focus,:root[data-theme="moon"] .notes-entry-title:focus-visible{
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+}

@@ -319,6 +319,7 @@ export const NoteSchema = z
     title: z.string(),
     body: z.string(),
     category: CategorySchema.optional().default(""),
+    pinned: z.boolean().optional().default(false),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
   })
@@ -332,6 +333,7 @@ export const NoteInputSchema = z.object({
   title: z.string().trim().max(MAX_NOTE_TITLE_LENGTH).default(""),
   body: z.string().max(MAX_NOTE_BODY_LENGTH).default(""),
   category: CategorySchema.optional().default(""),
+  pinned: z.boolean().optional().default(false),
 });
 
 // Save replaces the user's entire note set in one shot (matches the page's
