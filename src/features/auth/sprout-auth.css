@@ -1,0 +1,386 @@
+/* =============================================================================
+   SPROUT LOGIN — full-bleed background photo, forest-themed glass login card on
+   the left, animated "Plan peacefully with Sprout" headline on the right above
+   the character. Scoped under `.sprout-auth` so it overrides the shared
+   SoftLoginModal styles only on this page; the classic page is untouched.
+   Fonts: app fonts only — "Quattrocento" (serif display) + "Quattrocento Sans".
+   ========================================================================== */
+
+.sprout-auth {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  overflow: hidden;
+  /* Opaque photographic background. A solid fallback colour is painted under
+     the image so the page is never see-through during route transitions — this
+     prevents the old pink app gradient from flashing behind on logout. */
+  background-color: #e9ebe4;
+  background-image: url("/auth/sprout-login-bg.png");
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  /* App display serif for the big headline. */
+  --sprout-serif: "Quattrocento", Georgia, "Times New Roman", serif;
+  --sprout-ink: #3f5236;        /* deep eucalyptus green */
+  --sprout-ink-soft: #5a6b50;
+  /* Horizontal band the login card is centred in: from the page's LEFT edge to
+     the RIGHT edge of the rug in the bg photo. The rug ends at ~0.78 of the
+     photo width; with `background-size: cover` that lands near this fraction of
+     the viewport on typical desktop aspect ratios (16:9 ≈ 78vw, 16:10 ≈ 76vw).
+     The card's centre sits at half of this. Tune this one value to taste. */
+  --sprout-modal-band: 44.9vw;
+}
+
+/* ---- Left: login card -----------------------------------------------------
+   Centred (both axes) inside the band above, independent of the grid so the
+   right-hand headline keeps its column. */
+.sprout-auth__left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sprout-modal-band);
+  display: grid;
+  place-items: center;
+  padding-inline: clamp(16px, 3vw, 48px);
+  box-sizing: border-box;
+}
+
+/* ---- Right: headline above the character ---------------------------------- */
+.sprout-auth__right {
+  /* Stay in the 2nd column even though the card is now absolutely positioned. */
+  grid-column: 2;
+  position: relative;
+  height: 100%;
+}
+
+.sprout-auth__headline {
+  position: absolute;
+  top: clamp(48px, 10vh, 120px);
+  left: clamp(8px, 3vw, 40px);
+  /* Pull the right edge in so it sits roughly over the end of the rug the
+     character sits on (the rug ends near ~60% of the bg photo width). */
+  right: clamp(40px, 13vw, 220px);
+  margin: 0;
+  color: var(--sprout-ink);
+  font: 400 clamp(40px, 5vw, 68px)/1.08 var(--sprout-serif);
+  letter-spacing: -0.01em;
+  text-align: right;
+}
+
+.sprout-auth__headline-line {
+  display: block;
+}
+
+/* Each fragment fades + lifts in, staggered: "Plan peacefully" → "with" →
+   "Sprout". A light, calm entrance (no bounce) to match the brand tone. */
+.sprout-auth__headline-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(7px);
+  animation: sprout-word-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.sprout-auth__headline-word--peacefully {
+  animation-delay: 0.3s;
+}
+
+.sprout-auth__headline-word--with {
+  animation-delay: 1.3s;
+}
+
+.sprout-auth__headline-word--sprout {
+  font-weight: 700;
+  animation-delay: 2s;
+}
+
+/* "with" + "Sprout" share the second visual line. */
+.sprout-auth__headline-word--with {
+  margin-right: 0.28em;
+}
+
+@keyframes sprout-word-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sprout-auth__headline-word {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* =============================================================================
+   FOREST RE-SKIN of the shared SoftLoginModal, scoped to this page only.
+   ========================================================================== */
+.sprout-auth .soft-modal {
+  display: block;
+}
+
+.sprout-auth .soft-modal__panel {
+  --soft-panel-text: var(--sprout-ink);
+  width: min(420px, calc(100vw - 40px));
+  padding: 38px 38px 32px;
+  border-radius: 28px;
+  /* Warm milk-glass forest card. */
+  background: rgba(247, 248, 241, 0.86);
+  backdrop-filter: blur(22px) saturate(1.1);
+  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+  border: 1px solid rgba(127, 162, 104, 0.18);
+  box-shadow:
+    18px 24px 48px -22px rgba(63, 86, 58, 0.4),
+    -6px -6px 26px -14px rgba(255, 255, 255, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Heading — serif, left-aligned, like the screenshot's "Welcome back". */
+.sprout-auth .soft-modal__title {
+  margin: 0 0 4px;
+  color: var(--sprout-ink);
+  font: 700 38px/1.05 var(--sprout-serif);
+  text-align: left;
+}
+
+/* Sub-line under the title. */
+.sprout-auth .soft-modal__subtitle {
+  margin: 0 0 22px;
+  color: var(--sprout-ink-soft);
+  font: 400 15px/1.4 var(--planner-font);
+}
+
+.sprout-auth .soft-modal__form {
+  gap: 16px;
+}
+
+.sprout-auth .soft-modal__field {
+  color: var(--sprout-ink-soft);
+}
+
+/* Inputs: soft pill, sage-tinted, rounded but a touch squarer than the pill. */
+.sprout-auth .soft-modal__field input {
+  height: 50px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--sprout-ink);
+  box-shadow:
+    inset 1px 1px 4px rgba(63, 86, 58, 0.08),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.7),
+    0 0 0 1px rgba(127, 162, 104, 0.16);
+}
+
+.sprout-auth .soft-modal__field input::placeholder {
+  color: rgba(90, 107, 80, 0.5);
+}
+
+.sprout-auth .soft-modal__field input:hover {
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    inset 1px 1px 4px rgba(63, 86, 58, 0.08),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(127, 162, 104, 0.28);
+}
+
+.sprout-auth .soft-modal__field input:focus {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 1px 1px 4px rgba(63, 86, 58, 0.06),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.85),
+    0 0 0 2px rgba(127, 162, 104, 0.5);
+}
+
+/* Leading field icons (mail / lock) drawn with a small inline SVG mask so we
+   don't add new assets. */
+.sprout-auth .soft-modal__field input {
+  padding-left: 46px;
+}
+
+.sprout-auth .soft-modal__password-control input {
+  padding-left: 46px;
+}
+
+.sprout-auth .soft-modal__field--email,
+.sprout-auth .soft-modal__field--password {
+  position: relative;
+}
+
+.sprout-auth .soft-modal__field-icon {
+  position: absolute;
+  top: 25px;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  background: rgba(90, 107, 80, 0.7);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sprout-auth .soft-modal__field--password .soft-modal__field-icon {
+  top: 25px;
+}
+
+.sprout-auth .soft-modal__field-icon--mail {
+  -webkit-mask: var(--icon-mail) center / contain no-repeat;
+  mask: var(--icon-mail) center / contain no-repeat;
+}
+
+.sprout-auth .soft-modal__field-icon--lock {
+  -webkit-mask: var(--icon-lock) center / contain no-repeat;
+  mask: var(--icon-lock) center / contain no-repeat;
+}
+
+.sprout-auth {
+  --icon-mail: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='3'/%3E%3Cpath d='m3 6 9 7 9-7'/%3E%3C/svg%3E");
+  --icon-lock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2.5'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+}
+
+.sprout-auth .soft-modal__password-toggle {
+  color: rgba(90, 107, 80, 0.55);
+}
+
+.sprout-auth .soft-modal__password-toggle:hover,
+.sprout-auth .soft-modal__password-toggle:focus-visible,
+.sprout-auth .soft-modal__password-toggle[aria-pressed="true"] {
+  color: var(--sprout-ink);
+  background: rgba(127, 162, 104, 0.16);
+}
+
+/* Submit — full width, solid forest green like the screenshot's "Log in". */
+.sprout-auth .soft-modal__actions {
+  display: block;
+  width: 100%;
+  justify-self: stretch;
+  margin-top: 6px;
+}
+
+.sprout-auth .soft-modal__submit {
+  --soft-button-bg: var(--sprout-ink);
+  --soft-button-text: #f7f8f1;
+  --soft-button-raised-shadow:
+    0 14px 28px -12px rgba(63, 86, 58, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --soft-button-pressed-shadow:
+    0 8px 18px -12px rgba(63, 86, 58, 0.6),
+    inset 0 2px 6px rgba(0, 0, 0, 0.18);
+
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--sprout-ink);
+  color: #f7f8f1;
+  box-shadow: var(--soft-button-raised-shadow);
+  font: 700 16px/1 var(--planner-font);
+}
+
+.sprout-auth .soft-modal__submit:hover,
+.sprout-auth .soft-modal__submit:focus-visible {
+  background: #46603b;
+  box-shadow: var(--soft-button-raised-shadow);
+  transform: translateY(-1px);
+}
+
+.sprout-auth .soft-modal__submit:active {
+  transform: scale(0.99);
+  box-shadow: var(--soft-button-pressed-shadow);
+}
+
+.sprout-auth .soft-modal__submit .button-gooey-loader {
+  --loader-color: #f7f8f1;
+}
+
+.sprout-auth .soft-modal__submit .soft-button__label {
+  font: 700 16px/1 var(--planner-font);
+}
+
+.sprout-auth .soft-modal__divider {
+  margin: 18px 0;
+  color: rgba(90, 107, 80, 0.6);
+}
+
+.sprout-auth .soft-modal__divider::before,
+.sprout-auth .soft-modal__divider::after {
+  background: rgba(127, 162, 104, 0.28);
+  box-shadow: none;
+}
+
+/* Secondary action — "Continue with Google" outlined ghost button. */
+.sprout-auth__google {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  border: 1px solid rgba(127, 162, 104, 0.4);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--sprout-ink);
+  font: 700 15px/1 var(--planner-font);
+  cursor: pointer;
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.sprout-auth__google:hover,
+.sprout-auth__google:focus-visible {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px -14px rgba(63, 86, 58, 0.4);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.sprout-auth__google-mark {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.sprout-auth .soft-modal__helper {
+  margin-top: 18px;
+  color: var(--sprout-ink-soft);
+}
+
+.sprout-auth .soft-modal__auth-link {
+  color: var(--sprout-ink);
+  font-weight: 700;
+}
+
+.sprout-auth .soft-modal__auth-link:hover,
+.sprout-auth .soft-modal__auth-link:focus-visible {
+  color: #2e6446;
+}
+
+.sprout-auth .soft-modal__status.is-error {
+  color: rgb(150, 70, 64);
+}
+
+/* ---- Responsive: stack on narrow screens, card over the photo ------------- */
+@media (max-width: 880px) {
+  .sprout-auth {
+    grid-template-columns: 1fr;
+    background-position: center bottom;
+    align-items: start;
+  }
+
+  .sprout-auth__left {
+    position: static;
+    width: auto;
+    padding-top: clamp(72px, 12vh, 120px);
+    padding-inline: clamp(24px, 6vw, 96px);
+    justify-items: center;
+  }
+
+  .sprout-auth__right {
+    display: none;
+  }
+}

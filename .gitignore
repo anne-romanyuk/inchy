@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# local database & data backups (user data, password hashes)
+data/
+
+# build output
+dist/
+
+# env & local secrets
+.env
+.env.*
+*.local
+
+# editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+
+# local Claude settings (keep personal config out of the repo)
+.claude/settings.local.json

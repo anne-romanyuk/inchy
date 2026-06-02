@@ -1,0 +1,96 @@
+.soft-button {
+  --soft-button-bg: rgb(216, 216, 216);
+  --soft-button-text: rgb(71, 71, 71);
+  --soft-button-raised-shadow:
+    7px 6px 10px 0 rgba(0, 0, 0, 0.34),
+    -0.4px -0.4px 2.8px -0.875px rgba(255, 255, 255, 0.68),
+    -1.2px -1.2px 8.5px -1.75px rgba(255, 255, 255, 0.65),
+    -3.2px -3.2px 22.6px -2.625px rgba(255, 255, 255, 0.57),
+    -10px -10px 70.7px -3.5px rgba(255, 255, 255, 0.3);
+  --soft-button-pressed-shadow:
+    inset 2px 1px 3px 1px rgba(115, 115, 115, 0.34),
+    inset -1px -1px 4px 0 rgba(255, 255, 255, 0.84);
+
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-md, 14px);
+  width: 78px;
+  height: 38px;
+  padding: 10px 15px;
+  background: var(--soft-button-bg);
+  color: var(--soft-button-text);
+  box-shadow: var(--soft-button-raised-shadow);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-decoration: none;
+  white-space: nowrap;
+  font: 700 18px/1 "Quattrocento Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  transition:
+    box-shadow 1.5s cubic-bezier(0, -0.2, 1, 1),
+    transform 1.5s cubic-bezier(0, -0.2, 1, 1),
+    color 1.5s cubic-bezier(0, -0.2, 1, 1);
+}
+
+.soft-button:hover,
+.soft-button:focus-visible {
+  box-shadow: var(--soft-button-pressed-shadow);
+}
+
+.soft-button--press:hover {
+  box-shadow: var(--soft-button-raised-shadow);
+}
+
+.soft-button--press:active,
+.soft-button--press:focus-visible:active {
+  box-shadow: var(--soft-button-pressed-shadow);
+}
+
+.soft-button--dusty-pink {
+  --soft-button-bg: rgb(222, 193, 199);
+  --soft-button-text: rgb(93, 63, 70);
+  --soft-button-raised-shadow:
+    7px 6px 10px 0 rgba(95, 61, 69, 0.28),
+    -0.4px -0.4px 2.8px -0.875px rgba(255, 248, 250, 0.78),
+    -1.2px -1.2px 8.5px -1.75px rgba(255, 242, 246, 0.62),
+    -3.2px -3.2px 22.6px -2.625px rgba(255, 235, 241, 0.42),
+    -10px -10px 70.7px -3.5px rgba(255, 244, 247, 0.32);
+  --soft-button-pressed-shadow:
+    inset 2px 1px 3px 1px rgba(107, 69, 78, 0.28),
+    inset -1px -1px 4px 0 rgba(255, 247, 249, 0.76);
+}
+
+.soft-button--white {
+  --soft-button-bg: rgb(226, 223, 218);
+  --soft-button-text: rgb(78, 75, 72);
+  --soft-button-raised-shadow:
+    7px 6px 10px 0 rgba(65, 58, 54, 0.2),
+    -0.4px -0.4px 2.8px -0.875px rgba(255, 252, 247, 0.78),
+    -1.2px -1.2px 8.5px -1.75px rgba(255, 250, 244, 0.64),
+    -3.2px -3.2px 22.6px -2.625px rgba(255, 246, 238, 0.46),
+    -10px -10px 70.7px -3.5px rgba(255, 246, 238, 0.28);
+  --soft-button-pressed-shadow:
+    inset 2px 1px 3px 1px rgba(93, 84, 78, 0.24),
+    inset -1px -1px 4px 0 rgba(255, 251, 246, 0.78);
+}
+
+.soft-button:focus-visible {
+  outline: 2px solid rgba(63, 63, 65, 0.55);
+  outline-offset: 5px;
+}
+
+.soft-button:active {
+  transform: translateY(1px);
+}
+
+.soft-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.soft-button__label {
+  display: block;
+}

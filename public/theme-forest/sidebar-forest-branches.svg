@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" role="img" aria-label="">
+  <defs>
+    <linearGradient id="stem" x1="44" y1="302" x2="176" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#748a64"/>
+      <stop offset="1" stop-color="#aebc96"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e4ead6"/>
+      <stop offset="0.46" stop-color="#c0d0ac"/>
+      <stop offset="1" stop-color="#7f9a6a"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#4b6542" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#softShadow)">
+    <path d="M42 310C57 253 69 213 95 167C123 118 145 78 182 34" stroke="url(#stem)" stroke-width="4.5"/>
+    <path d="M68 235C45 220 29 198 24 173" stroke="#96aa82" stroke-width="3"/>
+    <path d="M87 184C67 163 60 140 64 118" stroke="#96aa82" stroke-width="3"/>
+    <path d="M112 139C134 123 154 102 167 78" stroke="#8da378" stroke-width="3"/>
+    <path d="M55 258C76 241 97 229 123 224" stroke="#8da378" stroke-width="3"/>
+    <path d="M130 99C112 82 104 62 106 42" stroke="#9aad85" stroke-width="3"/>
+  </g>
+  <g filter="url(#softShadow)">
+    <path fill="url(#leaf)" d="M20 158c23 3 42 17 50 39-25 2-44-11-50-39Z"/>
+    <path fill="url(#leaf)" d="M48 103c25 8 41 27 43 52-27-3-44-22-43-52Z"/>
+    <path fill="url(#leaf)" d="M103 29c22 11 35 30 33 54-25-7-38-27-33-54Z"/>
+    <path fill="url(#leaf)" d="M159 62c24-10 48-7 66 10-20 17-45 18-66-10Z"/>
+    <path fill="url(#leaf)" d="M111 218c27-14 55-12 76 8-24 18-52 16-76-8Z"/>
+    <path fill="url(#leaf)" d="M35 245c26-5 48 4 62 24-25 12-49 3-62-24Z"/>
+  </g>
+  <g opacity="0.36" fill="#f7f8f1">
+    <ellipse cx="47" cy="175" rx="1.9" ry="18" transform="rotate(-43 47 175)"/>
+    <ellipse cx="70" cy="127" rx="1.8" ry="19" transform="rotate(-34 70 127)"/>
+    <ellipse cx="120" cy="55" rx="1.8" ry="18" transform="rotate(-19 120 55)"/>
+    <ellipse cx="191" cy="78" rx="20" ry="1.8" transform="rotate(-7 191 78)"/>
+    <ellipse cx="149" cy="228" rx="23" ry="1.8" transform="rotate(-5 149 228)"/>
+  </g>
+</svg>

@@ -1,0 +1,304 @@
+/* =============================================================================
+   DESIGN TOKENS — single source of truth for the Planner UI system.
+   -----------------------------------------------------------------------------
+   These tokens were extracted from the existing, hand-tuned visual language so
+   they are ADOPTION-READY and NON-BREAKING: adding this file changes nothing on
+   its own. New and refactored components should read from these variables
+   instead of hardcoding colors / spacing / radius / shadows.
+
+   Themes:
+     :root                    -> Light (default)
+     :root[data-theme="dream"]-> Dream  (pale, airy, heavenly)
+     :root[data-theme="forest"]-> Forest (warm milk, sage, moss)
+     :root[data-theme="moon"] -> Moon   (dark blue, magical, adult)
+     :root[data-theme="dark"] -> Moon legacy alias
+
+   Rule: components consume `--c-*`, `--space-*`, `--radius-*`, `--text-*`,
+   `--shadow-*`. They MUST NOT introduce raw hex / rgba / px constants when a
+   token exists. See docs/design-system.md and AGENTS.md.
+   ========================================================================== */
+
+:root {
+  /* --- Brand accent gradient (shared by all themes, re-themed below) ------ */
+  --accent-grad-start: #faa08a;
+  --accent-grad-mid: #f194c2;
+  --accent-grad-end: #bf95e6;
+  --c-accent-gradient: linear-gradient(
+    135deg,
+    var(--accent-grad-start) 0%,
+    var(--accent-grad-mid) 54%,
+    var(--accent-grad-end) 100%
+  );
+
+  /* --- Semantic colors — LIGHT ------------------------------------------- */
+  --c-background: #d9d9d9;
+  --c-background-soft: #e7e4ec;
+  --c-surface: rgba(226, 222, 232, 0.68);
+  --c-surface-soft: rgba(255, 255, 255, 0.5);
+  --c-surface-elevated: rgba(255, 255, 255, 0.78);
+
+  --c-border: rgba(15, 21, 48, 0.12);
+  --c-border-soft: rgba(15, 21, 48, 0.07);
+
+  --c-text-primary: #0f1530;
+  --c-text-secondary: #4a3a64;
+  --c-text-muted: rgba(15, 21, 48, 0.55);
+  --c-text-on-accent: #ffffff;
+
+  --c-accent: #bf95e6;
+  --c-accent-hover: #a87fd6;
+  --c-accent-soft: rgba(191, 149, 230, 0.16);
+
+  --c-danger: #d8607a;
+  --c-danger-soft: rgba(216, 96, 122, 0.14);
+  --c-warning: #c08a2f;
+  --c-warning-soft: rgba(192, 138, 47, 0.16);
+  --c-success: #4a8b66;
+  --c-success-soft: rgba(74, 139, 102, 0.16);
+  --c-info: #5f7fd8;
+  --c-info-soft: rgba(95, 127, 216, 0.16);
+
+  --c-focus: #bf95e6;
+  --c-focus-soft: rgba(191, 149, 230, 0.35);
+
+  /* --- Spacing scale ----------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 16px;
+  --space-7: 20px;
+  --space-8: 24px;
+  --space-9: 32px;
+  --space-10: 40px;
+
+  /* --- Radius scale ------------------------------------------------------ */
+  --radius-xs: 6px;   /* tiny controls, ticks */
+  --radius-sm: 10px;  /* inputs, small chips */
+  --radius-md: 14px;  /* buttons */
+  --radius-lg: 20px;  /* inner cards, list rows */
+  --radius-xl: 28px;  /* cards / widgets */
+  --radius-2xl: 34px; /* large panels / modals */
+  --radius-pill: 999px;
+
+  /* --- Typography roles -------------------------------------------------- */
+  --font-base: var(--planner-font);
+
+  --text-page-title-size: 30px;
+  --text-page-title-weight: var(--planner-display-weight, 300);
+  --text-page-title-tracking: var(--planner-display-tracking, -0.03em);
+
+  --text-page-subtitle-size: 16px;
+  --text-page-subtitle-weight: 400;
+
+  --text-section-title-size: 20px;
+  --text-section-title-weight: var(--planner-heading-weight, 700);
+  --text-section-title-tracking: var(--planner-heading-tracking, -0.01em);
+
+  --text-card-title-size: 17px;
+  --text-card-title-weight: 700;
+
+  --text-item-title-size: 15px;
+  --text-item-title-weight: 600;
+
+  --text-body-size: 15px;
+  --text-body-weight: 400;
+  --text-body-line: 1.5;
+
+  --text-body-small-size: 13px;
+  --text-caption-size: 12px;
+
+  --text-label-size: 11px;
+  --text-label-weight: var(--planner-label-weight, 800);
+  --text-label-tracking: var(--planner-label-tracking, 0.16em);
+
+  --text-button-size: 14px;
+  --text-button-weight: 700;
+
+  --text-badge-size: 11px;
+  --text-badge-weight: 700;
+  --text-badge-tracking: 0.04em;
+
+  /* --- Elevation / shadows ----------------------------------------------- */
+  --shadow-none: none;
+  --shadow-soft:
+    0 6px 18px -14px rgba(58, 58, 105, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-medium:
+    12px 16px 30px -16px rgba(58, 58, 105, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-elevated:
+    18px 24px 42px -20px rgba(58, 58, 105, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-focus-ring: 0 0 0 3px var(--c-focus-soft);
+
+  /* --- Motion ------------------------------------------------------------ */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+}
+
+/* =============================================================================
+   DREAM — pale, soft, airy, calm, light & heavenly.
+   ========================================================================== */
+:root[data-theme="dream"] {
+  --accent-grad-start: #b8edff;
+  --accent-grad-mid: #d8b6ff;
+  --accent-grad-end: #f4bee8;
+
+  --c-background: #eef5ff;
+  --c-background-soft: #f7f2ff;
+  --c-surface: rgba(248, 250, 255, 0.68);
+  --c-surface-soft: rgba(255, 255, 255, 0.4);
+  --c-surface-elevated: rgba(255, 255, 255, 0.82);
+
+  --c-border: rgba(128, 143, 191, 0.2);
+  --c-border-soft: rgba(128, 143, 191, 0.12);
+
+  --c-text-primary: rgb(79, 88, 126);
+  --c-text-secondary: rgb(106, 114, 152);
+  --c-text-muted: rgba(79, 88, 126, 0.6);
+  --c-text-on-accent: rgb(83, 88, 129);
+
+  --c-accent: #c5a3ff;
+  --c-accent-hover: #b388ff;
+  --c-accent-soft: rgba(216, 182, 255, 0.22);
+
+  --c-danger: #e08aa6;
+  --c-danger-soft: rgba(224, 138, 166, 0.18);
+  --c-warning: #d6a85a;
+  --c-warning-soft: rgba(214, 168, 90, 0.18);
+  --c-success: #7ec7a4;
+  --c-success-soft: rgba(126, 199, 164, 0.2);
+  --c-info: #8fb0ff;
+  --c-info-soft: rgba(143, 176, 255, 0.2);
+
+  --c-focus: #c5a3ff;
+  --c-focus-soft: rgba(197, 163, 255, 0.4);
+
+  --shadow-soft:
+    0 8px 18px -18px rgba(128, 143, 191, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --shadow-medium:
+    14px 20px 34px -18px rgba(128, 143, 191, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-elevated:
+    18px 24px 42px -20px rgba(128, 143, 191, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+/* =============================================================================
+   FOREST — warm milk glass, sage/olive accents, calm botanical focus.
+   ========================================================================== */
+:root[data-theme="forest"] {
+  /* Palette + component language taken from the Sprout LOGIN page: warm SAND
+     canvas, milk-glass cards, and a SOLID deep-eucalyptus primary button
+     (matching the login "Log in" button), with sage accents in between. */
+  --accent-grad-start: #b6c49a;   /* pale sage */
+  --accent-grad-mid: #8a9c6f;     /* rug sage green */
+  --accent-grad-end: #5d6f4a;     /* deep moss */
+
+  /* Primary buttons: solid mid-sage (#7e9a6c), a touch brighter than the
+     deep-eucalyptus ink. (Overrides the shared --c-accent-gradient.) */
+  --c-accent-gradient: #7e9a6c;
+
+  --c-background: #f3ece2;        /* warm sand (login dunes) */
+  --c-background-soft: #f8f2e8;   /* lighter warm sand */
+  /* Warm cream milk-glass (r > g > b so it never casts green over sand). */
+  --c-surface: rgba(251, 247, 240, 0.88);
+  --c-surface-soft: rgba(252, 249, 243, 0.64);
+  --c-surface-elevated: rgba(252, 248, 242, 0.93);
+
+  /* Structural borders are warm-neutral taupe, not sage. */
+  --c-border: rgba(150, 132, 108, 0.2);
+  --c-border-soft: rgba(150, 132, 108, 0.12);
+
+  --c-text-primary: #3f5236;      /* deep eucalyptus (login ink) */
+  --c-text-secondary: #5a6b50;    /* login ink-soft */
+  --c-text-muted: rgba(63, 82, 54, 0.56);
+  --c-text-on-accent: #faf6ee;    /* warm cream (r > g > b) */
+
+  --c-accent: #7e8f67;            /* rug sage green */
+  --c-accent-hover: #6a8054;      /* deeper moss */
+  --c-accent-soft: rgba(126, 143, 103, 0.18);
+
+  --c-danger: #bd6f5f;
+  --c-danger-soft: rgba(189, 111, 95, 0.14);
+  --c-warning: #b8954f;           /* warm sand-gold */
+  --c-warning-soft: rgba(184, 149, 79, 0.16);
+  --c-success: #6f9c60;
+  --c-success-soft: rgba(111, 156, 96, 0.16);
+  --c-info: #7d9685;
+  --c-info-soft: rgba(125, 150, 133, 0.15);
+
+  --c-focus: #7e8f67;
+  --c-focus-soft: rgba(126, 143, 103, 0.34);
+
+  --shadow-soft:
+    0 8px 18px -16px rgba(74, 64, 44, 0.22),
+    inset 0 1px 0 rgba(255, 253, 247, 0.74);
+  --shadow-medium:
+    14px 20px 34px -18px rgba(74, 64, 44, 0.24),
+    inset 0 1px 0 rgba(255, 253, 247, 0.85);
+  --shadow-elevated:
+    18px 24px 42px -20px rgba(74, 64, 44, 0.26),
+    0 0 0 1px rgba(255, 253, 247, 0.5),
+    inset 0 1px 0 rgba(255, 253, 247, 0.86);
+}
+
+/* =============================================================================
+   MOON — dark blue leaning, magical but adult, readable, not neon, not childish.
+   The app sets data-theme="moon"; "dark" is a legacy alias kept for safety.
+   ========================================================================== */
+:root[data-theme="moon"],
+:root[data-theme="dark"] {
+  /* Filled-button gradient matches the timer-settings "Save" gold standard. */
+  --accent-grad-start: #f3d6ff;
+  --accent-grad-mid: #b388ff;
+  --accent-grad-end: #6d56d8;
+
+  --c-background: #050814;
+  --c-background-soft: #0c1022;
+  --c-surface: rgba(12, 16, 34, 0.74);
+  --c-surface-soft: rgba(36, 40, 70, 0.55);
+  --c-surface-elevated: rgba(34, 39, 67, 0.85);
+
+  --c-border: rgba(151, 142, 255, 0.2);
+  --c-border-soft: rgba(151, 142, 255, 0.12);
+
+  --c-text-primary: rgba(237, 239, 255, 0.92);
+  --c-text-secondary: rgba(206, 210, 245, 0.72);
+  --c-text-muted: rgba(206, 210, 245, 0.5);
+  --c-text-on-accent: #0c1022;
+
+  --c-accent: #b388ff;
+  --c-accent-hover: #c5a3ff;
+  --c-accent-soft: rgba(151, 142, 255, 0.22);
+
+  --c-danger: #f08aa6;
+  --c-danger-soft: rgba(240, 138, 166, 0.18);
+  --c-warning: #e6c074;
+  --c-warning-soft: rgba(230, 192, 116, 0.18);
+  --c-success: #9bffcf;
+  --c-success-soft: rgba(155, 255, 207, 0.18);
+  --c-info: #93a7ff;
+  --c-info-soft: rgba(147, 167, 255, 0.2);
+
+  --c-focus: #b388ff;
+  --c-focus-soft: rgba(179, 136, 255, 0.4);
+
+  --shadow-soft:
+    0 8px 18px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(178, 167, 255, 0.08);
+  --shadow-medium:
+    14px 18px 32px -16px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(178, 167, 255, 0.1);
+  --shadow-elevated:
+    18px 24px 44px -16px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(151, 142, 255, 0.2),
+    inset 0 1px 0 rgba(178, 167, 255, 0.1);
+}

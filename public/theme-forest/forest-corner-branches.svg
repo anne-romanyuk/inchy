@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" role="img" aria-label="">
+  <defs>
+    <linearGradient id="branchStem" x1="400" y1="392" x2="262" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7c936d"/>
+      <stop offset="1" stop-color="#b9c6a4"/>
+    </linearGradient>
+    <linearGradient id="branchLeaf" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#eef2e4"/>
+      <stop offset="0.5" stop-color="#c9d5b8"/>
+      <stop offset="1" stop-color="#81996d"/>
+    </linearGradient>
+    <filter id="blurredLeafShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#405f36" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <g filter="url(#blurredLeafShadow)" opacity="0.92">
+    <path d="M424 402C385 312 346 244 304 181C280 145 260 113 234 72" fill="none" stroke="url(#branchStem)" stroke-width="5.5" stroke-linecap="round"/>
+    <path d="M351 264C388 234 419 205 448 164" fill="none" stroke="#91a67c" stroke-width="4" stroke-linecap="round"/>
+    <path d="M319 210C291 177 275 140 272 100" fill="none" stroke="#98aa84" stroke-width="4" stroke-linecap="round"/>
+    <path d="M389 329C352 311 318 298 276 292" fill="none" stroke="#8fa47b" stroke-width="4" stroke-linecap="round"/>
+    <path d="M288 156C330 135 357 111 382 74" fill="none" stroke="#9caf87" stroke-width="4" stroke-linecap="round"/>
+    <path fill="url(#branchLeaf)" d="M430 142c-31 4-56 25-66 54 34 1 60-19 66-54Z"/>
+    <path fill="url(#branchLeaf)" d="M458 184c-28 11-47 35-49 64 32-4 52-28 49-64Z"/>
+    <path fill="url(#branchLeaf)" d="M260 83c-24 26-31 59-17 90 30-24 36-58 17-90Z"/>
+    <path fill="url(#branchLeaf)" d="M380 65c-35 0-64 17-80 48 36 7 66-10 80-48Z"/>
+    <path fill="url(#branchLeaf)" d="M253 286c34-14 68-8 95 18-32 21-67 15-95-18Z"/>
+    <path fill="url(#branchLeaf)" d="M312 323c35-7 66 5 87 33-36 15-69 3-87-33Z"/>
+  </g>
+</svg>

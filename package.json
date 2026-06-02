@@ -1,0 +1,43 @@
+{
+  "name": "planner-auth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "tsx watch server/index.ts",
+    "dev": "tsx watch server/index.ts",
+    "server": "tsx server/index.ts",
+    "build": "vite build",
+    "start": "tsx server/index.ts",
+    "go": "npm install && (npm run dev:server & npm run dev:client)"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.2",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.4.0",
+    "@tanstack/react-query": "^5.100.9",
+    "@vitejs/plugin-react": "^5.0.0",
+    "better-sqlite3": "^12.9.0",
+    "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.19.1",
+    "hono": "^4.12.18",
+    "motion": "^12.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.15.0",
+    "typescript": "^5.0.0",
+    "vite": "^7.0.0",
+    "zod": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tsx": "^4.21.0"
+  }
+}

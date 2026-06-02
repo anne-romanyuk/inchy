@@ -1,0 +1,299 @@
+/* =============================================================================
+   UI COMPONENT PRIMITIVES — the unified, reusable building blocks.
+   -----------------------------------------------------------------------------
+   Every class here is built ONLY from design tokens (design-tokens.css) and
+   therefore works in all three themes automatically. New screens should be a
+   COMPOSITION of these primitives, not a fresh visual invention.
+
+   Namespacing: all primitives use the `ui-` prefix so they never collide with
+   the existing bespoke classes during the gradual migration.
+
+   NOTE: buttons are NOT here — reuse the existing timer-settings components
+   (.task-modal__submit / .pomodoro-btn--ghost-text / .goal-ghost-button--danger).
+
+   Primitives:
+     .ui-icon-btn       IconButton (edit / delete / focus / more / reorder)
+     .ui-card           Card / widget surface (variants)
+     .ui-modal          Modal shell (header / body / footer)
+     .ui-field          Input / textarea / select + label + helper/error
+     .ui-badge          Badge / pill / status (tones + sizes)
+     .ui-progress       Progress bar (variants)
+     .ui-empty          Empty state
+     .ui-page-header / .ui-section-header
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   BUTTON — there is intentionally NO `.ui-btn` here.
+   The project standardises on the existing, battle-tested timer-settings
+   buttons as the canonical button components:
+     • Primary / confirm  -> `.task-modal__submit`        (gradient + hover "jump")
+     • Cancel / ghost     -> `.pomodoro-btn .pomodoro-btn--ghost-text`
+     • Destructive        -> `.goal-ghost-button .goal-ghost-button--danger`
+     • Round "+" add icon -> `.add-icon-btn` (see below)
+   Reuse those classes directly; do not invent new button styles.
+   -------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+   ADD ICON BUTTON — the single, shared round "+" add control.
+   One component reused everywhere a round "+" appears (Add-task modal queue,
+   goal "add task" row, …). Fix it here once and it applies in every place.
+   The "+" is perfectly centered via grid centering + line-height:1.
+   -------------------------------------------------------------------------- */
+.add-icon-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  cursor: pointer;
+  box-shadow: 0 8px 18px -10px rgba(110, 80, 150, 0.5);
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft);
+}
+/* The "+" is DRAWN with two bars (font-independent) so it is always perfectly
+   centered. The text glyph inside <span> is hidden but kept for a11y/markup. */
+.add-icon-btn > span { display: none; }
+.add-icon-btn::before,
+.add-icon-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: currentColor;
+  border-radius: 1px;
+}
+.add-icon-btn::before { width: 10px; height: 2px; transform: translate(-50%, -50%); }
+.add-icon-btn::after { width: 2px; height: 10px; transform: translate(-50%, -50%); }
+.add-icon-btn:hover { transform: translateY(-1px) scale(1.04); }
+.add-icon-btn:active { transform: scale(0.92); }
+.add-icon-btn:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+.add-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* Keep the shared circle centered inside its grid cells. */
+.goal-task-add-row .add-icon-btn,
+.task-modal__draft-row .add-icon-btn { justify-self: center; }
+
+/* ----------------------------------------------------------------------------
+   ICON BUTTON
+   <button class="ui-icon-btn ui-icon-btn--ghost ui-icon-btn--md">
+   variants: ghost | subtle | danger | accent     sizes: sm | md
+   icon glyph should be 18px (sm) / 20px (md); the hit area stays stable.
+   -------------------------------------------------------------------------- */
+.ui-icon-btn {
+  --_ib-size: 36px;
+  --_ib-icon: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--_ib-size);
+  height: var(--_ib-size);
+  flex: 0 0 var(--_ib-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+.ui-icon-btn--sm { --_ib-size: 30px; --_ib-icon: 18px; }
+.ui-icon-btn svg { width: var(--_ib-icon); height: var(--_ib-icon); display: block; }
+.ui-icon-btn:hover { background: var(--c-accent-soft); color: var(--c-text-primary); }
+.ui-icon-btn:active { transform: scale(0.94); }
+.ui-icon-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+.ui-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ui-icon-btn--subtle { background: var(--c-surface-soft); }
+.ui-icon-btn--accent:hover { background: var(--c-accent-soft); color: var(--c-accent); }
+/* Destructive icons stay neutral until intent (hover/focus) — never aggressive by default. */
+.ui-icon-btn--danger { color: var(--c-text-muted); }
+.ui-icon-btn--danger:hover,
+.ui-icon-btn--danger:focus-visible { background: var(--c-danger-soft); color: var(--c-danger); }
+
+/* ----------------------------------------------------------------------------
+   CARD
+   <section class="ui-card ui-card--default"> ... </section>
+   variants: default | soft | elevated | interactive | danger | warning | success
+   -------------------------------------------------------------------------- */
+.ui-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-soft);
+}
+.ui-card--soft { background: var(--c-surface-soft); box-shadow: var(--shadow-none); }
+.ui-card--elevated { box-shadow: var(--shadow-elevated); }
+.ui-card--interactive { cursor: pointer; transition: transform var(--dur-base) var(--ease-soft), box-shadow var(--dur-base) var(--ease-soft); }
+.ui-card--interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-medium); }
+.ui-card--danger { border-color: var(--c-danger-soft); background: var(--c-danger-soft); }
+.ui-card--warning { border-color: var(--c-warning-soft); background: var(--c-warning-soft); }
+.ui-card--success { border-color: var(--c-success-soft); background: var(--c-success-soft); }
+
+/* ----------------------------------------------------------------------------
+   MODAL — one structure everywhere: overlay > panel > header/body/footer
+   variants on .ui-modal: --confirmation | --destructive | --form
+   -------------------------------------------------------------------------- */
+.ui-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: rgba(10, 12, 28, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 100;
+}
+.ui-modal {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  background: var(--c-surface-elevated);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-elevated);
+  color: var(--c-text-primary);
+}
+.ui-modal--form { max-width: 640px; }
+.ui-modal--confirmation,
+.ui-modal--destructive { max-width: 440px; text-align: left; }
+
+.ui-modal__header { display: flex; flex-direction: column; gap: var(--space-2); }
+.ui-modal__header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-5); }
+.ui-modal__title { margin: 0; font: var(--text-section-title-weight) var(--text-section-title-size) / 1.2 var(--font-base); letter-spacing: var(--text-section-title-tracking); }
+.ui-modal__description { margin: 0; color: var(--c-text-secondary); font-size: var(--text-body-small-size); line-height: var(--text-body-line); }
+.ui-modal__body { display: flex; flex-direction: column; gap: var(--space-5); }
+.ui-modal__footer { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); }
+.ui-modal__footer--split { justify-content: space-between; }
+.ui-modal__close { position: absolute; }
+
+/* ----------------------------------------------------------------------------
+   FIELD — input / textarea / select with label + helper/error
+   <label class="ui-field"><span class="ui-field__label">..</span>
+     <input class="ui-field__control" /></label>
+   -------------------------------------------------------------------------- */
+.ui-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.ui-field__label {
+  font: var(--text-label-weight) var(--text-label-size) / 1 var(--font-base);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+.ui-field__control,
+input.ui-field__control,
+textarea.ui-field__control,
+select.ui-field__control {
+  min-height: 40px;
+  padding: var(--space-3) var(--space-5);
+  background: var(--c-surface-soft);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  color: var(--c-text-primary);
+  font: var(--text-body-weight) var(--text-body-size) / var(--text-body-line) var(--font-base);
+  transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
+}
+textarea.ui-field__control { min-height: 88px; resize: vertical; }
+.ui-field__control::placeholder { color: var(--c-text-muted); }
+.ui-field__control:focus-visible,
+.ui-field__control:focus {
+  outline: none;
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-focus-ring);
+}
+.ui-field__control:disabled { opacity: 0.55; cursor: not-allowed; }
+.ui-field__helper { font-size: var(--text-caption-size); color: var(--c-text-muted); }
+.ui-field__error { font-size: var(--text-caption-size); color: var(--c-danger); }
+.ui-field.is-invalid .ui-field__control { border-color: var(--c-danger); box-shadow: 0 0 0 3px var(--c-danger-soft); }
+
+/* ----------------------------------------------------------------------------
+   BADGE / PILL / STATUS
+   <span class="ui-badge ui-badge--warning ui-badge--sm">Due soon</span>
+   tones: neutral | accent | success | warning | danger | info | muted
+   sizes: sm | md           add .ui-badge--dot for a leading status dot
+   -------------------------------------------------------------------------- */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px var(--space-4);
+  border-radius: var(--radius-pill);
+  font: var(--text-badge-weight) var(--text-badge-size) / 1 var(--font-base);
+  letter-spacing: var(--text-badge-tracking);
+  white-space: nowrap;
+  background: var(--c-surface-soft);
+  color: var(--c-text-secondary);
+}
+.ui-badge--md { padding: 5px var(--space-5); font-size: var(--text-body-small-size); }
+.ui-badge--dot::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
+
+.ui-badge--neutral { background: var(--c-surface-soft); color: var(--c-text-secondary); }
+.ui-badge--muted   { background: transparent; color: var(--c-text-muted); }
+.ui-badge--accent  { background: var(--c-accent-soft); color: var(--c-accent); }
+.ui-badge--success { background: var(--c-success-soft); color: var(--c-success); }
+.ui-badge--warning { background: var(--c-warning-soft); color: var(--c-warning); }
+.ui-badge--danger  { background: var(--c-danger-soft); color: var(--c-danger); }
+.ui-badge--info    { background: var(--c-info-soft); color: var(--c-info); }
+
+/* ----------------------------------------------------------------------------
+   PROGRESS BAR
+   <div class="ui-progress"><span class="ui-progress__fill" style="width:60%"></span></div>
+   variants on .ui-progress: --success | --warning | --danger | --soft
+   -------------------------------------------------------------------------- */
+.ui-progress {
+  --_pf: var(--c-accent-gradient);
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--c-border-soft);
+  overflow: hidden;
+}
+.ui-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--_pf);
+  transition: width var(--dur-slow) var(--ease-soft);
+}
+.ui-progress--success { --_pf: var(--c-success); }
+.ui-progress--warning { --_pf: var(--c-warning); }
+.ui-progress--danger  { --_pf: var(--c-danger); }
+.ui-progress--soft    { --_pf: var(--c-accent-soft); }
+
+/* ----------------------------------------------------------------------------
+   EMPTY STATE
+   -------------------------------------------------------------------------- */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-5);
+  padding: var(--space-9) var(--space-7);
+  color: var(--c-text-secondary);
+}
+.ui-empty__art { width: 72px; height: 72px; opacity: 0.9; }
+.ui-empty__title { margin: 0; font: var(--text-card-title-weight) var(--text-card-title-size) / 1.2 var(--font-base); color: var(--c-text-primary); }
+.ui-empty__text { margin: 0; max-width: 34ch; font-size: var(--text-body-small-size); line-height: var(--text-body-line); }
+
+/* ----------------------------------------------------------------------------
+   PAGE / SECTION HEADERS
+   -------------------------------------------------------------------------- */
+.ui-page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-6); margin-bottom: var(--space-7); }
+.ui-page-header__title { margin: 0; font: var(--text-page-title-weight) var(--text-page-title-size) / 1 var(--font-base); letter-spacing: var(--text-page-title-tracking); color: var(--c-text-primary); }
+.ui-page-header__subtitle { margin: var(--space-2) 0 0; font-size: var(--text-page-subtitle-size); color: var(--c-text-secondary); }
+.ui-page-header__actions { display: flex; align-items: center; gap: var(--space-3); }
+
+.ui-section-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); margin-bottom: var(--space-5); }
+.ui-section-header__title { margin: 0; font: var(--text-section-title-weight) var(--text-section-title-size) / 1.2 var(--font-base); letter-spacing: var(--text-section-title-tracking); color: var(--c-text-primary); }
+.ui-section-header__meta { font-size: var(--text-body-small-size); color: var(--c-text-muted); }
