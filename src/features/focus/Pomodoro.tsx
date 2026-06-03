@@ -181,10 +181,12 @@ export default function PomodoroPanel({
   selectedTask,
   onLinkedTaskChange,
   onRunningTaskChange,
+  fullPage = false,
 }: {
   selectedTask?: Task | null;
   onLinkedTaskChange?: (taskId: string | null) => void;
   onRunningTaskChange?: (taskId: string | null) => void;
+  fullPage?: boolean;
 }) {
   const queryClient = useQueryClient();
   const cachedSession = useMemo(loadActiveSessionCache, []);
@@ -549,7 +551,7 @@ export default function PomodoroPanel({
 
   return (
     <motion.section
-      className={`tasks-panel pomodoro-panel ${hasSelectedFocusTask ? "has-focus-task" : ""}`.trim()}
+      className={`tasks-panel pomodoro-panel ${fullPage ? "pomodoro-panel--full" : ""} ${hasSelectedFocusTask ? "has-focus-task" : ""}`.trim()}
       aria-label="Pomodoro timer"
     >
       <header className="tasks-panel__header">

@@ -251,13 +251,11 @@ function GoalActionIcon({
 
 function GoalTaskEditor({
   task,
-  index,
   onChange,
   onRemove,
   disableRemove,
 }: {
   task: DraftTask;
-  index: number;
   onChange: (updates: Partial<DraftTask>) => void;
   onRemove: () => void;
   disableRemove: boolean;
@@ -284,7 +282,6 @@ function GoalTaskEditor({
         <span />
         <span />
       </button>
-      <span className="goal-task-editor__number">{index + 1}</span>
       <div className="goal-task-editor__icon-wrap">
         <button
           type="button"
@@ -488,7 +485,6 @@ function GoalEditorModal({
             <GoalTaskIcon iconId={draft.iconId} />
           </button>
           <div>
-            <strong>Goal icon</strong>
             <span>Pick the icon for this goal summary.</span>
           </div>
           {goalIconPickerOpen ? (
@@ -508,13 +504,32 @@ function GoalEditorModal({
         <div className="goal-editor-section">
           <div className="goal-editor-section__head">
             <div>
-              <p className="goal-kicker">Sequential tasks</p>
               <h3>Break it into steps</h3>
             </div>
           </div>
 
+          <Reorder.Group
+            axis="y"
+            values={draft.tasks}
+            onReorder={(tasks) =>
+              setDraft((current) => ({ ...current, tasks }))
+            }
+            className="goal-task-editor-list"
+          >
+            <AnimatePresence initial={false}>
+              {draft.tasks.map((task) => (
+                <GoalTaskEditor
+                  key={task.id}
+                  task={task}
+                  onChange={(updates) => updateTask(task.id, updates)}
+                  onRemove={() => removeTask(task.id)}
+                  disableRemove={false}
+                />
+              ))}
+            </AnimatePresence>
+          </Reorder.Group>
+
           <div className="goal-task-add-row" aria-label="Add task to goal">
-            <span className="goal-task-editor__number">+</span>
             <div className="goal-task-editor__icon-wrap goal-task-add-row__icon-wrap">
               <button
                 type="button"
@@ -575,28 +590,6 @@ function GoalEditorModal({
               <span aria-hidden="true">+</span>
             </button>
           </div>
-
-          <Reorder.Group
-            axis="y"
-            values={draft.tasks}
-            onReorder={(tasks) =>
-              setDraft((current) => ({ ...current, tasks }))
-            }
-            className="goal-task-editor-list"
-          >
-            <AnimatePresence initial={false}>
-              {draft.tasks.map((task, index) => (
-                <GoalTaskEditor
-                  key={task.id}
-                  task={task}
-                  index={index}
-                  onChange={(updates) => updateTask(task.id, updates)}
-                  onRemove={() => removeTask(task.id)}
-                  disableRemove={false}
-                />
-              ))}
-            </AnimatePresence>
-          </Reorder.Group>
         </div>
         ) : null}
 
@@ -618,7 +611,7 @@ function GoalEditorModal({
               ? "Saving..."
               : isEditing
                 ? "Save changes"
-                : "Create goal"}
+                : "Create Goal"}
           </button>
         </footer>
       </motion.section>
@@ -1659,7 +1652,6 @@ export function GoalDetailPage() {
           <div className="goal-detail-hero__content">
             <div className="goal-detail-hero__title-row">
               <div className="goal-detail-hero__title">
-                <p className="goal-kicker">Goal summary</p>
                 <div className="goal-detail-hero__title-line">
                   <h1>{goal.title}</h1>
                   <span className={getStatusClassName(goal)}>{getStatusLabel(goal)}</span>
@@ -1797,7 +1789,6 @@ export function GoalsPage() {
   const goalsQuery = useGoals();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editorGoal, setEditorGoal] = useState<Goal | null | undefined>(undefined);
-  const [theme] = useTheme();
   const goals = goalsQuery.data ?? [];
 
   useEffect(() => {
@@ -1826,7 +1817,6 @@ export function GoalsPage() {
       >
         <header className="goals-page__header">
           <div>
-            <p className="goal-kicker">Goal journey</p>
             <h1 className="tasks-title">Goals</h1>
             <p className="goals-page__subtitle">
               Every goal has a path. Follow your next step, track your progress, and keep moving at your own pace.
@@ -1855,7 +1845,6 @@ export function GoalsPage() {
         {goalsQuery.isLoading ? <p className="goals-empty">Loading goals...</p> : null}
         {!goalsQuery.isLoading && goals.length === 0 ? (
           <div className="goals-empty">
-            <img className="goals-empty__art" src={getGoalIconSrc("flag", theme)} alt="" aria-hidden="true" />
             <strong>No goals yet</strong>
             <span>Add your first goal and break the chaos into cute little steps.</span>
             <button

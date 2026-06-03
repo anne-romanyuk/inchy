@@ -5,8 +5,6 @@ import type { Goal, GoalTask } from "../../../shared/schemas";
 import { useGoals } from "../goals/useGoals";
 import { AddToTodayButton } from "../goals/AddToTodayButton";
 import { useOverflowFade } from "../../shared/hooks/useOverflowFade";
-import { getGoalIconSrc } from "../goals/goalIcons";
-import { useTheme } from "../../shared/hooks/useTheme";
 
 type Health = "overdue" | "due-today" | "due-soon";
 
@@ -55,7 +53,6 @@ const GROUPS: { health: Health; label: string }[] = [
 export function NeedsAttentionWidget() {
   const navigate = useNavigate();
   const goalsQuery = useGoals();
-  const [theme] = useTheme();
   const groupsScrollRef = useRef<HTMLDivElement>(null);
 
   const alerts = useMemo<Alert[]>(() => {
@@ -90,12 +87,6 @@ export function NeedsAttentionWidget() {
     return (
       <div className="needs-attention needs-attention--empty" aria-label="Needs attention">
         <div className="needs-attention__empty-content">
-          <img
-            className="needs-attention__empty-art"
-            src={getGoalIconSrc("flag", theme)}
-            alt=""
-            aria-hidden="true"
-          />
           <div className="needs-attention__empty-text">
             <h2>All clear</h2>
             <p>No overdue or upcoming goal tasks. Nice work staying ahead.</p>

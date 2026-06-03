@@ -72,8 +72,11 @@ If a change consumes a raw hex, an arbitrary px value, or a custom card box-shad
 
 ### Notes for this codebase
 
-- Styling is global CSS class based (`src/styles.css`, ~11.5k lines, Forest-only) — no CSS-in-JS.
-  (Deprecated multi-theme overrides are parked in `archive/legacy-themes.css`, unused.)
+- Styling is global CSS class based, Forest-only, no CSS-in-JS. `src/styles.css` is just an
+  `@import` barrel; rules live in per-feature files under `src/styles/` (`30-goals.css`,
+  `31-today.css`, `32-notes.css`, `20-pomodoro.css`, `02-base.css` for shared, `99-responsive.css`
+  for all `@media`, …). **Edit the matching feature file, not the barrel.** See the CSS file map in
+  `CLAUDE.md`. (Deprecated multi-theme overrides are parked in `archive/legacy-themes.css`, unused.)
 - Legacy bespoke classes still exist (`task-add`, `goal-primary-button`, `pomodoro-confirm__button`,
   `goal-modal__*`, `task-modal__*`, `goal-health-pill`, `needs-attention__*`, …). They are being
   migrated to `.ui-*` primitives. When you touch one, migrate it; do not add new bespoke variants.
