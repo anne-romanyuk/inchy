@@ -32,7 +32,7 @@ app.doc("/api/openapi.json", {
   info: {
     title: "Planner API",
     version: "1.0.0",
-    description: "Auth, tasks and default task pool for the Tokee planner.",
+    description: "Auth, tasks and default task pool for the Inchy planner.",
   },
   servers: [{ url: "/" }],
 });

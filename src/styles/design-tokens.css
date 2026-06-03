@@ -210,7 +210,9 @@
   --c-background-soft: #f8f2e8;   /* lighter warm sand */
   /* Warm cream milk-glass (r > g > b so it never casts green over sand). */
   --c-surface: rgba(251, 247, 240, 0.88);
-  --c-surface-soft: rgba(252, 249, 243, 0.64);
+  --c-sidebar-surface: rgba(251, 247, 240, 0.88);
+  --c-sidebar-surface-solid: rgb(251, 247, 240);
+  --c-surface-soft: rgba(252, 249, 243, 0.75);
   --c-surface-elevated: rgba(252, 248, 242, 0.93);
 
   /* Structural borders are warm-neutral taupe, not sage. */
