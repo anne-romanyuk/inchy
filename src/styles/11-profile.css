@@ -1,0 +1,623 @@
+/* 11-profile.css — Profile menu & avatars.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+.profile-dropdown {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.profile-dropdown__svg {
+  position: absolute;
+  pointer-events: none;
+}
+
+.profile-dropdown__blob-wrap {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 260px;
+  height: 280px;
+  pointer-events: none;
+  filter: url(#profile-goo);
+  opacity: 0.92;
+  z-index: 1;
+}
+
+.profile-dropdown__avatar-disc,
+.profile-dropdown__panel-disc {
+  position: absolute;
+  background-image: linear-gradient(
+    180deg,
+    rgba(250,160,138,0.6) 0%,
+    rgba(241,148,194,0.62) 38%,
+    rgba(191,149,230,0.65) 72%,
+    rgba(129,129,190,0.68) 100%
+  );
+  background-size: 100% 290px;
+}
+
+.profile-dropdown__avatar-disc {
+  top: 6px;
+  right: 6px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-position: 0 0;
+}
+
+.profile-dropdown__panel-disc {
+  top: 60px;
+  right: 20px;
+  width: 212px;
+  height: 156px;
+  border-radius: 28px;
+  background-position: 0 -42px;
+  transform-origin: top right;
+  transform: scale(0.06) translateY(-24px);
+  opacity: 0;
+  transition:
+    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 180ms ease-in;
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__panel-disc {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  transition:
+    transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 250ms ease;
+}
+
+.profile-dropdown__avatar-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 4;
+  background:
+    radial-gradient(120% 120% at 30% 25%, #ffe5ec 0%, #ffc5d4 55%, #f4a3b9 100%);
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.45),
+    0 4px 10px rgba(122, 58, 82, 0.25);
+  transition: transform 200ms ease;
+}
+
+.profile-dropdown__avatar-btn:hover {
+  transform: scale(1.03);
+}
+
+.profile-dropdown__avatar-btn:active {
+  transform: scale(0.95);
+}
+
+.profile-dropdown__avatar-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.45),
+    0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 4px 10px rgba(122, 58, 82, 0.25);
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 46px;
+  height: 46px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+}
+
+.profile-dropdown__menu-wrap {
+  position: absolute;
+  top: 44px;
+  right: 4px;
+  width: 212px;
+  height: 156px;
+  border-radius: 28px;
+  overflow: hidden;
+  transform-origin: top right;
+  transform: scale(0.06) translateY(-24px);
+  pointer-events: none;
+  z-index: 3;
+  transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__menu-wrap {
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-dropdown__menu {
+  list-style: none;
+  margin: 0;
+  height: 100%;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-dropdown__item {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 110ms ease-in,
+    transform 140ms ease-in;
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item:nth-child(1) {
+  transition:
+    opacity 280ms ease-out 280ms,
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 280ms;
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item:nth-child(2) {
+  transition:
+    opacity 280ms ease-out 350ms,
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 350ms;
+}
+
+.profile-dropdown__item {
+  position: relative;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 110ms ease-in,
+    transform 140ms ease-in;
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item:nth-child(1) {
+  transition:
+    opacity 280ms ease-out 280ms,
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 280ms;
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__item:nth-child(2) {
+  transition:
+    opacity 280ms ease-out 350ms,
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 350ms;
+}
+
+.profile-dropdown__item--toggle .theme-toggle {
+  background: rgba(255, 255, 255, 0.55);
+  color: #4a3a64;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 6px rgba(74, 58, 100, 0.12);
+}
+
+.profile-dropdown__menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 9px 16px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #4a3a64;
+  cursor: pointer;
+  font: 600 15px/1 var(--planner-font);
+  text-align: left;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 6px rgba(74, 58, 100, 0.12);
+  transition:
+    background-color 200ms ease,
+    transform 150ms ease,
+    color 200ms ease;
+}
+
+.profile-dropdown__menu-btn:hover,
+.profile-dropdown__menu-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.8);
+  color: rgb(99, 73, 145);
+  outline: none;
+}
+
+.profile-dropdown__menu-btn:active {
+  transform: scale(0.985);
+}
+
+.profile-dropdown__menu-btn .floating-user-menu__icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.avatar-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(232, 232, 232, 0.72);
+  overflow: hidden;
+  box-shadow:
+    3px 3px 8px rgba(76, 76, 112, 0.12),
+    -2px -2px 7px rgba(255, 255, 255, 0.64);
+}
+
+.avatar-preview img {
+  position: absolute;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  object-fit: contain;
+}
+
+.avatar-preview span {
+  color: rgba(57, 57, 92, 0.62);
+  font: 700 17px/1 "Quattrocento Sans", system-ui, sans-serif;
+}
+
+
+/* ─────────── Theme toggle (3-way) ─────────── */
+
+.profile-dropdown__panel-disc,
+.profile-dropdown__menu-wrap {
+  height: 164px;
+}
+
+.profile-dropdown__menu {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+:root[data-theme="forest"] .profile-dropdown__avatar-disc,
+:root[data-theme="forest"] .profile-dropdown__panel-disc {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-grad-start) 54%, transparent) 0%,
+    color-mix(in srgb, var(--accent-grad-start) 58%, transparent) 34%,
+    color-mix(in srgb, var(--accent-grad-mid) 60%, transparent) 72%,
+    color-mix(in srgb, var(--accent-grad-end) 62%, transparent) 100%
+  );
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--c-success) 18%, transparent));
+}
+
+:root[data-theme="forest"] .profile-dropdown__avatar-btn {
+  background:
+    radial-gradient(120% 120% at 30% 25%, rgba(252, 248, 241, 0.96) 0%, rgba(218, 229, 198, 0.72) 48%, rgba(129, 158, 109, 0.76) 100%);
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.46),
+    0 0 0 1px color-mix(in srgb, var(--c-accent) 18%, transparent),
+    0 6px 12px color-mix(in srgb, var(--c-success) 18%, transparent);
+}
+
+:root[data-theme="forest"] .profile-dropdown__menu-btn,
+:root[data-theme="forest"] .profile-dropdown__item--toggle .theme-toggle {
+  background: rgba(252, 248, 241, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 2px 10px color-mix(in srgb, var(--c-success) 14%, transparent);
+}
+
+:root[data-theme="forest"] .profile-dropdown__menu-btn:hover,
+:root[data-theme="forest"] .profile-dropdown__menu-btn:focus-visible {
+  background: rgba(252, 248, 241, 0.82);
+  color: var(--c-accent-hover);
+}
+
+.profile-dropdown {
+  width: 56px;
+  height: 56px;
+}
+
+.profile-dropdown__avatar-disc {
+  top: 7px;
+  right: 7px;
+  width: 72px;
+  height: 72px;
+}
+
+.profile-dropdown__avatar-btn {
+  top: 5px;
+  right: 5px;
+  width: 46px;
+  height: 46px;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 40px;
+  height: 40px;
+}
+
+.profile-dropdown__menu-wrap {
+  top: 42px;
+  right: 4px;
+}
+
+.profile-dropdown__panel-disc {
+  top: 58px;
+  right: 18px;
+}
+
+/* Preserve dropdown readability after avatar nudge */
+.profile-dropdown[data-open="true"] .profile-dropdown__menu-wrap {
+  transform: scale(1) translateY(0);
+}
+
+/* Center the avatar image inside its colored ring after size/position adjustments */
+.profile-dropdown {
+  width: 56px;
+  height: 56px;
+}
+
+.profile-dropdown__avatar-disc {
+  top: -1px;
+  right: -1px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+}
+
+.profile-dropdown__avatar-btn {
+  top: 5px;
+  right: 5px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview img {
+  position: static;
+  inset: auto;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.profile-dropdown__menu-wrap {
+  top: 48px;
+  right: 2px;
+}
+
+.profile-dropdown__panel-disc {
+  top: 64px;
+  right: 18px;
+}
+
+.profile-dropdown {
+  width: 74px;
+  height: 74px;
+}
+
+.profile-dropdown__blob-wrap {
+  top: 0;
+  right: 0;
+  width: 252px;
+  height: 252px;
+  opacity: 0.94;
+  z-index: 1;
+}
+
+.profile-dropdown__avatar-disc {
+  top: 0;
+  right: 0;
+  width: 74px;
+  height: 74px;
+}
+
+.profile-dropdown__avatar-btn {
+  top: 9px;
+  right: 9px;
+  width: 56px;
+  height: 56px;
+  z-index: 5;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 50px;
+  height: 50px;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+}
+
+.profile-dropdown__panel-disc {
+  top: 58px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  border-radius: 30px;
+  transform-origin: 196px 0;
+}
+
+.profile-dropdown__menu-wrap {
+  top: 58px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  border-radius: 30px;
+  transform-origin: 196px 0;
+  z-index: 4;
+}
+
+.profile-dropdown[data-open="false"] .profile-dropdown__menu-wrap,
+.profile-dropdown[data-open="false"] .profile-dropdown__panel-disc {
+  transform: scale(0.06) translateY(-18px);
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__menu-wrap,
+.profile-dropdown[data-open="true"] .profile-dropdown__panel-disc {
+  transform: scale(1) translateY(0);
+}
+
+.profile-dropdown {
+  width: 88px;
+  height: 88px;
+}
+
+.profile-dropdown__blob-wrap {
+  top: 0;
+  right: 0;
+  width: 276px;
+  height: 268px;
+}
+
+.profile-dropdown__avatar-disc {
+  top: 0;
+  right: 0;
+  width: 88px;
+  height: 88px;
+}
+
+.profile-dropdown__avatar-btn {
+  top: 11px;
+  right: 11px;
+  width: 62px;
+  height: 62px;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 56px;
+  height: 56px;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+}
+
+.profile-dropdown__avatar-btn .avatar-preview span {
+  display: none;
+}
+
+.profile-dropdown__panel-disc {
+  top: 68px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  border-radius: 30px;
+  transform-origin: 198px 0;
+}
+
+.profile-dropdown__menu-wrap {
+  top: 68px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  border-radius: 30px;
+  transform-origin: 198px 0;
+  z-index: 4;
+}
+
+.profile-dropdown[data-open="false"] .profile-dropdown__menu-wrap,
+.profile-dropdown[data-open="false"] .profile-dropdown__panel-disc {
+  transform: scale(0.06) translateY(-18px);
+}
+
+.profile-dropdown[data-open="true"] .profile-dropdown__menu-wrap,
+.profile-dropdown[data-open="true"] .profile-dropdown__panel-disc {
+  transform: scale(1) translateY(0);
+}
+
+.profile-dropdown {
+  width: 72px;
+  height: 72px;
+}
+
+.profile-dropdown__blob-wrap {
+  top: 0;
+  right: 0;
+  width: 258px;
+  height: 248px;
+}
+
+.profile-dropdown__avatar-disc {
+  top: 0;
+  right: 0;
+  width: 72px;
+  height: 72px;
+}
+
+.profile-dropdown__avatar-btn {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: 50px;
+  height: 50px;
+  transform: translate(-50%, -50%);
+}
+
+.profile-dropdown__avatar-btn:hover {
+  transform: translate(-50%, -50%) scale(1.03);
+}
+
+.profile-dropdown__avatar-btn:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+.profile-dropdown__avatar-btn .avatar-preview {
+  width: 46px;
+  height: 46px;
+}
+
+.profile-dropdown__avatar-btn .avatar-preview img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  object-position: center center;
+}
+
+.profile-dropdown__panel-disc {
+  top: 56px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  transform-origin: 198px 0;
+}
+
+.profile-dropdown__menu-wrap {
+  top: 56px;
+  right: 0;
+  width: 224px;
+  height: 164px;
+  transform-origin: 198px 0;
+}

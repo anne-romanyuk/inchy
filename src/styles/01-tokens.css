@@ -1,0 +1,40 @@
+/* 01-tokens.css — Forest design tokens defined inline in the old styles.css (the --pomodoro-grad-* block etc.). Primary tokens live in design-tokens.css.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+:root {
+  --planner-font: "Quattrocento Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Typography system mirrored from the Pomodoro timer (uppercase intentionally NOT applied globally). */
+  --planner-display-weight: 300;
+  --planner-display-tracking: -0.03em;
+  --planner-heading-weight: 700;
+  --planner-heading-tracking: -0.01em;
+  --planner-label-weight: 800;
+  --planner-label-tracking: 0.16em;
+  --planner-value-weight: 700;
+  --pomodoro-grad-start: #faa08a;
+  --pomodoro-grad-mid: #f194c2;
+  --pomodoro-grad-end: #bf95e6;
+  color-scheme: light;
+}
+
+:root[data-theme="forest"] {
+  --pomodoro-grad-start: #b6c49a;
+  --pomodoro-grad-mid: #8a9c6f;
+  --pomodoro-grad-end: #5d6f4a;
+  color-scheme: light;
+}
+
+:root {
+  --task-col-drag: 18px;
+  --task-col-check: 24px;
+  /* Category column was 96px when there was also a priority column.
+     After the priority column was removed, we widen it so it fits both
+     short user-typed categories and (clipped) goal names for goal-linked
+     occurrences. The grid `minmax(0, 1fr)` on the title column absorbs
+     any leftover space. */
+  --task-col-category: 180px;
+  --task-col-focus: 28px;
+  --task-col-edit: 26px;
+  --task-col-delete: 26px;
+  --task-col-gap: 10px;
+}

@@ -1,0 +1,1109 @@
+/* 32-notes.css — Notes page.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+.notes-workspace {
+  --notes-gap: clamp(12px, 1.6vh, 18px);
+  --notes-page-pad: clamp(12px, 1.4vh, 16px);
+  --notes-widget-radius: var(--radius-2xl);
+  --notes-widget-bg: var(--app-widget-bg);
+  --notes-widget-backdrop: var(--app-widget-backdrop);
+  --notes-widget-border: var(--app-widget-border);
+  --notes-widget-shadow: var(--app-widget-shadow);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  /* Top padding matches the Goals page so the "Notes" title lines up with the
+     sidebar INCHY logo. */
+  padding: 22px 0 var(--notes-page-pad);
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .notes-workspace {
+  --notes-widget-bg: var(--app-widget-bg);
+  --notes-widget-backdrop: var(--app-widget-backdrop);
+  --notes-widget-border: var(--app-widget-border);
+  --notes-widget-shadow: var(--app-widget-shadow);
+}
+.notes-workspace--loading {
+  display: grid;
+  place-items: center;
+}
+.notes-workspace svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+.notes-page-head {
+  min-width: 0;
+}
+.notes-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.notes-sidebar {
+  position: relative;
+  align-self: stretch;
+  height: auto;
+  min-height: 0;
+  display: none;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-none);
+  overflow: auto;
+}
+.notes-sidebar__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--c-accent);
+  font: var(--text-label-weight) var(--text-label-size) / 1 var(--font-base);
+  letter-spacing: var(--text-label-tracking);
+  text-transform: uppercase;
+}
+.notes-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.notes-nav--secondary {
+  margin-top: auto;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--c-border-soft);
+}
+.notes-nav__item {
+  display: grid;
+  grid-template-columns: var(--space-9) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  text-align: left;
+  font: var(--text-body-weight) var(--text-body-size) / 1.2 var(--font-base);
+  transition:
+    background-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+.notes-nav__item:hover,
+.notes-nav__item:focus-visible,
+.notes-nav__item.is-active {
+  outline: none;
+  background: var(--c-accent-soft);
+  color: var(--c-text-primary);
+}
+.notes-nav__item:active {
+  transform: scale(0.98);
+}
+.notes-nav__item strong {
+  color: var(--c-text-muted);
+  font-size: var(--text-body-small-size);
+  line-height: 1;
+}
+.notes-nav__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-soft);
+  color: var(--c-text-muted);
+}
+.notes-nav__icon--accent { background: var(--c-accent-soft); color: var(--c-accent); }
+.notes-nav__icon--danger { background: var(--c-danger-soft); color: var(--c-danger); }
+.notes-nav__icon--info { background: var(--c-info-soft); color: var(--c-info); }
+.notes-nav__icon--warning { background: var(--c-warning-soft); color: var(--c-warning); }
+.notes-nav__icon--success { background: var(--c-success-soft); color: var(--c-success); }
+
+.notes-main {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: var(--space-5);
+  overflow: hidden;
+}
+.notes-header {
+  margin-bottom: 0;
+  padding-right: var(--space-4);
+}
+.notes-header .tasks-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+.notes-header__subtitle {
+  max-width: 760px;
+}
+.notes-title-sprig {
+  display: inline-grid;
+  place-items: center;
+  color: var(--c-accent);
+  font-size: var(--text-section-title-size);
+}
+.notes-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1800px;
+  margin: 0;
+  padding: 0;
+}
+.notes-actions .task-add {
+  margin-left: auto;
+}
+.notes-new-note {
+  min-width: 118px;
+}
+.notes-tools {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(150px, 190px) minmax(130px, 170px) minmax(180px, 1fr) auto;
+  column-gap: var(--space-5);
+  row-gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+}
+.notes-tools .notes-new-note {
+  justify-self: end;
+  white-space: nowrap;
+}
+.notes-search,
+.notes-select {
+  position: relative;
+}
+.notes-search .ui-field__control,
+.notes-select .ui-field__control {
+  width: 100%;
+  padding-left: var(--space-10);
+}
+.notes-select .ui-field__control {
+  appearance: none;
+}
+.notes-control-icon {
+  position: absolute;
+  left: var(--space-5);
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--c-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.notes-filter-btn {
+  justify-self: end;
+}
+.notes-filter-strip {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-self: stretch;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-none);
+}
+.notes-filter-strip > span:first-child {
+  font: var(--text-item-title-weight) var(--text-item-title-size) / 1 var(--font-base);
+}
+/* Clear-all is now an icon-only X button, pinned to the right of the strip. */
+.notes-filter-strip .pomodoro-btn.notes-filter-strip__clear {
+  width: var(--space-9);
+  height: var(--space-9);
+  margin-left: auto;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.notes-filter-strip__clear svg {
+  width: 16px;
+  height: 16px;
+}
+.notes-filter-strip__empty {
+  color: var(--c-text-muted);
+  font-size: var(--text-body-small-size);
+}
+.notes-filter-strip .ui-badge {
+  border: 0;
+  cursor: pointer;
+}
+
+.notes-content {
+  --notes-list-column-width: calc(var(--space-10) * 6 + var(--space-4));
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--notes-list-column-width) minmax(0, 1fr);
+  gap: var(--space-7);
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+/* Soft hairline between the list column and the editor column, centered in the
+   gutter and fading at top/bottom. Hidden when there are no notes at all (the
+   empty state spans both columns) and when the layout stacks on narrow screens. */
+.notes-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--notes-list-column-width) + var(--space-7) / 2);
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--c-border-soft) 12%,
+    var(--c-border-soft) 88%,
+    transparent
+  );
+  pointer-events: none;
+}
+.notes-content:has(.notes-empty-all)::before {
+  display: none;
+}
+.notes-list {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-1) 0 var(--space-1) 0;
+}
+.notes-list__empty {
+  min-height: 100%;
+}
+.notes-list-card {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  /* Promote to its own compositing layer so the frosted backdrop-filter clips
+     to the rounded corners instead of leaking a dark rectangle behind the card
+     (Chromium clips backdrop-filter to border-radius only on a composited layer). */
+  transform: translateZ(0);
+  /* Uniform height regardless of content: the title and body each reserve a
+     fixed 1-line box (see below), so every card is the same size. */
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-radius: var(--notes-widget-radius);
+  box-shadow: var(--shadow-none);
+  text-align: left;
+  color: var(--c-text-primary);
+}
+.notes-list-card.ui-card--interactive:hover {
+  box-shadow: var(--shadow-none);
+}
+.notes-list-card.is-active {
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-none);
+}
+.notes-list-card__pin {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
+  color: var(--c-text-muted);
+}
+.notes-list-card strong {
+  padding-right: var(--space-8);
+  font: var(--text-card-title-weight) var(--text-card-title-size) / 1.36 var(--font-base);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  /* Single line, then ellipsis — keeps every card the same height. */
+  min-height: 1.36em;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.notes-list-card > span:not(.notes-list-card__pin):not(.notes-list-card__meta) {
+  color: var(--c-text-secondary);
+  font-size: var(--text-body-small-size);
+  line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  /* Single line, then ellipsis. */
+  min-height: 1.55em;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.notes-list-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--c-text-muted);
+}
+.notes-list-card__meta .ui-badge {
+  flex: 0 0 auto;
+  max-width: none;
+  white-space: nowrap;
+}
+.notes-list-card__meta small {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--text-caption-size);
+}
+.notes-list-card .ui-badge svg,
+.notes-editor-card .ui-badge svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* The whole card is clickable to open the note (a div with role=button). */
+.notes-list-card {
+  cursor: pointer;
+}
+.notes-list-card:focus-visible {
+  outline: none;
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-soft), var(--shadow-focus-ring);
+}
+
+/* Pinned marker sits top-left so it never collides with the kebab top-right. */
+.notes-list-card__pin {
+  left: var(--space-6);
+  right: auto;
+  color: var(--c-accent);
+}
+.notes-list-card.is-pinned > strong {
+  padding-left: var(--space-7);
+}
+
+/* Per-card three-dots menu (pin / delete). */
+.notes-card-menu {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 4;
+}
+.notes-card-menu__dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 24;
+  min-width: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: var(--notes-widget-border);
+  background: var(--notes-widget-bg);
+  backdrop-filter: var(--notes-widget-backdrop);
+  -webkit-backdrop-filter: var(--notes-widget-backdrop);
+  box-shadow: var(--notes-widget-shadow);
+}
+.notes-card-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-secondary);
+  font: 600 var(--text-body-small-size) / 1 var(--font-base);
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.notes-card-menu__item svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+.notes-card-menu__item:hover {
+  background: var(--c-surface-soft);
+  color: var(--c-text-primary);
+}
+.notes-card-menu__item--danger {
+  color: var(--c-danger);
+}
+.notes-card-menu__item--danger:hover {
+  background: color-mix(in srgb, var(--c-danger) 12%, transparent);
+  color: var(--c-danger);
+}
+/* Let the open menu escape the card's rounded clip (and overlap neighbours). */
+.notes-list-card:has(.notes-card-menu__dropdown) {
+  overflow: visible;
+  z-index: 6;
+}
+
+/* Editor header close (X) — neutral icon button. */
+.notes-entry-close {
+  flex: 0 0 auto;
+}
+
+/* Anchor the confirm overlays to the editor column so delete/unsaved dialogs
+   render whether or not a note is open. */
+.notes-editor-compose {
+  position: relative;
+}
+
+.notes-editor-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  padding: 0;
+  box-shadow: var(--shadow-none);
+  overflow: hidden;
+}
+.notes-editor-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-width: 0;
+  padding: var(--space-8);
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.notes-editor-card__title-block {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.notes-editor-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  width: 100%;
+}
+.notes-title-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 10ch;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-text-primary);
+  font: var(--text-section-title-weight) var(--text-section-title-size) / 1.15 var(--font-base);
+  letter-spacing: var(--text-section-title-tracking);
+}
+.notes-title-input:focus-visible {
+  outline: none;
+  box-shadow: 0 2px 0 var(--c-focus);
+}
+.notes-category-picker {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.notes-category-picker__trigger {
+  border: 0;
+  cursor: pointer;
+}
+.notes-category-picker__trigger .task-modal__dropdown-caret {
+  margin-left: var(--space-1);
+  transform: translateY(-2px) rotate(45deg);
+}
+.notes-category-picker__trigger[aria-expanded="true"] .task-modal__dropdown-caret {
+  transform: translateY(2px) rotate(225deg);
+}
+.notes-category-picker__dropdown {
+  left: auto;
+  right: 0;
+  min-width: calc(var(--space-10) * 4 + var(--space-6));
+}
+.notes-category-picker__list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+.notes-category-picker__list .notes-category-picker__option {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
+  letter-spacing: var(--text-badge-tracking);
+}
+.notes-category-picker__list .task-modal__category-pill.notes-category-picker__option {
+  box-shadow: none;
+}
+.notes-category-picker__list .ui-badge--danger {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+.notes-category-picker__list .ui-badge--info {
+  background: var(--c-info-soft);
+  color: var(--c-info);
+}
+.notes-category-picker__list .ui-badge--warning {
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+}
+.notes-category-picker__list .ui-badge--success {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+.notes-category-picker__list .notes-category-picker__option:hover,
+.notes-category-picker__list .notes-category-picker__option:focus-visible,
+.notes-category-picker__list .notes-category-picker__option[aria-selected="true"] {
+  outline: none;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.notes-editor-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--c-text-muted);
+  font-size: var(--text-body-small-size);
+}
+.notes-editor-card__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.notes-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid var(--c-border-soft);
+  overflow-x: auto;
+}
+.notes-editor-toolbar .pomodoro-btn {
+  min-width: auto;
+  height: var(--space-9);
+  padding: 0 var(--space-3);
+  white-space: nowrap;
+}
+.notes-editor-field {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-6) var(--space-6) 0;
+  overflow: hidden;
+}
+.notes-editor-field .ui-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.notes-editor-textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  resize: none;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  font-size: var(--text-body-size);
+  line-height: 1.75;
+}
+.notes-editor-textarea:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+.notes-editor-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+.notes-editor-status {
+  min-width: 0;
+  color: var(--c-text-muted);
+  font-size: var(--text-body-small-size);
+  line-height: 1;
+}
+.notes-editor-card__footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.notes-editor-card__footer .task-add,
+.notes-editor-card__footer .pomodoro-btn {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.notes-entry-card {
+  position: relative;
+  min-height: min(620px, calc(100dvh - var(--space-10) * 4));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: var(--space-7) var(--space-8);
+  overflow: hidden;
+}
+.notes-entry-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-width: 0;
+  color: var(--c-text-muted);
+  font-size: var(--text-body-small-size);
+}
+.notes-entry-card__meta-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.notes-entry-card__meta-main .notes-category-picker {
+  margin-left: 0;
+}
+.notes-entry-card__timestamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.notes-entry-delete {
+  flex: 0 0 auto;
+}
+.notes-entry-card__body {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-7) 0 var(--space-6);
+}
+.notes-entry-title,
+.notes-entry-textarea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--c-text-primary);
+  font-family: var(--font-base);
+}
+.notes-entry-title {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: var(--text-section-title-weight) var(--text-section-title-size) / 1.2 var(--font-base);
+  letter-spacing: var(--text-section-title-tracking);
+}
+:root .notes-entry-title,
+:root .notes-entry-title:hover,
+:root .notes-entry-title:focus,
+:root .notes-entry-title:focus-visible {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+}
+:root[data-theme="forest"] .notes-entry-title,
+:root[data-theme="forest"] .notes-entry-title:hover,
+:root[data-theme="forest"] .notes-entry-title:focus,
+:root[data-theme="forest"] .notes-entry-title:focus-visible{
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+}
+.notes-entry-title::placeholder,
+.notes-entry-textarea::placeholder {
+  color: var(--c-text-muted);
+}
+.notes-entry-editor[data-empty="true"]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 0;
+  left: var(--space-7);
+  text-indent: 0;
+  color: var(--c-text-muted);
+  pointer-events: none;
+}
+.notes-entry-title:focus-visible,
+.notes-entry-textarea:focus-visible {
+  outline: none;
+}
+.notes-entry-textarea {
+  height: 100%;
+  min-height: 0;
+  resize: none;
+  overflow: auto;
+  font-size: var(--text-body-size);
+  line-height: 1.7;
+}
+.notes-entry-editor {
+  position: relative;
+  cursor: text;
+  padding: 0;
+  text-indent: var(--space-7);
+  white-space: normal;
+  word-break: break-word;
+}
+.notes-entry-editor :is(div, p) {
+  min-height: 1.7em;
+  margin: 0;
+  text-indent: var(--space-7);
+}
+.notes-entry-editor :is(ul, ol) {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-8);
+  text-indent: 0;
+}
+.notes-entry-editor li {
+  min-height: 1.7em;
+  padding-left: var(--space-1);
+  text-indent: 0;
+}
+.notes-entry-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  min-width: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-border-soft);
+}
+.notes-entry-toolbar,
+.notes-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.notes-entry-toolbar {
+  overflow: visible;
+}
+.notes-entry-toolbar .pomodoro-btn {
+  min-width: auto;
+  height: var(--space-9);
+  padding: 0 var(--space-3);
+  white-space: nowrap;
+}
+.notes-entry-toolbar .pomodoro-btn.is-active {
+  color: var(--c-accent);
+  background: transparent;
+  box-shadow: none;
+}
+/* Active format toggles keep their accent on hover — the global ghost-text
+   hover brighten must not override the active-state highlight here. */
+:root[data-theme] .notes-entry-toolbar .pomodoro-btn--ghost-text.is-active:hover {
+  color: var(--c-accent);
+  background: transparent;
+}
+.notes-entry-toolbar .pomodoro-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+}
+.notes-format-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1em;
+}
+.notes-format-icon--bold {
+  font-weight: 900;
+}
+.notes-format-icon--italic {
+  font-style: italic;
+}
+.notes-format-icon--underline {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+.notes-emoji-picker {
+  position: relative;
+  display: inline-flex;
+}
+.notes-emoji-picker__popover {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--space-3));
+  z-index: 60;
+  border: var(--notes-widget-border);
+  border-radius: var(--radius-lg);
+  background: var(--notes-widget-bg);
+  backdrop-filter: var(--notes-widget-backdrop);
+  -webkit-backdrop-filter: var(--notes-widget-backdrop);
+  box-shadow: var(--notes-widget-shadow);
+  overflow: hidden;
+  animation: notes-emoji-rise 160ms ease-out;
+}
+.notes-emoji-picker__popover .EmojiPickerReact {
+  --epr-bg-color: transparent;
+  --epr-category-label-bg-color: var(--notes-widget-bg);
+  --epr-text-color: var(--c-text-primary);
+  --epr-search-input-bg-color: var(--c-surface-glass);
+  --epr-search-input-bg-color-active: var(--c-surface-glass);
+  --epr-search-input-text-color: var(--c-text-primary);
+  --epr-search-input-placeholder-color: var(--c-text-muted);
+  --epr-search-border-color: var(--c-border-soft);
+  --epr-search-border-color-active: var(--c-focus);
+  --epr-highlight-color: var(--c-accent);
+  --epr-hover-bg-color: var(--c-accent-soft);
+  --epr-focus-bg-color: var(--c-accent-soft);
+  --epr-horizontal-padding: var(--space-3);
+  --epr-header-padding: var(--space-3);
+  --epr-search-input-height: 32px;
+  --epr-search-input-padding: 0 var(--space-8);
+  --epr-category-navigation-button-size: 24px;
+  --epr-category-label-height: 26px;
+  --epr-category-label-padding: 0 var(--space-3);
+  --epr-category-padding: 0 var(--space-3);
+  --epr-emoji-size: 22px;
+  --epr-emoji-padding: 3px;
+  --epr-emoji-fullsize: calc(var(--epr-emoji-size) + var(--epr-emoji-padding) * 2);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-base);
+}
+.notes-emoji-picker__popover .EmojiPickerReact,
+.notes-emoji-picker__popover .EmojiPickerReact * {
+  font-family: var(--font-base);
+}
+.notes-emoji-picker__popover .EmojiPickerReact input {
+  background: var(--c-surface-glass);
+  color: var(--c-text-primary);
+  border-color: var(--c-border-soft);
+  box-shadow: var(--shadow-soft);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1 var(--font-base);
+}
+.notes-emoji-picker__popover .EmojiPickerReact input::placeholder {
+  color: var(--c-text-muted);
+}
+.notes-emoji-picker__popover .epr-emoji-category-label {
+  color: var(--c-text-primary);
+  font: var(--text-item-title-weight) var(--text-item-title-size) / 1 var(--font-base);
+}
+.notes-emoji-picker__popover .epr-category-nav {
+  padding-block: var(--space-2);
+}
+.notes-emoji-picker__loading {
+  display: grid;
+  place-items: center;
+  width: 248px;
+  height: 268px;
+  color: var(--c-text-muted);
+  font: var(--text-item-title-weight) var(--text-item-title-size) / 1 var(--font-base);
+}
+.notes-entry-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+.notes-entry-unsaved {
+  flex: 0 0 auto;
+  color: var(--c-text-muted);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1 var(--font-base);
+  letter-spacing: var(--text-item-title-tracking);
+  white-space: nowrap;
+}
+.notes-delete-confirm,
+.notes-unsaved-confirm {
+  position: absolute;
+  border-radius: var(--notes-widget-radius);
+}
+.notes-delete-confirm .pomodoro-confirm__card,
+.notes-unsaved-confirm .pomodoro-confirm__card {
+  width: min(100%, 360px);
+}
+.notes-unsaved-confirm .pomodoro-confirm__card {
+  width: min(100%, 440px);
+}
+.notes-delete-confirm .goal-ghost-button--danger,
+.notes-unsaved-confirm .goal-ghost-button--danger,
+.notes-unsaved-confirm .task-add {
+  height: 40px;
+  padding-inline: var(--space-5);
+}
+
+.notes-content:has(> .notes-empty-all) {
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+}
+
+.notes-content:has(> .notes-empty-all) > .notes-empty-all {
+  align-self: center;
+  justify-self: center;
+  margin: 0;
+}
+
+:root[data-theme="forest"] .notes-card-menu__dropdown,
+:root[data-theme="forest"] .notes-emoji-picker__popover,
+:root[data-theme="forest"] .notes-category-picker__dropdown .task-modal__combobox-list {
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .notes-emoji-picker__popover .EmojiPickerReact {
+  --epr-category-label-bg-color: var(--app-popup-bg);
+}
+.notes-unsaved-confirm .pomodoro-confirm__actions {
+  flex-wrap: wrap;
+}
+.notes-editor-compose {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+.notes-editor-compose .notes-entry-card {
+  min-height: 0;
+  height: 100%;
+}
+.notes-editor-empty {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: var(--space-7);
+}
+/* Same muted body voice as the goals empty-state subtitle
+   ("Add your first goal and break the chaos into cute little steps."). */
+.notes-editor-empty__hint {
+  margin: 0;
+  max-width: 360px;
+  text-align: center;
+  color: var(--c-text-muted);
+  font: 700 14px/1.45 var(--planner-font);
+}
+/* Whole-page empty state (no notes at all): one centered "No notes yet" across
+   both content columns, matching the Goals empty-state typography. The backdrop
+   is a compact, widget/modal-shaped card (rounded corners, not a full-bleed
+   rectangular panel). */
+.notes-empty-all {
+  grid-column: 1 / -1;
+  /* Sit high in the content area — roughly the same level as the Goals empty
+     card (just below the toolbar), with a small gap so it isn't glued to it. */
+  align-self: start;
+  justify-self: center;
+  width: min(100%, 460px);
+  max-width: 460px;
+  min-height: 0;
+  margin: clamp(12px, 3vh, 36px) 0 0;
+  padding: var(--space-9) var(--space-8);
+  border: 0;
+  border-radius: var(--notes-widget-radius);
+}
+:root[data-theme="forest"] .notes-empty-all {
+  border: var(--notes-widget-border);
+  background: var(--notes-widget-bg);
+  backdrop-filter: var(--notes-widget-backdrop);
+  -webkit-backdrop-filter: var(--notes-widget-backdrop);
+  box-shadow: var(--notes-widget-shadow);
+}
+
+.notes-search .ui-field__control,
+.notes-select .ui-field__control,
+.notes-filter-strip,
+.notes-list-card,
+.notes-editor-card,
+.notes-entry-card {
+  border: var(--notes-widget-border);
+  border-radius: var(--notes-widget-radius);
+  background: var(--notes-widget-bg);
+  backdrop-filter: var(--notes-widget-backdrop);
+  -webkit-backdrop-filter: var(--notes-widget-backdrop);
+  box-shadow: var(--notes-widget-shadow);
+}
+/* Toolbar filter fields (search / category / date / filters strip) adopt the
+   Add Goal field shape + style — rounded-rect (radius-sm), thin border, solid
+   cream fill — instead of the pill widget surface. Cards keep their own look. */
+/* `.notes-tools` prefix keeps these above the global forest `input/select`
+   surface rule (02-base.css) so the cream fill actually wins. */
+.notes-tools .notes-search .ui-field__control,
+.notes-tools .notes-select .ui-field__control,
+.notes-tools .notes-filter-strip {
+  min-height: calc(var(--space-10) + var(--space-1));
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.notes-list-card,
+.notes-editor-card,
+.notes-entry-card {
+  overflow: hidden;
+}
+.notes-list-card {
+  box-shadow: var(--notes-widget-shadow);
+}
+.notes-list-card.ui-card--interactive:hover,
+.notes-list-card.is-active {
+  box-shadow: var(--notes-widget-shadow);
+}
+.notes-tools .notes-search .ui-field__control:focus,
+.notes-tools .notes-search .ui-field__control:focus-visible,
+.notes-tools .notes-select .ui-field__control:focus,
+.notes-tools .notes-select .ui-field__control:focus-visible {
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  box-shadow: var(--shadow-focus-ring);
+}

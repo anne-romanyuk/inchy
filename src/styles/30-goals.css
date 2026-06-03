@@ -1,0 +1,3845 @@
+/* 30-goals.css — Goals page: goal cards, goal detail, tasks, journey.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+/* Goals module */
+.goals-page {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  min-height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+.goals-page__header {
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.goal-kicker {
+  margin: 0 0 6px;
+  color: rgba(82, 70, 132, 0.62);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.goals-page__subtitle {
+  max-width: 640px;
+  margin: 10px 0 0;
+  color: rgba(57, 57, 92, 0.62);
+  font: 600 14px/1.45 var(--planner-font);
+}
+
+.goals-stat {
+  display: grid;
+  place-items: center;
+  min-width: 72px;
+  height: 48px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.07);
+}
+
+.goals-stat strong {
+  color: rgb(57, 57, 92);
+  font: var(--planner-value-weight) 14px/1 var(--planner-font);
+}
+
+.goals-stat span {
+  margin-top: 4px;
+  color: rgba(57, 57, 92, 0.54);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.goals-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  overflow: auto;
+  padding: 2px 4px 12px 0;
+}
+
+.goal-card {
+  display: grid;
+  gap: 14px;
+  min-height: 260px;
+  border-radius: 28px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.28), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+  box-shadow:
+    12px 14px 26px -18px rgba(58, 58, 105, 0.42),
+    inset -1px -1px 8px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.07);
+}
+
+.goal-card__topline,
+.goal-card__header,
+.goal-card__actions {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goal-card__header h2 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: var(--planner-heading-weight) 21px/1.05 var(--planner-font);
+  letter-spacing: -0.02em;
+}
+
+.goal-card__header p {
+  margin: 8px 0 0;
+  color: rgba(57, 57, 92, 0.58);
+  font: 600 15px/1.35 var(--planner-font);
+}
+
+.goal-pill,
+.goal-deadline {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.24);
+  color: rgba(57, 57, 92, 0.68);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.goal-pill {
+  background: linear-gradient(135deg, rgba(250, 160, 138, 0.3), rgba(191, 149, 230, 0.28));
+  color: rgb(82, 70, 132);
+}
+
+.goal-icon-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: rgba(57, 57, 92, 0.72);
+  cursor: pointer;
+  font: 800 14px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 6px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08);
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.goal-icon-button:hover,
+.goal-icon-button:focus-visible {
+  background: rgba(255, 255, 255, 0.38);
+  color: rgb(57, 57, 92);
+  outline: none;
+  transform: translateY(-1px) scale(1.04);
+}
+
+.goal-icon-button--danger {
+  color: rgb(190, 76, 93);
+}
+
+.goal-progress {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 2px 2px 7px rgba(80, 75, 104, 0.12),
+    inset -1px -1px 6px rgba(255, 255, 255, 0.32);
+}
+
+.goal-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  box-shadow: 0 0 18px rgba(241, 148, 194, 0.42);
+  transition: width 260ms ease;
+}
+
+.goal-steps {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-steps li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  border-radius: 18px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.goal-steps li button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  color: rgb(82, 70, 132);
+  cursor: pointer;
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 5px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 6px rgba(80, 75, 104, 0.08);
+}
+
+.goal-steps li.is-complete button {
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+}
+
+.goal-steps strong,
+.goal-steps span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-steps strong {
+  color: rgb(57, 57, 92);
+  font: 700 15px/1.2 var(--planner-font);
+}
+
+.goal-steps span {
+  margin-top: 3px;
+  color: rgba(57, 57, 92, 0.52);
+  font: var(--planner-label-weight) 12px/1.2 var(--planner-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-steps li.is-complete strong {
+  text-decoration: line-through;
+  color: rgba(57, 57, 92, 0.48);
+}
+
+.goals-empty {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  min-height: min(60vh, 480px);
+  margin: 0 auto;
+  padding: 48px 28px;
+  background: transparent;
+  color: rgba(57, 57, 92, 0.62);
+  text-align: center;
+  font: 700 14px/1.45 var(--planner-font);
+}
+
+.goals-empty__art {
+  width: 132px;
+  height: 132px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 12px 24px rgba(140, 110, 200, 0.22));
+  animation: goals-empty-float 4s ease-in-out infinite;
+}
+
+.goals-empty strong {
+  color: rgb(57, 57, 92);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.goals-empty > span {
+  max-width: 360px;
+}
+
+.goals-empty__cta {
+  margin-top: 18px;
+}
+
+/* Empty-state goal widget on Today dashboard */
+.goal-journey--empty {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 18px 22px;
+}
+
+.goal-journey__empty-content {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  text-align: center;
+  max-width: 520px;
+}
+
+.goal-journey__empty-art {
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 10px 20px rgba(140, 110, 200, 0.22));
+  animation: goals-empty-float 4s ease-in-out infinite;
+}
+
+.goal-journey__empty-text h2 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: 900 20px/1.15 var(--planner-font);
+  letter-spacing: -0.01em;
+}
+
+.goal-journey__empty-text p {
+  margin: 4px 0 0;
+  color: rgba(57, 57, 92, 0.6);
+  font: 700 15px/1.45 var(--planner-font);
+  max-width: 380px;
+}
+
+.goal-journey__empty-cta {
+  margin-top: 14px;
+}
+
+.goal-modal-backdrop {
+  position: fixed;
+  z-index: 7;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(42, 38, 66, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.goal-modal {
+  width: min(920px, calc(100vw - 56px));
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+}
+
+.goal-modal__header,
+.goal-modal__footer,
+.goal-editor-section__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.goal-modal__header h2,
+.goal-editor-section h3 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+}
+
+.goal-modal__header h2 {
+  font-size: 32px;
+}
+
+.goal-form-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.goal-field {
+  display: grid;
+  gap: 8px;
+}
+
+.goal-field span {
+  color: rgba(57, 57, 92, 0.6);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.goal-input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  border: 0;
+  border-radius: 16px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.24);
+  color: rgb(57, 57, 92);
+  font: 700 15px/1 var(--planner-font);
+  box-shadow:
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08),
+    inset -2px -2px 8px rgba(255, 255, 255, 0.34);
+}
+
+.goal-input--large {
+  height: 48px;
+  border-radius: 20px;
+  font-size: 17px;
+}
+
+.goal-input::placeholder {
+  color: rgba(57, 57, 92, 0.38);
+}
+
+.goal-input:focus-visible {
+  outline: 2px solid var(--c-focus-soft);
+  outline-offset: 3px;
+}
+
+.goal-date-picker {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  color: var(--c-text-primary);
+}
+
+.goal-date-picker:has(.goal-date-picker__trigger[aria-expanded="true"]) {
+  z-index: 120;
+}
+
+.goal-date-picker__trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(var(--space-9) + var(--space-2));
+  display: grid;
+  grid-template-columns: calc(var(--space-7) + var(--space-1)) minmax(0, 1fr) calc(var(--space-7) + var(--space-1));
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 0 var(--space-4);
+  background: var(--c-surface-soft);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  font: var(--text-badge-weight) var(--text-item-title-size) / 1 var(--font-base);
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.goal-date-picker__trigger:hover {
+  border-color: var(--c-border);
+  box-shadow: var(--shadow-medium);
+}
+
+.goal-date-picker__trigger:active {
+  transform: scale(0.99);
+}
+
+.goal-date-picker__trigger:focus-visible {
+  outline: none;
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-focus-ring), var(--shadow-soft);
+}
+
+.goal-date-picker__trigger[aria-expanded="true"] {
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-focus-ring), var(--shadow-soft);
+}
+
+.goal-date-picker__trigger.is-empty .goal-date-picker__value {
+  color: var(--c-text-muted);
+  font-weight: var(--text-item-title-weight);
+}
+
+.goal-date-picker__icon,
+.goal-date-picker__chevrons {
+  display: grid;
+  place-items: center;
+  color: var(--c-text-secondary);
+}
+
+.goal-date-picker__icon svg,
+.goal-date-picker__nav svg,
+.goal-date-picker__chevrons svg {
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.goal-date-picker__chevrons {
+  gap: 0;
+}
+
+.goal-date-picker__chevrons svg {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
+.goal-date-picker__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  color: var(--c-text-secondary);
+  font-weight: var(--text-badge-weight);
+}
+
+.goal-date-picker--large .goal-date-picker__trigger {
+  min-height: calc(var(--space-10) + var(--space-3));
+  border-radius: var(--radius-xl);
+  padding: 0 var(--space-5);
+  font-size: var(--text-card-title-size);
+}
+
+.goal-date-picker__popover {
+  position: absolute;
+  z-index: 140;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  width: min(100vw - calc(var(--space-7) * 2), calc(var(--space-10) * 7));
+  max-width: max(100%, calc(var(--space-10) * 7));
+  padding: var(--space-4);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface-elevated);
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.goal-form-grid .goal-field:not(.goal-field--wide) .goal-date-picker__popover,
+.goal-task-editor__date .goal-date-picker__popover,
+.goal-task-add-row .goal-date-picker__popover {
+  right: 0;
+  left: auto;
+}
+
+.goal-date-picker__header {
+  display: grid;
+  grid-template-columns: calc(var(--space-9) + var(--space-1)) minmax(0, 1fr) calc(var(--space-9) + var(--space-1));
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.goal-date-picker__header strong {
+  color: var(--c-text-primary);
+  font: var(--text-card-title-weight) var(--text-card-title-size) / 1.15 var(--font-base);
+  text-align: center;
+}
+
+.goal-date-picker__nav {
+  display: grid;
+  place-items: center;
+  width: calc(var(--space-9) + var(--space-1));
+  height: calc(var(--space-9) + var(--space-1));
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--c-surface-soft);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition:
+    background-color var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.goal-date-picker__nav:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-text-primary);
+  box-shadow: var(--shadow-medium);
+}
+
+.goal-date-picker__nav:active {
+  transform: scale(0.94);
+}
+
+.goal-date-picker__nav:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring), var(--shadow-soft);
+}
+
+.goal-date-picker__weekdays,
+.goal-date-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.goal-date-picker__weekdays {
+  margin-bottom: var(--space-1);
+}
+
+.goal-date-picker__weekdays span {
+  color: var(--c-text-secondary);
+  font: var(--text-item-title-weight) var(--text-body-small-size) / 1 var(--font-base);
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.goal-date-picker__grid {
+  gap: var(--space-1);
+}
+
+.goal-date-picker__day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
+  transition:
+    background-color var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.goal-date-picker__day:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-text-primary);
+}
+
+.goal-date-picker__day:active {
+  transform: scale(0.94);
+}
+
+.goal-date-picker__day:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.goal-date-picker__day.is-outside {
+  color: var(--c-text-muted);
+  opacity: 0.48;
+}
+
+.goal-date-picker__day.is-today {
+  border-color: var(--c-border);
+  background: var(--c-surface-soft);
+}
+
+.goal-date-picker__day.is-today::after {
+  content: "";
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--c-accent);
+}
+
+.goal-date-picker__day.is-selected {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  border-color: transparent;
+  box-shadow: 0 var(--space-2) var(--space-6) calc(var(--space-4) * -1) var(--c-focus);
+  opacity: 1;
+}
+
+.goal-date-picker__day.is-selected::after {
+  background: currentColor;
+}
+
+.goal-date-picker__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.goal-date-picker__footer .pomodoro-btn {
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+}
+
+.goal-form-grid:has(.goal-date-picker__trigger[aria-expanded="true"]),
+.goal-editor-section:has(.goal-date-picker__trigger[aria-expanded="true"]),
+.goal-task-editor:has(.goal-date-picker__trigger[aria-expanded="true"]),
+.goal-task-add-row:has(.goal-date-picker__trigger[aria-expanded="true"]) {
+  position: relative;
+  z-index: 100;
+  overflow: visible;
+}
+
+.goal-editor-section {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  border-radius: 26px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset -1px -1px 8px rgba(255, 255, 255, 0.18),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.06);
+}
+
+.goal-soft-button,
+.goal-primary-button,
+.goal-ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  cursor: pointer;
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  letter-spacing: 0.08em;
+}
+
+.goal-soft-button,
+.goal-primary-button {
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  box-shadow:
+    0 14px 30px -10px rgba(110, 80, 150, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
+
+.goal-soft-button span {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.goal-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.64;
+}
+
+.goal-task-editor-list {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-task-editor {
+  display: grid;
+  grid-template-columns: 24px 28px minmax(0, 1fr) 170px 32px;
+  align-items: center;
+  gap: 9px;
+  border-radius: 20px;
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.2),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06);
+}
+
+.goal-task-editor__drag,
+.goal-task-editor__remove {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(57, 57, 92, 0.58);
+  cursor: grab;
+}
+
+.goal-task-editor__drag span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 6px 0 currentColor, 0 -6px 0 currentColor;
+}
+
+.goal-task-editor__remove {
+  cursor: pointer;
+  color: rgb(190, 76, 93);
+  font: 800 14px/1 var(--planner-font);
+}
+
+.goal-task-editor__remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.goal-error {
+  position: relative;
+  z-index: 1;
+  min-height: 18px;
+  margin: 12px 0;
+  color: rgb(142, 65, 75);
+  font: 700 14px/1.35 var(--planner-font);
+}
+
+/* Goals fixes: scroll, stable summary card height, optional deadline, theme polish */
+.goals-page {
+  height: calc(100vh - 48px);
+  max-height: calc(100vh - 48px);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.goals-grid {
+  min-height: 0;
+  max-height: 100%;
+  grid-auto-rows: 380px;
+  align-items: stretch;
+  padding: 4px 8px 18px 0;
+  overscroll-behavior: contain;
+}
+
+.goal-card {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.goal-card__header {
+  min-height: 78px;
+}
+
+.goal-card__header > div:first-child {
+  min-width: 0;
+}
+
+.goal-card__header h2,
+.goal-card__header p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.goal-card__header h2 {
+  -webkit-line-clamp: 2;
+}
+
+.goal-card__header p {
+  -webkit-line-clamp: 1;
+}
+
+.goal-steps {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+}
+
+.goal-modal {
+  overscroll-behavior: contain;
+}
+
+:root[data-theme="forest"] .goal-kicker,
+:root[data-theme="forest"] .goals-page__subtitle,
+:root[data-theme="forest"] .goals-stat span,
+:root[data-theme="forest"] .goal-card__header p,
+:root[data-theme="forest"] .goal-deadline,
+:root[data-theme="forest"] .goal-steps span,
+:root[data-theme="forest"] .goal-field span,
+:root[data-theme="forest"] .goal-ghost-button,
+:root[data-theme="forest"] .goals-empty {
+  color: var(--c-text-muted);
+}
+
+:root[data-theme="forest"] .goals-stat strong,
+:root[data-theme="forest"] .goal-card__header h2,
+:root[data-theme="forest"] .goal-steps strong,
+:root[data-theme="forest"] .goals-empty strong,
+:root[data-theme="forest"] .goal-modal__header h2,
+:root[data-theme="forest"] .goal-editor-section h3,
+:root[data-theme="forest"] .goal-input {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .goals-stat,
+:root[data-theme="forest"] .goal-card,
+:root[data-theme="forest"] .goal-steps li,
+:root[data-theme="forest"] .goals-empty,
+:root[data-theme="forest"] .goal-editor-section,
+:root[data-theme="forest"] .goal-task-editor,
+:root[data-theme="forest"] .goal-input,
+:root[data-theme="forest"] .goal-icon-button,
+:root[data-theme="forest"] .goal-task-editor__drag,
+:root[data-theme="forest"] .goal-task-editor__remove,
+:root[data-theme="forest"] .goal-ghost-button {
+  background: rgba(252, 248, 241, 0.42);
+  color: var(--c-text-primary);
+  box-shadow:
+    inset -1px -1px 8px rgba(255, 255, 255, 0.62),
+    inset 2px 2px 8px color-mix(in srgb, var(--c-success) 9%, transparent);
+}
+
+:root[data-theme="forest"] .goal-pill,
+:root[data-theme="forest"] .goal-progress span,
+:root[data-theme="forest"] .goal-steps li.is-complete button,
+:root[data-theme="forest"] .goal-soft-button,
+:root[data-theme="forest"] .goal-primary-button {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+}
+
+/* Base fill keeps a pink glow — swap it for sage on the goal progress bar. */
+:root[data-theme="forest"] .goal-progress span {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c-success) 38%, transparent);
+}
+
+/* Goals layout refresh: page-level scroll, frameless header, adaptive cards */
+.goals-page {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-height: auto;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 24px 112px 32px 0;
+}
+
+.goals-page__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 22px;
+}
+
+.goals-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.goals-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 18px;
+  align-items: start;
+  grid-auto-rows: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  padding: 2px 0 24px;
+}
+
+.goal-card {
+  height: auto;
+  min-height: 260px;
+  max-height: none;
+  grid-template-rows: auto auto auto auto;
+  overflow: visible;
+}
+
+.goal-card__header {
+  min-height: 0;
+}
+
+.goal-card__header h2,
+.goal-card__header p,
+.goal-steps strong,
+.goal-steps span {
+  display: block;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: normal;
+}
+
+.goal-steps {
+  min-height: 0;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.goals-empty {
+  max-width: 560px;
+}
+
+/* No-goals empty state styled like the Notes empty card: soft rounded
+   translucent panel, compact, with no border or shadow. The 0.42 cream fill is
+   inherited from the shared forest surface rule above. */
+:root[data-theme="forest"] .goals-empty {
+  max-width: 460px;
+  min-height: auto;
+  padding: var(--space-9) var(--space-8);
+  border: 0;
+  border-radius: var(--radius-2xl);
+  box-shadow: none;
+}
+
+.goals-page {
+  min-height: 100vh;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding-bottom: 96px;
+}
+
+.goals-grid {
+  overflow: visible;
+  max-height: none;
+  padding-bottom: 80px;
+}
+
+.goal-card,
+.goal-steps {
+  overflow: visible;
+  max-height: none;
+}
+
+.goal-modal-backdrop {
+  place-items: start center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 36px 28px 56px;
+  overscroll-behavior: contain;
+}
+
+.goal-modal.tasks-panel,
+.goal-modal.tasks-panel--today {
+  width: min(920px, calc(100vw - 56px));
+  max-height: none;
+  overflow: visible;
+  border-radius: 34px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(250, 160, 138, 0.18), transparent 34%),
+    radial-gradient(circle at 94% 12%, rgba(191, 149, 230, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(247, 240, 250, 0.96), rgba(241, 233, 246, 0.95) 48%, rgba(232, 220, 244, 0.94));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: rgb(57, 57, 92);
+  box-shadow:
+    0 22px 56px -28px rgba(58, 58, 105, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -22px 44px rgba(255, 255, 255, 0.04);
+}
+
+.goal-modal.tasks-panel--today::before,
+.goal-modal.tasks-panel--today::after {
+  content: none;
+}
+
+.goal-form-grid {
+  align-items: end;
+}
+
+.goal-field--wide {
+  min-width: 0;
+}
+
+.goal-modal__footer {
+  margin-top: 16px;
+  padding-top: 2px;
+}
+
+:root[data-theme="forest"] .goal-modal.tasks-panel,
+:root[data-theme="forest"] .goal-modal.tasks-panel--today {
+  /* Solid cream so the modal reads opaque over the blurred page backdrop
+     (the same plate-like look the Pomodoro settings modal gets from sitting
+     on its solid panel) — no liquid-glass see-through. */
+  background: var(--c-sidebar-surface-solid);
+  color: var(--c-text-primary);
+  box-shadow:
+    0 22px 56px -28px rgba(86, 74, 58, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -22px 44px rgba(150, 132, 108, 0.12);
+}
+
+/* Goal editor modal: lift the small field labels + kicker to the same prominence
+   as the Pomodoro settings labels (denser navy ink) so they stand out clearly. */
+:root[data-theme="forest"] .goal-modal .goal-kicker,
+:root[data-theme="forest"] .goal-modal .goal-field span {
+  color: rgba(57, 57, 92, 0.68);
+}
+
+/* Goals visual consistency pass v4
+   Align goal summaries, goal actions, task deletion, and the inline add-task row
+   with the Today modal/table controls. */
+.goal-card__header {
+  align-items: flex-start;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.goal-card__actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.goal-action-icon.task-action {
+  opacity: 0.78;
+  flex: 0 0 auto;
+}
+
+.goal-card:hover .goal-action-icon.task-action,
+.goal-card:focus-within .goal-action-icon.task-action,
+.goal-task-editor:hover .goal-action-icon.task-action,
+.goal-task-editor:focus-within .goal-action-icon.task-action,
+.goal-task-add-row:hover .goal-action-icon.task-action,
+.goal-task-add-row:focus-within .goal-action-icon.task-action {
+  opacity: 1;
+}
+
+.goal-task-editor__remove.task-action {
+  width: 26px;
+  height: 26px;
+  justify-self: center;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.goal-task-editor__remove.task-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.28;
+  transform: none;
+}
+
+.goal-task-editor__remove.task-action:disabled:hover {
+  background: transparent;
+  color: rgba(142, 65, 75, 0.54);
+}
+
+.goal-task-add-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 170px 38px;
+  align-items: center;
+  gap: 9px;
+  border-radius: 20px;
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.18),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.05);
+}
+
+.goal-task-add-row__button.goal-soft-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  justify-self: center;
+}
+
+.goal-task-add-row__button.goal-soft-button span {
+  width: auto;
+  height: auto;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+}
+
+
+/* Goals polish v5: remove phantom empty task, remove summary divider, enlarge icons only. */
+.goal-card__header {
+  border-bottom: 0 !important;
+  padding-bottom: 0;
+}
+
+.goal-action-icon.task-action svg,
+.goal-task-editor__remove.task-action svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.goal-task-editor__remove.task-action {
+  width: 26px;
+  height: 26px;
+}
+
+.goal-task-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 12px rgba(110, 76, 150, 0.16));
+  pointer-events: none;
+  user-select: none;
+  transition: width 180ms ease, height 180ms ease, transform 180ms ease, filter 180ms ease;
+}
+
+.goal-card__hero-icon {
+  flex: 0 0 auto;
+  width: 74px;
+  height: 60px;
+  margin: -8px 2px -2px -6px;
+}
+
+.goal-steps li {
+  grid-template-columns: 30px 38px minmax(0, 1fr);
+}
+
+.goal-steps li > .goal-task-icon {
+  width: 38px;
+  height: 34px;
+}
+
+.goal-journey {
+  position: relative;
+  overflow-x: clip;
+  overflow-y: visible;
+  border-radius: 30px;
+  padding: 14px 22px 14px;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(250, 160, 138, 0.18), transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(191, 149, 230, 0.22), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(241, 148, 194, 0.08) 48%, rgba(191, 149, 230, 0.06));
+  backdrop-filter: blur(36px) saturate(1.36);
+  -webkit-backdrop-filter: blur(36px) saturate(1.36);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    18px 24px 42px -20px rgba(58, 58, 105, 0.28),
+    0 0 32px rgba(241, 148, 194, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -22px 44px rgba(129, 129, 190, 0.08);
+}
+
+/* The old single continuous baseline is replaced by per-segment connectors
+   (see `.goal-journey-step::after`) so the line links circle-to-circle and
+   never runs inside a node. Kept in the DOM but hidden to avoid JSX churn. */
+.goal-journey__track,
+.goal-journey__track-fill {
+  display: none;
+}
+
+/* Truncation hint when there are hidden steps on either side: a short dashed
+   stub continuing past the first/last visible circle, themed via tokens. */
+.goal-journey__edge-line {
+  position: absolute;
+  top: calc(var(--goal-steps-pt, 12px) + var(--goal-node-h, 92px) / 2);
+  width: calc(50% / var(--goal-visible-count, 1) - var(--goal-node-r, 44px));
+  height: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--c-text-primary) 22%, transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Steps to the left are already completed → solid accent stub. */
+.goal-journey__edge-line--left {
+  left: 0;
+  border-top: 3px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-grad-start), var(--accent-grad-mid) 100%);
+  height: 3px;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-grad-mid) 40%, transparent);
+}
+
+.goal-journey__edge-line--right {
+  right: 0;
+}
+
+.goal-journey__header {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(170px, auto) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  margin-bottom: 2px;
+}
+
+/* Compact header (Today widget): two slots side-by-side, no heading block.
+   Left slot is the goal dropdown (auto width, can shrink), right slot is
+   the inline metrics row (progress / deadline / status). */
+.goal-journey__header--compact {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.goal-journey__meta--inline {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.goal-journey__header h2 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: var(--planner-heading-weight) 24px/1.1 var(--planner-font);
+  letter-spacing: -0.03em;
+}
+
+.goal-journey__header p {
+  margin: 5px 0 0;
+  color: rgba(57, 57, 92, 0.54);
+  font: 650 14px/1.35 var(--planner-font);
+}
+
+.goal-journey__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.goal-journey__selector,
+.goal-journey__date,
+.goal-journey__status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  border-radius: 16px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(57, 57, 92, 0.72);
+  font: 800 14px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.22),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.07);
+}
+
+.goal-journey__selector .goal-task-icon {
+  width: 30px;
+  height: 28px;
+  margin: 0 8px 0 -4px;
+}
+
+.goal-journey__progress {
+  display: grid;
+  grid-template-columns: auto 82px;
+  align-items: center;
+  gap: 8px;
+  color: rgb(57, 57, 92);
+  font: 900 14px/1 var(--planner-font);
+}
+
+.goal-journey__progress i {
+  position: relative;
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 2px 2px 6px rgba(80, 75, 104, 0.12),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.goal-journey__progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent-grad-mid) 46%, transparent);
+}
+
+.goal-journey__status {
+  background: #4f9d69;
+  color: #fff;
+}
+
+.goal-journey__status--on-track {
+  background: #4f9d69;
+  color: #fff;
+}
+
+.goal-journey__status--needs-attention {
+  background: #ffa700;
+  color: #fff;
+}
+
+.goal-journey__status--at-risk {
+  background: #ff5353;
+  color: #fff;
+}
+
+.goal-journey__status--completed {
+  background: #4f9d69;
+  color: #fff;
+}
+
+.goal-journey__status--no-plan,
+.goal-journey__status--no-steps-yet {
+  background: #7c8595;
+  color: #fff;
+}
+
+.goal-journey__steps {
+  --goal-node-h: 92px;
+  --goal-steps-pt: 4px;
+  /* Visible circle radius — used to inset connectors so the line links the
+     circle edges and never runs inside a node. Overridden per theme. */
+  --goal-node-r: 40px;
+  --goal-steps-gap: 16px;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(120px, 1fr);
+  align-items: end;
+  gap: var(--goal-steps-gap);
+  margin: 0;
+  padding: var(--goal-steps-pt) 0 0;
+  list-style: none;
+}
+
+.goal-journey-step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Per-segment connector: spans from the right edge of this circle to the left
+   edge of the next one (center-to-center distance = column width + gap, then
+   inset by one radius on each side). Default = thin dashed for not-yet-done. */
+.goal-journey-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--goal-node-h, 92px) / 2);
+  left: calc(50% + var(--goal-node-r, 40px));
+  width: calc(100% + var(--goal-steps-gap, 16px) - 2 * var(--goal-node-r, 40px));
+  height: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--c-text-primary) 24%, transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Completed step → the segment leaving it is "achieved" → solid accent line. */
+.goal-journey-step.is-completed:not(:last-child)::after {
+  height: 3px;
+  border-top: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-grad-mid) 42%, transparent);
+}
+
+.goal-journey-step__node {
+  position: relative;
+  isolation: isolate;
+  width: 112px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+}
+
+.goal-journey-step__node .goal-task-icon {
+  width: 112px;
+  height: 92px;
+}
+
+.goal-detail-page .goal-journey-step.is-in-progress .goal-journey-step__node,
+.goals-page .goal-journey-step.is-in-progress .goal-journey-step__node {
+  transform: translateY(-6px) scale(1.06);
+}
+
+.goal-detail-page .goal-journey-step.is-in-progress .goal-journey-step__node::before,
+.goals-page .goal-journey-step.is-in-progress .goal-journey-step__node::before {
+  inset: 6% -10% -5%;
+  filter: blur(10px);
+  transform: scale(1.22);
+}
+
+.goal-detail-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon,
+.goals-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon {
+  width: 112px;
+  height: 92px;
+  transform: scale(1.04);
+}
+
+.goal-journey-step__badge {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.82);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  translate: 0 0;
+  background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
+  color: #fff;
+  font: 900 13px/1 var(--planner-font);
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(130, 84, 160, 0.22);
+}
+
+.goal-journey-step.is-upcoming .goal-journey-step__node {
+  opacity: 0.72;
+  filter: saturate(0.88);
+}
+
+.goal-journey-step.is-upcoming .goal-journey-step__badge {
+  background: rgba(255, 255, 255, 0.46);
+  color: rgba(82, 70, 132, 0.66);
+}
+
+.goal-journey-step.is-in-progress .goal-journey-step__node {
+  transform: translateY(-5px) scale(1.08);
+  filter: drop-shadow(0 0 16px rgba(241, 148, 194, 0.52));
+}
+
+.goal-journey-step.is-in-progress .goal-journey-step__node::before {
+  content: "";
+  position: absolute;
+  inset: 12% 6% 4%;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.92), rgba(255, 220, 244, 0.58) 34%, rgba(241, 148, 194, 0.28) 58%, transparent 74%),
+    radial-gradient(circle at 50% 58%, rgba(191, 149, 230, 0.34), transparent 68%);
+  filter: blur(8px);
+  opacity: 0.95;
+  transform: scale(1.12);
+}
+
+.goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon {
+  transform: scale(1.18);
+}
+
+.goal-journey-step strong {
+  display: block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(57, 57, 92);
+  font: 800 14px/1.2 var(--planner-font);
+}
+
+.goal-journey-step > span:not(.goal-journey-step__badge) {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: rgba(82, 70, 132, 0.7);
+  font: 800 11px/1.2 var(--planner-font);
+  letter-spacing: 0.01em;
+}
+
+.goal-journey-step.is-completed > span:not(.goal-journey-step__badge) {
+  background: linear-gradient(135deg, rgba(198, 220, 203, 0.85), rgba(164, 196, 173, 0.85));
+  color: #4a6b54;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 10px rgba(140, 175, 150, 0.25);
+}
+
+.goal-journey-step.is-in-progress > span:not(.goal-journey-step__badge) {
+  background: linear-gradient(135deg, rgba(248, 222, 152, 0.9), rgba(240, 196, 120, 0.9));
+  color: #7a5a1f;
+  font-weight: 900;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 10px rgba(220, 180, 110, 0.28);
+}
+
+.goal-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 10px;
+}
+
+.goal-icon-choice {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.22),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.goal-icon-choice:hover,
+.goal-icon-choice:focus-visible,
+.goal-icon-choice.is-selected {
+  outline: none;
+  transform: translateY(-1px);
+  border-color: var(--c-focus);
+  background: rgba(255, 255, 255, 0.32);
+  box-shadow:
+    0 12px 20px -14px var(--c-focus-soft),
+    inset 0 0 0 2px var(--c-focus-soft),
+    inset -1px -1px 8px rgba(255, 255, 255, 0.3);
+}
+
+.goal-icon-choice img {
+  width: 62px;
+  height: 54px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.goal-icon-choice__check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
+  color: #fff;
+  font: 900 12px/1 var(--planner-font);
+  box-shadow: 0 6px 12px rgba(190, 76, 128, 0.25);
+}
+
+.goal-editor-section--icons {
+  margin-top: 12px;
+}
+
+.goal-editor-hint {
+  color: rgba(57, 57, 92, 0.52);
+  font: 700 14px/1.25 var(--planner-font);
+}
+
+.goal-task-editor {
+  grid-template-columns: 24px 28px 42px minmax(0, 1fr) 170px 32px;
+}
+
+.goal-task-editor__icon-wrap {
+  position: relative;
+}
+
+.goal-task-editor__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 38px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.22),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06);
+}
+
+.goal-task-editor__icon .goal-task-icon {
+  width: 44px;
+  height: 36px;
+}
+
+.goal-task-add-row {
+  display: grid;
+  grid-template-columns: 28px 42px minmax(0, 1fr) 170px 42px;
+  align-items: center;
+  gap: 9px;
+  border-radius: 20px;
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.goal-task-add-row__button {
+  min-width: 42px;
+  width: 42px;
+  height: 38px;
+  padding: 0;
+}
+
+.goal-task-editor__popover {
+  position: absolute;
+  z-index: 5;
+  left: -12px;
+  top: 48px;
+  width: min(440px, calc(100vw - 80px));
+  padding: 12px;
+  border-radius: 24px;
+  background: rgba(255, 248, 254, 0.86);
+  box-shadow:
+    0 22px 50px -26px rgba(57, 57, 92, 0.5),
+    inset -1px -1px 10px rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+:root[data-theme="forest"] .goal-journey {
+  background: var(--app-widget-bg);
+  border: var(--app-widget-border);
+  color: var(--c-text-primary);
+  box-shadow: var(--app-widget-shadow);
+}
+
+/* Small inner chips/controls — light warm wash. */
+:root[data-theme="forest"] .goal-icon-choice,
+:root[data-theme="forest"] .goal-task-add-row,
+:root[data-theme="forest"] .goal-task-editor__icon,
+:root[data-theme="forest"] .goal-task-editor__popover,
+:root[data-theme="forest"] .goal-journey__selector,
+:root[data-theme="forest"] .goal-journey__date {
+  background: rgba(252, 249, 243, 0.5);
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .goal-journey__header h2,
+:root[data-theme="forest"] .goal-journey-step strong,
+:root[data-theme="forest"] .goal-journey__progress {
+  color: var(--c-text-primary);
+}
+
+/* Progress fill was the pink brand gradient with a pink glow — make it sage. */
+:root[data-theme="forest"] .goal-journey__progress b {
+  background: var(--c-accent-gradient);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-success) 40%, transparent);
+}
+
+/* The active step's halo + glow are hardcoded pink/purple — re-tint to sage so
+   the in-progress flag reads as part of the forest palette, not a stray bloom. */
+:root[data-theme="forest"] .goal-journey-step.is-in-progress .goal-journey-step__node {
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--c-success) 42%, transparent));
+}
+
+/* Drop the inner radial fill that bled green through the white circle; the
+   surrounding glow now comes solely from the node's drop-shadow above. */
+:root[data-theme="forest"] .goal-journey-step.is-in-progress .goal-journey-step__node::before {
+  display: none;
+}
+
+/* In-progress status pill is hardcoded amber/gold — soften toward warm sage. */
+:root[data-theme="forest"] .goal-journey-step.is-in-progress > span:not(.goal-journey-step__badge) {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c-warning) 34%, white), color-mix(in srgb, var(--c-warning) 20%, white));
+  color: color-mix(in srgb, var(--c-warning) 72%, var(--c-text-primary));
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--c-warning) 22%, transparent);
+}
+
+/* Completed pill — align with the fresher success token. */
+:root[data-theme="forest"] .goal-journey-step.is-completed > span:not(.goal-journey-step__badge) {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c-success) 30%, white), color-mix(in srgb, var(--c-success) 18%, white));
+  color: color-mix(in srgb, var(--c-success) 76%, var(--c-text-primary));
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--c-success) 20%, transparent);
+}
+
+/* Forest uses dedicated sage/moss icon assets; keep only the shadow retinted. */
+:root[data-theme="forest"] .goal-task-icon {
+  filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--c-success) 14%, transparent));
+}
+
+:root[data-theme="forest"] .goal-journey__track,
+:root[data-theme="forest"] .goal-journey__edge-line {
+  z-index: 0;
+}
+
+:root[data-theme="forest"] .goal-journey-step {
+  z-index: 1;
+}
+
+:root[data-theme="forest"] .goal-journey-step__node,
+:root[data-theme="forest"] .goal-list-card__icon,
+:root[data-theme="forest"] .goal-task-editor__icon,
+:root[data-theme="forest"] .goal-detail-editor__icon {
+  border: 1px solid color-mix(in srgb, var(--c-accent) 42%, rgba(255, 255, 252, 0.92));
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 252, 0.86);
+  /* Neutral soft shadow — no green halo on every node. The in-progress node
+     keeps its own green glow via the drop-shadow rule below. */
+  box-shadow:
+    0 10px 18px -18px rgba(86, 74, 58, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="forest"] .goal-journey__steps {
+  --goal-node-r: 46px;
+}
+
+:root[data-theme="forest"] .goal-journey-step__node {
+  width: 92px;
+  height: 92px;
+  margin-inline: auto;
+}
+
+:root[data-theme="forest"] .goal-journey-step__node .goal-task-icon,
+:root[data-theme="forest"] .goal-detail-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon,
+:root[data-theme="forest"] .goals-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon {
+  width: 58px;
+  height: 58px;
+  transform: none;
+}
+
+:root[data-theme="forest"] .goal-journey-step.is-in-progress .goal-journey-step__node {
+  border-color: color-mix(in srgb, var(--c-accent) 62%, rgba(255, 255, 252, 0.9));
+  background: rgba(255, 255, 252, 0.94);
+}
+
+:root[data-theme="forest"] .goal-list-card__icon {
+  width: 78px;
+  height: 78px;
+}
+
+:root[data-theme="forest"] .goal-list-card__icon .goal-task-icon {
+  width: 52px;
+  height: 52px;
+}
+
+:root[data-theme="forest"] .goal-detail-hero__image .goal-task-icon {
+  width: 108px;
+  height: 108px;
+  padding: var(--space-6);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 42%, rgba(255, 255, 252, 0.92));
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 252, 0.9);
+  box-shadow:
+    0 14px 24px -20px color-mix(in srgb, var(--c-success) 36%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="forest"] .goal-detail-task__main .goal-task-icon {
+  width: 48px;
+  height: 48px;
+  padding: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 252, 0.84);
+}
+
+:root[data-theme="forest"] .goal-task-editor__icon .goal-task-icon,
+:root[data-theme="forest"] .goal-detail-editor__icon .goal-task-icon {
+  width: 50px;
+  height: 50px;
+}
+
+:root[data-theme="forest"] .goal-icon-choice {
+  border-color: color-mix(in srgb, var(--c-accent) 34%, transparent);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 252, 0.78);
+}
+
+:root[data-theme="forest"] .goal-icon-choice img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+:root[data-theme="forest"] .goal-steps li > .goal-task-icon,
+:root[data-theme="forest"] .goal-journey__selector .goal-task-icon {
+  width: 42px;
+  height: 42px;
+  padding: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 252, 0.86);
+  box-shadow:
+    0 8px 16px -16px color-mix(in srgb, var(--c-success) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Completed goal-task checkboxes used the pink brand gradient — make them sage. */
+:root[data-theme="forest"] .goal-detail-task.is-complete .goal-detail-task__check {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 6px 14px -8px color-mix(in srgb, var(--c-success) 38%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme="forest"] .goal-journey__header p,
+:root[data-theme="forest"] .goal-journey-step > span:not(.goal-journey-step__badge),
+:root[data-theme="forest"] .goal-editor-hint {
+  color: var(--c-text-muted);
+}
+
+.goal-modal-backdrop {
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(14px, 3vh, 28px);
+}
+
+.goal-modal.tasks-panel,
+.goal-modal.tasks-panel--today {
+  max-height: calc(100dvh - clamp(28px, 6vh, 56px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.goal-modal.tasks-panel:has(.goal-date-picker__trigger[aria-expanded="true"]),
+.goal-modal.tasks-panel--today:has(.goal-date-picker__trigger[aria-expanded="true"]) {
+  overflow: visible;
+}
+
+.goal-journey__selector--select {
+  position: relative;
+  padding-right: 32px;
+}
+
+.goal-journey__selector--select select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 138px;
+  max-width: min(240px, 34vw);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-journey__selector--select::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0.56;
+  pointer-events: none;
+  transform: translateY(-62%) rotate(45deg);
+}
+
+.goal-task-add-row__icon-wrap {
+  position: relative;
+  z-index: 6;
+}
+
+/* Icon is now the first column (the step-number column was removed), so the
+   old -58px offset pushed the popover off the modal's left edge. Match the
+   editor rows' -12px so it stays inside the modal. */
+.goal-task-add-row__icon-wrap .goal-task-editor__popover {
+  left: -12px;
+}
+
+/* Goals list + dedicated goal detail page v8 */
+.goals-list-page {
+  padding-right: 10px;
+}
+
+.goals-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 1800px;
+  padding: 2px 0 80px;
+}
+
+.goal-list-card {
+  border-radius: 30px;
+}
+
+.goal-list-card__link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 18px;
+  min-height: 142px;
+  border-radius: 30px;
+  padding: 18px 20px 18px 18px;
+  text-decoration: none;
+  color: inherit;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.34), transparent 36%),
+    radial-gradient(circle at 96% 18%, rgba(191, 149, 230, 0.18), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.11));
+  box-shadow:
+    12px 14px 26px -18px rgba(58, 58, 105, 0.42),
+    inset -1px -1px 8px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.07);
+  transition: box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.goal-list-card__link:hover,
+.goal-list-card__link:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow:
+    16px 20px 34px -20px rgba(58, 58, 105, 0.5),
+    0 0 0 1px var(--c-border),
+    inset -1px -1px 8px rgba(255, 255, 255, 0.34),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.08);
+}
+
+.goal-list-card__icon {
+  width: 90px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+}
+
+.goal-list-card__icon .goal-task-icon {
+  width: 96px;
+  height: 78px;
+}
+
+.goal-list-card__content {
+  min-width: 0;
+}
+
+.goal-list-card__topline,
+.goal-list-card__meta,
+.goal-list-card__progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.goal-list-card__topline {
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.goal-list-card h2 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: var(--planner-heading-weight) 23px/1.05 var(--planner-font);
+  letter-spacing: -0.02em;
+}
+
+.goal-list-card p {
+  margin: 7px 0 14px;
+  color: rgba(57, 57, 92, 0.58);
+  font: 650 15px/1.35 var(--planner-font);
+}
+
+.goal-list-card__progress-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.goal-list-card__progress-row strong {
+  min-width: 44px;
+  color: rgb(57, 57, 92);
+  font: 900 15px/1 var(--planner-font);
+  text-align: right;
+}
+
+.goal-list-card__meta {
+  margin-top: 10px;
+  color: rgba(57, 57, 92, 0.54);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.goal-list-card__meta span + span::before {
+  content: "•";
+  margin-right: 10px;
+  opacity: 0.56;
+}
+
+.goal-list-card__chevron {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: rgba(82, 70, 132, 0.66);
+  font: 900 26px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 6px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08);
+}
+
+.goal-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #4f9d69;
+  color: #fff;
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.goal-status-chip--completed {
+  background: #4f9d69;
+  color: #fff;
+}
+
+.goal-status-chip--on-track {
+  background: #4f9d69;
+  color: #fff;
+}
+
+.goal-status-chip--needs-attention {
+  background: #ffa700;
+  color: #fff;
+}
+
+.goal-status-chip--at-risk {
+  background: #ff5353;
+  color: #fff;
+}
+
+.goal-status-chip--no-plan,
+.goal-status-chip--no-steps-yet {
+  background: #7c8595;
+  color: #fff;
+}
+
+.goal-detail-page {
+  display: grid;
+  gap: 16px;
+  max-width: 1260px;
+  padding-right: 112px;
+}
+
+.goal-detail-nav {
+  position: relative;
+  z-index: 1;
+}
+
+.goal-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0 10px;
+  color: rgba(57, 57, 92, 0.72);
+  text-decoration: none;
+  font: 800 15px/1 var(--planner-font);
+}
+
+.goal-back-link:hover,
+.goal-back-link:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.goal-detail-hero,
+.goal-detail-tasks,
+.goal-detail-editor {
+  position: relative;
+  z-index: 1;
+}
+
+.goal-detail-hero {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  min-height: 220px;
+}
+
+.goal-detail-hero__image {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 52% 64%, rgba(241, 148, 194, 0.2), transparent 42%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.26), transparent 60%);
+}
+
+.goal-detail-hero__image .goal-task-icon {
+  width: 178px;
+  height: 146px;
+}
+
+.goal-detail-hero__content {
+  min-width: 0;
+}
+
+.goal-detail-hero__title-row,
+.goal-detail-hero__progress-row,
+.goal-detail-section-header,
+.goal-detail-editor__header,
+.goal-detail-editor__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.goal-detail-hero__title-row h1,
+.goal-detail-section-header h2,
+.goal-detail-editor__header h2 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  letter-spacing: -0.03em;
+}
+
+.goal-detail-hero__title-row h1 {
+  font: var(--planner-display-weight) 32px/1.05 var(--planner-font);
+}
+
+.goal-detail-hero__title-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.goal-detail-hero__title-line .goal-status-chip {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 16px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 4px 12px rgba(80, 75, 104, 0.1);
+}
+
+.goal-health-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  border-radius: 16px;
+  padding: 0 14px;
+  font: 800 14px/1 var(--planner-font);
+  letter-spacing: 0.02em;
+  box-sizing: border-box;
+}
+
+.goal-health-alert::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Task-count health pills — outlined (they show task status, not the goal's).
+   The ::before dot uses currentColor, so it follows the status color. */
+.goal-health-alert--overdue {
+  background: transparent;
+  border: 1px solid #ff5353;
+  color: #ff5353;
+}
+.goal-health-alert--due-today {
+  background: transparent;
+  border: 1px solid #ffa700;
+  color: #ffa700;
+}
+.goal-health-alert--due-soon {
+  background: transparent;
+  border: 1px solid #3a9bdc;
+  color: #3a9bdc;
+}
+
+.goal-detail-section-header h2,
+.goal-detail-editor__header h2 {
+  font: var(--planner-heading-weight) 22px/1.08 var(--planner-font);
+}
+
+.goal-detail-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.goal-detail-hero__description {
+  margin: 8px 0 18px;
+  color: rgba(57, 57, 92, 0.58);
+  font: 650 14px/1.4 var(--planner-font);
+}
+
+.goal-detail-hero__progress-row {
+  align-items: center;
+  margin-bottom: 9px;
+  color: rgba(57, 57, 92, 0.68);
+  font: 800 15px/1 var(--planner-font);
+}
+
+.goal-detail-hero__progress-row strong {
+  color: rgb(57, 57, 92);
+  font-size: 16px;
+}
+
+.goal-detail-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.goal-detail-hero__stats > span:not(.goal-status-chip):not(.goal-health-alert) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  border-radius: 16px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(57, 57, 92, 0.72);
+  font: 800 14px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.22),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.07);
+}
+
+.goal-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 420px);
+  gap: 18px;
+  align-items: start;
+}
+
+.goal-detail-task-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-detail-task {
+  display: block;
+  border-radius: 22px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.18),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.05);
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+.goal-detail-task.is-expanded {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(250, 160, 138, 0.12), transparent 38%),
+    radial-gradient(circle at 96% 100%, rgba(191, 149, 230, 0.14), transparent 42%),
+    rgba(255, 255, 255, 0.2);
+}
+
+.goal-detail-task__head {
+  display: grid;
+  /* drag | check# | title | deadline | health | status | today | actions */
+  grid-template-columns: 24px 34px minmax(0, 1fr) 108px 108px 108px 96px 64px;
+  align-items: center;
+  column-gap: 14px;
+  min-height: 52px;
+}
+
+.goal-detail-task__today {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.goal-detail-task__main {
+  padding-right: 8px;
+}
+
+.goal-detail-task__main {
+  min-width: 0;
+}
+
+
+.goal-detail-task__check:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.goal-detail-task__expand {
+  display: grid;
+  overflow: hidden;
+  will-change: grid-template-rows, opacity, transform;
+}
+
+.goal-detail-task__expand-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.goal-task-expand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  margin: 10px 4px 6px 68px;
+  padding: 6px 4px 4px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-task-expand__field--subtasks,
+.goal-task-expand__field--note {
+  align-self: start;
+}
+
+.goal-task-expand__note-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.goal-task-expand__note-state {
+  font: 800 13px/1 var(--planner-font);
+  letter-spacing: 0.04em;
+}
+.goal-task-expand__note-state.is-saved {
+  color: rgba(46, 112, 84, 0.75);
+}
+.goal-task-expand__note-state.is-dirty {
+  color: rgb(160, 88, 50);
+}
+
+.goal-task-expand__note-save {
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
+  color: white;
+  font: 800 14px/1 var(--planner-font);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(241, 148, 194, 0.3);
+  transition: transform 120ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+.goal-task-expand__note-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(241, 148, 194, 0.4);
+}
+.goal-task-expand__note-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.goal-task-expand__field {
+  display: grid;
+  gap: 6px;
+}
+
+.goal-task-expand__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: rgba(57, 57, 92, 0.6);
+  font: 800 12px/1 var(--planner-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.goal-task-expand__label em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(82, 70, 132, 0.5);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.goal-task-expand__note {
+  width: 100%;
+  resize: vertical;
+  min-height: 160px;
+  max-height: 480px;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.45);
+  color: rgb(57, 57, 92);
+  font: 700 15px/1.4 var(--planner-font);
+  box-shadow:
+    inset 1px 1px 4px rgba(80, 75, 104, 0.08),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.4);
+  outline: none;
+  transition: box-shadow 160ms ease;
+  display: block;
+}
+.goal-task-expand__note:focus {
+  box-shadow:
+    0 0 0 2px var(--c-focus-soft),
+    inset 1px 1px 4px rgba(80, 75, 104, 0.08);
+}
+.goal-task-expand__note::placeholder {
+  color: rgba(82, 70, 132, 0.4);
+  font-weight: 600;
+}
+
+.goal-subtask-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-subtask {
+  display: grid;
+  /* drag | check | title | today (auto) | delete */
+  grid-template-columns: 20px 24px minmax(0, 1fr) auto 28px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: background 160ms ease, opacity 160ms ease;
+}
+
+.goal-subtask__today {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.goal-subtask.is-done {
+  background: rgba(214, 245, 226, 0.5);
+}
+
+.goal-subtask__drag {
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  width: 20px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+}
+.goal-subtask__drag:active {
+  cursor: grabbing;
+}
+.goal-subtask__drag span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(82, 70, 132, 0.36);
+  box-shadow: 0 6px 0 rgba(82, 70, 132, 0.36);
+}
+
+/* Subtask check uses the shared .checkbox-wrapper visual (gradient + tick). */
+.goal-subtask__check {
+  align-self: center;
+}
+
+.goal-subtask__title {
+  border: 0;
+  background: transparent;
+  color: rgb(57, 57, 92);
+  font: 700 15px/1.2 var(--planner-font);
+  outline: none;
+  min-width: 0;
+  padding: 4px 0;
+}
+.goal-subtask.is-done .goal-subtask__title {
+  color: rgba(57, 57, 92, 0.5);
+  text-decoration: line-through;
+}
+
+.goal-subtask__delete {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.4);
+  color: rgba(160, 58, 82, 0.7);
+  font: 900 14px/1 var(--planner-font);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, background 160ms ease;
+}
+/* Show delete only on direct hover of the row, or when keyboard focus
+   is on the title input (NOT on the hidden checkbox input). */
+.goal-subtask:hover .goal-subtask__delete,
+.goal-subtask:has(.goal-subtask__title:focus) .goal-subtask__delete,
+.goal-subtask__delete:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.goal-subtask__delete:hover {
+  background: rgba(255, 210, 218, 0.7);
+}
+
+.goal-subtask-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.goal-subtask-add input {
+  border: 1px dashed rgba(82, 70, 132, 0.18);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.3);
+  color: rgb(57, 57, 92);
+  font: 700 15px/1.2 var(--planner-font);
+  outline: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.goal-subtask-add input:focus {
+  border-style: solid;
+  border-color: var(--c-focus);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.goal-subtask-add button {
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
+  color: white;
+  font: 800 14px/1 var(--planner-font);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 10px rgba(241, 148, 194, 0.3);
+  transition: transform 120ms ease, box-shadow 160ms ease;
+}
+.goal-subtask-add button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(241, 148, 194, 0.4);
+}
+.goal-subtask-add button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.goal-detail-task.is-editing {
+  position: relative;
+  z-index: 3;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(250, 160, 138, 0.14), transparent 34%),
+    radial-gradient(circle at 96% 50%, rgba(191, 149, 230, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 0 0 1px var(--c-border),
+    inset -1px -1px 7px rgba(255, 255, 255, 0.26);
+}
+
+.goal-detail-task.is-editing .goal-detail-task__head {
+  min-height: 52px;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__health,
+.goal-detail-task.is-editing .goal-detail-task__status,
+.goal-detail-task.is-editing .goal-detail-task__today {
+  display: none;
+}
+
+.goal-detail-task__check,
+.goal-detail-task__main {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.goal-detail-task__check {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  color: rgb(82, 70, 132);
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  box-shadow:
+    inset -1px -1px 5px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 6px rgba(80, 75, 104, 0.08);
+}
+
+.goal-detail-task.is-complete .goal-detail-task__check {
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+}
+
+.goal-detail-task__main {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.goal-detail-task__main .goal-task-icon {
+  width: 58px;
+  height: 48px;
+}
+
+.goal-detail-task__main strong,
+.goal-detail-task__main small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-detail-task__main strong {
+  color: rgb(57, 57, 92);
+  font: 800 16px/1.2 var(--planner-font);
+}
+
+.goal-detail-task__main small {
+  margin-top: 4px;
+  color: rgba(57, 57, 92, 0.52);
+  font: var(--planner-label-weight) 14px/1.2 var(--planner-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-detail-task.is-complete .goal-detail-task__main strong {
+  color: rgba(57, 57, 92, 0.48);
+  text-decoration: line-through;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__main strong {
+  text-decoration: none;
+}
+
+.goal-detail-task__main--editing {
+  cursor: default;
+}
+
+.goal-detail-task__icon-edit-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.goal-detail-task__icon-edit {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 48px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--c-surface-soft);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.goal-detail-task__icon-edit .goal-task-icon {
+  width: 58px;
+  height: 48px;
+}
+
+.goal-detail-task__icon-popover {
+  position: absolute;
+  z-index: 130;
+  left: 0;
+  top: calc(100% + var(--space-2));
+  width: min(360px, calc(100vw - 48px));
+  max-height: clamp(260px, 44vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface-elevated);
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.goal-detail-task__icon-popover .goal-icon-picker {
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: var(--space-3);
+}
+
+.goal-detail-task__title-edit {
+  display: grid;
+  gap: var(--space-2);
+  width: min(100%, var(--goal-title-width, 100%));
+  min-width: 0;
+}
+
+.goal-detail-task__title-edit input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 38px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-4);
+  background: var(--c-surface-soft);
+  color: var(--c-text-primary);
+  font: var(--text-item-title-weight) var(--text-item-title-size) / 1 var(--font-base);
+  box-shadow: var(--shadow-soft);
+  outline: none;
+}
+
+.goal-detail-task__title-edit input:focus-visible,
+.goal-detail-task__title-edit input:focus {
+  box-shadow: var(--shadow-focus-ring), var(--shadow-soft);
+}
+
+.goal-detail-editor {
+  display: grid;
+  gap: 16px;
+  align-self: start;
+}
+
+.goal-detail-editor__icon-wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  border-radius: 24px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.goal-detail-editor__icon {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 76px;
+  border: 0;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  box-shadow:
+    inset -1px -1px 7px rgba(255, 255, 255, 0.22),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06);
+}
+
+.goal-detail-editor__icon .goal-task-icon {
+  width: 84px;
+  height: 68px;
+}
+
+.goal-detail-editor__icon-wrap strong,
+.goal-detail-editor__icon-wrap span {
+  display: block;
+}
+
+.goal-detail-editor__icon-wrap strong {
+  color: rgb(57, 57, 92);
+  font: 800 14px/1.2 var(--planner-font);
+}
+
+.goal-detail-editor__icon-wrap span {
+  margin-top: 5px;
+  color: rgba(57, 57, 92, 0.56);
+  font: 650 14px/1.35 var(--planner-font);
+}
+
+.goal-detail-editor__popover {
+  position: absolute;
+  z-index: 20;
+  left: 12px;
+  right: 12px;
+  top: calc(100% + 10px);
+  width: auto;
+  max-width: calc(100% - 24px);
+  max-height: clamp(260px, 44vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 24px;
+  background: rgba(255, 248, 254, 0.94);
+  box-shadow:
+    0 22px 50px -26px rgba(57, 57, 92, 0.5),
+    inset -1px -1px 10px rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.goal-detail-editor__popover .goal-icon-picker {
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 10px;
+}
+
+.goal-detail-editor__popover .goal-icon-choice {
+  min-width: 0;
+}
+
+.goal-detail-editor__popover .goal-icon-choice img {
+  width: min(64px, 100%);
+  height: 54px;
+}
+
+.goal-detail-editor__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(57, 57, 92, 0.68);
+  font: 800 15px/1 var(--planner-font);
+}
+
+.goal-detail-editor__status input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--c-accent);
+}
+
+.goal-detail-editor__footer {
+  align-items: center;
+}
+
+.goal-detail-empty {
+  margin-top: 18px;
+  padding: 28px 18px;
+}
+
+/* Goal cards = shared app widget surface. */
+:root[data-theme="forest"] .goal-list-card__link {
+  background: var(--app-widget-bg);
+  border: var(--app-widget-border);
+  color: var(--c-text-primary);
+  box-shadow: var(--app-widget-shadow);
+}
+
+/* Small inner controls/chips stay a light warm wash. */
+:root[data-theme="forest"] .goal-detail-editor__icon-wrap,
+:root[data-theme="forest"] .goal-detail-editor__icon,
+:root[data-theme="forest"] .goal-detail-editor__popover,
+:root[data-theme="forest"] .goal-detail-hero__stats > span:not(.goal-status-chip):not(.goal-health-alert),
+:root[data-theme="forest"] .goal-list-card__chevron {
+  background: rgba(252, 248, 241, 0.6);
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .goal-list-card h2,
+:root[data-theme="forest"] .goal-list-card__progress-row strong,
+:root[data-theme="forest"] .goal-detail-hero__title-row h1,
+:root[data-theme="forest"] .goal-detail-section-header h2,
+:root[data-theme="forest"] .goal-detail-editor__header h2,
+:root[data-theme="forest"] .goal-detail-hero__progress-row strong,
+:root[data-theme="forest"] .goal-detail-task__main strong,
+:root[data-theme="forest"] .goal-detail-editor__icon-wrap strong {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .goal-list-card p,
+:root[data-theme="forest"] .goal-list-card__meta,
+:root[data-theme="forest"] .goal-detail-hero__description,
+:root[data-theme="forest"] .goal-detail-hero__progress-row,
+:root[data-theme="forest"] .goal-detail-task__main small,
+:root[data-theme="forest"] .goal-detail-editor__icon-wrap span,
+:root[data-theme="forest"] .goal-detail-editor__status,
+:root[data-theme="forest"] .goal-back-link {
+  color: var(--c-text-muted);
+}
+
+/* Goals list/detail adaptive width + slide-in editors */
+.goals-list-page,
+.goal-detail-page {
+  width: 100%;
+  max-width: none;
+  padding-right: 10px;
+}
+
+.goals-list {
+  width: 100%;
+  max-width: none;
+}
+
+.goal-list-card,
+.goal-list-card__link,
+.goal-detail-hero,
+.goal-detail-tasks,
+.goal-journey {
+  width: 100%;
+}
+
+.goal-side-sheet {
+  position: fixed;
+  inset: 24px auto 24px 260px;
+  width: min(560px, calc(100vw - 300px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+.goal-modal-backdrop:has(.goal-side-sheet) {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  background: rgba(47, 38, 76, 0.18);
+}
+
+.goal-detail-page {
+  max-width: none;
+}
+
+.goal-detail-layout {
+  grid-template-columns: minmax(0, 1fr);
+  transition: grid-template-columns 220ms ease;
+}
+
+.goal-detail-layout.has-task-editor {
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+}
+
+.goal-detail-layout.has-task-editor .goal-detail-editor {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.goal-detail-layout.has-task-editor .goal-detail-tasks {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.goal-detail-editor {
+  min-width: 0;
+  max-height: none;
+}
+
+.goal-detail-task-list {
+  width: 100%;
+}
+
+.goal-detail-task {
+  grid-template-columns: 24px 36px minmax(220px, 1.15fr) minmax(130px, 0.45fr) minmax(128px, 0.45fr) auto;
+  gap: 12px;
+  cursor: default;
+}
+
+.goal-detail-task__drag {
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  width: 24px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: grab;
+}
+
+.goal-detail-task__drag:active {
+  cursor: grabbing;
+}
+
+.goal-detail-task__drag span {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(82, 70, 132, 0.38);
+  box-shadow: 0 7px 0 rgba(82, 70, 132, 0.38);
+}
+
+.goal-detail-task__deadline,
+.goal-detail-task__status,
+.goal-detail-task__health {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 26px;
+}
+
+.goal-detail-task__deadline > span:first-child,
+.goal-detail-task__status > span:first-child,
+.goal-detail-task__health > span:first-child {
+  display: none;
+}
+
+.goal-detail-task__deadline strong {
+  color: rgba(57, 57, 92, 0.72);
+  font: 800 14px/1.15 var(--planner-font);
+  white-space: nowrap;
+  /* Inset to match the editing date-picker's right border (1px) + padding (8px)
+     so the date text right edge lines up across read-only and editing rows. */
+  padding-right: calc(var(--space-3) + 1px);
+}
+
+.goal-detail-task__deadline strong.is-empty {
+  color: rgba(57, 57, 92, 0.4);
+  font-weight: 700;
+}
+
+.goal-detail-task__deadline strong.is-overdue {
+  color: #ff5353;
+}
+
+.goal-detail-task__date-picker {
+  width: 100%;
+  min-width: 0;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__deadline {
+  grid-column: 4;
+  justify-content: flex-end;
+}
+
+.goal-detail-task__date-picker .goal-date-picker__trigger {
+  min-height: 38px;
+  border-radius: var(--radius-md);
+}
+
+.goal-detail-task.is-editing .goal-detail-task__date-picker {
+  /* Hug the content (date / "No due date") and pin to the same right edge as
+     the read-only deadline so the dates line up across rows. Don't shrink to
+     the narrow 108px track; grow leftward into the space freed by the hidden
+     health/status columns. width:max-content keeps the value box tight to the
+     text (a wider fixed box would left-align the text and break alignment). */
+  width: max-content;
+  max-width: 220px;
+  flex: 0 0 auto;
+  justify-self: end;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__trigger {
+  min-height: 34px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__chevrons {
+  display: none;
+}
+
+.goal-detail-task__date-picker .goal-date-picker__popover {
+  right: 0;
+  left: auto;
+}
+
+.goal-health-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 108px;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 12px;
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.goal-health-pill > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Task health pills: outlined — transparent fill, border + text + dot in the
+   status color. (Goal-level pills stay filled.) */
+.goal-health-pill--overdue {
+  background: transparent;
+  border: 1px solid #ff5353;
+  color: #ff5353;
+}
+.goal-health-pill--overdue > span {
+  background: #ff5353;
+}
+
+.goal-health-pill--due-today {
+  background: transparent;
+  border: 1px solid #ffa700;
+  color: #ffa700;
+}
+.goal-health-pill--due-today > span {
+  background: #ffa700;
+}
+
+.goal-health-pill--due-soon {
+  background: transparent;
+  border: 1px solid #3a9bdc;
+  color: #3a9bdc;
+}
+.goal-health-pill--due-soon > span {
+  background: #3a9bdc;
+}
+
+.goal-task-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 108px;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.25);
+  color: rgba(57, 57, 92, 0.72);
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.goal-task-status > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(82, 70, 132, 0.38);
+}
+
+.goal-task-status.is-complete {
+  background: rgba(222, 246, 196, 0.54);
+  color: rgb(67, 95, 62);
+}
+
+.goal-task-status.is-complete > span {
+  background: rgb(96, 148, 84);
+}
+
+.goal-detail-task__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.goal-detail-task.is-editing .goal-detail-task__actions {
+  grid-column: 6 / 9;
+  justify-self: end;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.goal-detail-task__actions .goal-action-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.goal-detail-task__actions .goal-action-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.goal-detail-task__save.task-add {
+  /* Match the "+ Today" button: same compact height and the tighter
+     radius-sm corners (the base .task-add uses radius-md, which reads as
+     too rounded here). Drop the wide 104px min-width so "Save" isn't
+     swimming in side padding. */
+  min-width: 0;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Just the compact sizing — the quiet→bright hover affordance now lives on the
+   shared .pomodoro-btn--ghost-text primitive, so every Cancel button matches. */
+.goal-detail-task__cancel.pomodoro-btn {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.goal-detail-task__error {
+  margin: 0 0 var(--space-3) 68px;
+  color: var(--c-danger);
+  font: var(--text-item-title-weight) var(--text-body-small-size) / 1.3 var(--font-base);
+}
+
+/* Goal detail: right-side task drawer that pushes the page content */
+.goal-detail-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  width: 100%;
+  transition: grid-template-columns 240ms ease, gap 240ms ease;
+}
+
+.goal-detail-workspace.has-task-editor {
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 440px);
+}
+
+.goal-detail-main-stack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+  /* Fill the full width — the summary, tasks and journey stretch to the screen.
+     (The task-editor open/close still animates via the workspace's
+     grid-template-columns transition above.) */
+  max-width: none;
+}
+
+.goal-detail-workspace.has-task-editor .goal-detail-hero,
+.goal-detail-workspace.has-task-editor .goal-detail-tasks,
+.goal-detail-workspace.has-task-editor .goal-journey {
+  min-width: 0;
+}
+
+.goal-detail-workspace > .goal-detail-editor {
+  grid-column: 2;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  align-self: start;
+  min-width: 0;
+}
+
+.goal-detail-workspace:not(.has-task-editor) > .goal-detail-editor {
+  display: none;
+}
+
+.goal-detail-workspace.has-task-editor .goal-detail-hero {
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.goal-detail-workspace.has-task-editor .goal-detail-hero__image .goal-task-icon {
+  width: 148px;
+  height: 122px;
+}
+
+:root[data-theme="forest"] .goal-detail-workspace.has-task-editor .goal-detail-hero__image .goal-task-icon {
+  width: 96px;
+  height: 96px;
+}
+
+.goal-detail-workspace.has-task-editor .goal-detail-task__head {
+  grid-template-columns: 24px 34px minmax(180px, 1fr) 100px 110px 118px 72px;
+}
+
+.goal-detail-workspace.has-task-editor .goal-detail-task.is-editing .goal-detail-task__actions {
+  grid-column: 6 / 8;
+}
+
+
+/* Drop the title down so it sits on the same line as the sidebar INCHY logo
+   (the wordmark is vertically centered ~22px from the top). */
+.goals-list-page {
+  padding-top: 22px;
+}
+
+/* Goals list action row under description */
+.goals-list-page .goals-page__header {
+  margin-bottom: 10px;
+}
+
+.goals-list-page .goals-page__subtitle {
+  max-width: 760px;
+}
+
+.goals-list-page .goals-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.goals-list-page .goals-page__actions .task-add {
+  margin-left: 4px;
+}
+
+/* Goals actions row should end exactly where goal cards end */
+.goals-list-page .goals-page__actions,
+.goals-list-page .goals-list {
+  width: 100%;
+  max-width: 1800px;
+}
+
+.goals-list-page .goals-page__actions {
+  justify-content: flex-start;
+}
+
+.goals-list-page .goals-page__actions .task-add {
+  margin-left: auto;
+}
+
+.goals-list-page {
+  padding-right: 10px;
+}
+
+.goals-list-page .goals-page__actions,
+.goals-list-page .goals-list {
+  width: 100%;
+  max-width: none;
+}
+
+/* Goal cards span the full width — single column, each card stretches across
+   the whole content area (responsive). */
+.goals-list-page .goals-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.goals-list-page .goals-page__actions {
+  padding-right: 0;
+}
+
+.goals-list-page .goal-list-card__link {
+  grid-template-columns: 110px minmax(0, 1fr) 42px;
+  min-height: 152px;
+  padding: 22px 28px 22px 24px;
+  gap: 24px;
+}
+
+.goals-list-page .goal-list-card__icon {
+  width: 110px;
+}
+
+.goals-list-page .goal-list-card__progress-row {
+  gap: 20px;
+}
+
+.goals-list-page:has(> .goals-empty:not(p)) {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: calc(100dvh - 22px);
+}
+
+.goals-list-page:has(> .goals-empty:not(p)) > .goals-page__actions {
+  align-self: start;
+}
+
+.goals-list-page:has(> .goals-empty:not(p)) > .goals-empty {
+  align-self: center;
+  justify-self: center;
+  margin: 0 auto;
+}
+
+.goals-list-page:has(> .goals-empty:not(p)) > .goals-list {
+  display: none;
+}
+
+/* Shared app surface: match Today widgets across Goals cards and modals. */
+:root[data-theme="forest"] .goal-card,
+:root[data-theme="forest"] .goals-stat,
+:root[data-theme="forest"] .goals-empty,
+:root[data-theme="forest"] .goal-list-card__link,
+:root[data-theme="forest"] .goal-detail-hero,
+:root[data-theme="forest"] .goal-detail-tasks,
+:root[data-theme="forest"] .goal-detail-editor,
+:root[data-theme="forest"] .goal-journey,
+:root[data-theme="forest"] .goal-editor-section,
+:root[data-theme="forest"] .goal-task-editor,
+:root[data-theme="forest"] .goal-task-editor__popover,
+:root[data-theme="forest"] .goal-date-picker__popover,
+:root[data-theme="forest"] .goal-detail-task__icon-popover,
+:root[data-theme="forest"] .goal-detail-editor__popover {
+  border: var(--app-widget-border);
+  background: var(--app-widget-bg);
+  backdrop-filter: var(--app-widget-backdrop);
+  -webkit-backdrop-filter: var(--app-widget-backdrop);
+  box-shadow: var(--app-widget-shadow);
+}
+
+/* Goal detail tasks read as one list, not separate oversized pill cards. */
+.goal-detail-tasks .goal-detail-task-list {
+  gap: 0;
+  margin-top: var(--space-7);
+  position: relative;
+}
+
+.goal-detail-tasks .goal-detail-task-list::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 12%,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 88%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.goal-detail-tasks .goal-detail-task {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-detail-tasks .goal-detail-task::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-surface-soft) 34%, transparent) 12%,
+    color-mix(in srgb, var(--c-surface-soft) 34%, transparent) 88%,
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.goal-detail-tasks .goal-detail-task::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 12%,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 88%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.goal-detail-tasks .goal-detail-task__head {
+  position: relative;
+  z-index: 1;
+  min-height: 62px;
+  padding: var(--space-4) 0;
+}
+
+.goal-detail-tasks .goal-detail-task:hover,
+.goal-detail-tasks .goal-detail-task:focus-within,
+.goal-detail-tasks .goal-detail-task.is-expanded {
+  background: transparent;
+}
+
+.goal-detail-tasks .goal-detail-task:hover::before,
+.goal-detail-tasks .goal-detail-task:focus-within::before,
+.goal-detail-tasks .goal-detail-task.is-expanded::before {
+  opacity: 1;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing {
+  border: 0;
+  border-radius: 0;
+  margin-block: 0;
+  padding-inline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-surface-soft) 30%, transparent) 12%,
+    color-mix(in srgb, var(--c-surface-soft) 30%, transparent) 88%,
+    transparent
+  );
+  opacity: 1;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-focus) 38%, var(--c-border-soft)) 12%,
+    color-mix(in srgb, var(--c-focus) 38%, var(--c-border-soft)) 88%,
+    transparent
+  );
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__head {
+  min-height: 62px;
+  padding: var(--space-4) 0;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__icon-edit,
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__title-edit input,
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__trigger {
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-surface-soft) 42%, transparent);
+  box-shadow: none;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__title-edit input:focus-visible,
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__title-edit input:focus {
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  box-shadow: var(--shadow-focus-ring);
+}
+
+/* Goal create/edit modal: reuse the task-list editing language. */
+.goal-modal.tasks-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-modal.tasks-panel .goal-form-grid {
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 22vw, 340px);
+  gap: var(--space-7);
+}
+
+.goal-modal.tasks-panel .goal-input,
+.goal-modal.tasks-panel .goal-date-picker__trigger {
+  min-height: calc(var(--space-10) + var(--space-1));
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  color: var(--c-text-primary);
+  box-shadow: none;
+}
+
+.goal-modal.tasks-panel .goal-input {
+  height: calc(var(--space-10) + var(--space-1));
+  padding-inline: var(--space-4);
+  font: var(--text-item-title-weight) var(--text-item-title-size) / 1 var(--font-base);
+}
+
+.goal-modal.tasks-panel .goal-input--large {
+  height: calc(var(--space-10) + var(--space-1));
+  font-size: var(--text-item-title-size);
+}
+
+.goal-modal.tasks-panel .goal-input:focus-visible,
+.goal-modal.tasks-panel .goal-date-picker__trigger:focus-visible,
+.goal-modal.tasks-panel .goal-date-picker__trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.goal-modal.tasks-panel .goal-editor-icon-block {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--space-10) * 2) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  width: fit-content;
+  max-width: min(100%, 620px);
+  margin-block: var(--space-5) var(--space-6);
+}
+
+.goal-modal.tasks-panel .goal-editor-icon-block > div {
+  min-width: 0;
+}
+
+.goal-modal.tasks-panel .goal-editor-icon-block > div span {
+  margin: 0;
+  color: var(--c-text-secondary);
+  font: var(--text-body-weight) var(--text-body-size) / 1.35 var(--font-base);
+}
+
+.goal-modal.tasks-panel .goal-editor-icon-block__popover {
+  position: absolute;
+  z-index: 160;
+  left: 0;
+  top: calc(100% + var(--space-3));
+  width: min(440px, calc(100vw - 80px));
+  padding: var(--space-4);
+  border: var(--app-popup-border);
+  border-radius: var(--radius-xl);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+
+.goal-modal.tasks-panel .goal-detail-editor__icon,
+.goal-modal.tasks-panel .goal-task-editor__icon,
+.goal-modal.tasks-panel .goal-icon-choice {
+  aspect-ratio: 1;
+  border-radius: var(--radius-pill);
+}
+
+.goal-modal.tasks-panel .goal-detail-editor__icon {
+  width: calc(var(--space-10) * 2);
+  height: calc(var(--space-10) * 2);
+}
+
+.goal-modal.tasks-panel .goal-detail-editor__icon .goal-task-icon,
+.goal-modal.tasks-panel .goal-task-editor__icon .goal-task-icon,
+.goal-modal.tasks-panel .goal-icon-choice img {
+  width: calc(var(--space-10) + var(--space-3));
+  height: calc(var(--space-10) + var(--space-3));
+  object-fit: contain;
+}
+
+.goal-modal.tasks-panel .goal-task-editor__icon .goal-task-icon {
+  width: calc(var(--space-8) + var(--space-1));
+  height: calc(var(--space-8) + var(--space-1));
+  object-position: center;
+}
+
+.goal-modal.tasks-panel .goal-editor-section {
+  gap: 0;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-modal.tasks-panel .goal-editor-section__head {
+  margin-bottom: var(--space-4);
+}
+
+.goal-modal.tasks-panel .goal-editor-section__head h3 {
+  color: var(--c-text-primary);
+  font: var(--text-card-title-weight) var(--text-card-title-size) / 1 var(--font-base);
+}
+
+.goal-modal.tasks-panel .goal-task-editor-list {
+  position: relative;
+  gap: 0;
+}
+
+.goal-modal.tasks-panel .goal-task-editor-list::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 12%,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 88%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.goal-modal.tasks-panel .goal-task-editor,
+.goal-modal.tasks-panel .goal-task-add-row {
+  position: relative;
+  min-height: 62px;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-modal.tasks-panel .goal-task-editor {
+  grid-template-columns: 24px 42px minmax(0, 1fr) clamp(190px, 17vw, 260px) 42px;
+}
+
+.goal-modal.tasks-panel .goal-task-add-row {
+  grid-template-columns: 42px minmax(0, 1fr) clamp(190px, 17vw, 260px) 42px;
+}
+
+.goal-modal.tasks-panel .goal-task-editor::before,
+.goal-modal.tasks-panel .goal-task-add-row::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 12%,
+    color-mix(in srgb, var(--c-border) 74%, var(--c-text-secondary)) 88%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.goal-modal.tasks-panel .goal-task-editor > *,
+.goal-modal.tasks-panel .goal-task-add-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+.goal-modal.tasks-panel .goal-task-add-row {
+  margin-top: 0;
+}
+
+.goal-modal.tasks-panel .goal-task-editor__drag,
+.goal-modal.tasks-panel .goal-task-editor__remove {
+  background: transparent;
+  box-shadow: none;
+}
+
+.goal-modal.tasks-panel .goal-task-editor__icon {
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
+  background: rgba(255, 255, 252, 0.84);
+  box-shadow: none;
+}
+
+.goal-modal.tasks-panel .goal-task-add-row .add-icon-btn {
+  justify-self: end;
+}
+
+.goal-modal.tasks-panel .goal-error {
+  margin-block: var(--space-4) 0;
+}
+
+.goal-modal.tasks-panel .goal-modal__footer {
+  justify-content: flex-end;
+  gap: var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-7);
+}
+
+:root[data-theme="forest"] .goal-date-picker__popover {
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+
+.goal-modal.tasks-panel .goal-date-picker--large {
+  justify-self: end;
+  width: 100%;
+  max-width: 340px;
+}
+
+.goal-modal.tasks-panel .goal-task-editor__date {
+  width: 100%;
+  max-width: 260px;
+}

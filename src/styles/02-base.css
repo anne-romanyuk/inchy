@@ -1,0 +1,1968 @@
+/* 02-base.css — Base / reset / shared primitives & buttons (.ui-*, .task-add, .pomodoro-btn, .add-to-today, scrollbars, keyframes, layout shells, shared utils).
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+/* Design system foundation — tokens first, then reusable primitives.
+   Both are additive and token-driven; they do not alter existing classes.
+   See docs/design-system.md and AGENTS.md for usage rules. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #d9d9d9;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--planner-font);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 260ms ease,
+    color 260ms ease;
+}
+
+/* Display-level — large headings throughout the app. */
+h1,
+h2 {
+  font-weight: var(--planner-display-weight);
+  letter-spacing: var(--planner-display-tracking);
+}
+
+h3 {
+  font-weight: var(--planner-heading-weight);
+  letter-spacing: var(--planner-heading-tracking);
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:root {
+  --app-widget-bg: color-mix(in srgb, var(--c-surface-soft) 85%, transparent);
+  --app-widget-backdrop: none;
+  --app-widget-border: 1px solid color-mix(in srgb, var(--c-border-soft) 72%, var(--c-surface-elevated));
+  --app-widget-shadow: none;
+  --app-popup-bg: var(--c-sidebar-surface-solid);
+  --app-popup-backdrop: none;
+  --app-popup-border: var(--app-widget-border);
+  --app-popup-shadow: var(--shadow-elevated);
+}
+
+.fluid-gradient {
+  position: fixed;
+  inset: 0;
+  min-width: 100px;
+  min-height: 100px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.fluid-gradient__layer {
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  left: -25%;
+  top: -25%;
+  filter: blur(100px);
+  will-change: transform;
+}
+
+.fluid-gradient__layer--coral {
+  background: radial-gradient(circle at 80% 50%, #faa08a 0%, transparent 50%);
+  animation: fluid-coral 6.666s ease-in-out infinite;
+}
+
+.fluid-gradient__layer--pink {
+  background: radial-gradient(circle at 20% 80%, #f194c2 0%, transparent 50%);
+  animation: fluid-pink 8s ease-in-out infinite;
+}
+
+.fluid-gradient__layer--violet {
+  background: radial-gradient(circle at 50% 20%, #bf95e6 0%, transparent 50%);
+  animation: fluid-violet 6s ease-in-out infinite;
+}
+
+.home-stage {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* One-shot blur-in flourish. Runs only on mount and leaves NO resting filter
+   (no `forwards` fill), so the stage never keeps a `filter` that would create a
+   backdrop-root and make the frosted panels' `backdrop-filter` leak a
+   rectangular pad. Replaces the old motion-driven filter animation. */
+@keyframes stage-blur-in {
+  from {
+    filter: blur(8px);
+  }
+  to {
+    filter: blur(0px);
+  }
+}
+
+.home-stage,
+.auth-stage {
+  animation: stage-blur-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.home-content {
+  /* Sidebar width is fluid: stays at the small-screen 204px for normal
+     displays, then grows proportionally on large screens so the strip doesn't
+     look too thin (and nav items don't read as squares). Nav items scale with
+     it (see `.sidebar-nav` width below: --sidebar-w − 40px = 164px at 204px). */
+  --sidebar-w: clamp(204px, 14vw, 300px);
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  gap: 34px;
+  min-height: 100vh;
+  width: 100%;
+  overflow: auto;
+  padding: 0 24px 0 0;
+  transition:
+    filter 320ms ease,
+    opacity 320ms ease,
+    transform 320ms ease;
+}
+
+.home-content.is-avatar-pending {
+  filter: blur(14px);
+  opacity: 0.72;
+  pointer-events: none;
+  user-select: none;
+  transform: scale(0.992);
+}
+
+.home-page--loading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+}
+
+.home-loading {
+  display: grid;
+  place-items: center;
+  min-width: 180px;
+  min-height: 72px;
+  border-radius: 34px;
+  background: rgba(226, 222, 232, 0.68);
+  backdrop-filter: blur(26px) saturate(1.18);
+  -webkit-backdrop-filter: blur(26px) saturate(1.18);
+  color: rgba(57, 57, 92, 0.72);
+  font: 700 15px/1.4 var(--planner-font);
+  box-shadow:
+    18px 20px 32px -12px rgba(0, 0, 0, 0.22),
+    -8px -8px 34px -12px rgba(255, 255, 255, 0.54),
+    inset -2px -2px 12px rgba(255, 255, 255, 0.34),
+    inset 2px 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.home-user {
+  position: fixed;
+  z-index: 5;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floating-user-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+.floating-user-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(188px, calc(100vw - 32px));
+  min-height: 0;
+  padding: 12px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 84% 10%, rgba(241, 148, 194, 0.5), transparent 30%),
+    linear-gradient(145deg, rgba(129, 129, 190, 0.88) 0%, rgba(194, 117, 171, 0.8) 48%, rgba(238, 184, 223, 0.7) 100%),
+    rgba(226, 222, 232, 0.84);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow:
+    14px 18px 28px -16px rgba(58, 58, 105, 0.34),
+    -5px -5px 20px -12px rgba(255, 255, 255, 0.6),
+    inset -2px -2px 10px rgba(255, 255, 255, 0.24),
+    inset 2px 2px 10px rgba(57, 57, 92, 0.1);
+  overflow: hidden;
+  transform-origin: top right;
+  will-change: transform, opacity, filter;
+}
+
+.floating-user-menu__items {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 7px;
+}
+
+.floating-user-menu__item {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 10px;
+  background: rgba(243, 235, 245, 0.76);
+  color: rgba(82, 70, 132, 0.82);
+  cursor: pointer;
+  font: 700 15px/1 var(--planner-font);
+  text-align: left;
+  box-shadow:
+    5px 6px 12px rgba(58, 58, 105, 0.1),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.52),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08);
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.floating-user-menu__icon {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.floating-user-menu__item:hover,
+.floating-user-menu__item:focus-visible {
+  background: rgba(255, 246, 250, 0.9);
+  color: rgb(99, 73, 145);
+  box-shadow:
+    7px 8px 14px rgba(58, 58, 105, 0.12),
+    -2px -2px 8px rgba(255, 255, 255, 0.52);
+  outline: none;
+}
+
+.floating-user-menu__item:active {
+  transform: translateY(1px);
+}
+
+.theme-toggle {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  padding: 4px;
+  background: rgba(243, 235, 245, 0.76);
+  color: rgba(82, 70, 132, 0.82);
+  cursor: pointer;
+  font: 700 15px/1 var(--planner-font);
+  box-shadow:
+    5px 6px 12px rgba(58, 58, 105, 0.1),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.52),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08);
+}
+
+.theme-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-toggle__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  width: 100%;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 12% 50%, rgba(250, 160, 138, 0.22), transparent 36%),
+    radial-gradient(circle at 88% 50%, rgba(191, 149, 230, 0.28), transparent 38%),
+    rgba(232, 225, 238, 0.72);
+  overflow: hidden;
+  box-shadow:
+    inset 2px 2px 6px rgba(80, 60, 130, 0.28),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.55),
+    0 0 18px rgba(155, 116, 205, 0.18);
+  transition:
+    background 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.theme-toggle__option {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: rgba(82, 70, 132, 0.72);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.08em;
+  transition: color 220ms ease;
+}
+
+.theme-toggle__thumb {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: 20px;
+  border-radius: var(--radius-xs);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.55), transparent 38%),
+    linear-gradient(135deg, #faa08a 0%, #f194c2 58%, #bf95e6 100%);
+  box-shadow:
+    3px 4px 9px rgba(110, 80, 150, 0.26),
+    -1px -1px 4px rgba(255, 255, 255, 0.5),
+    0 0 12px rgba(241, 148, 194, 0.42),
+    0 0 10px rgba(129, 129, 190, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.theme-toggle:hover,
+.theme-toggle:has(input:focus-visible) {
+  color: rgb(99, 73, 145);
+  outline: none;
+  box-shadow:
+    7px 8px 14px rgba(58, 58, 105, 0.12),
+    -2px -2px 8px rgba(255, 255, 255, 0.52);
+}
+
+.theme-toggle:has(input:focus-visible) {
+  outline: 2px solid rgba(63, 63, 65, 0.38);
+  outline-offset: 3px;
+}
+
+.theme-toggle input:checked + .theme-toggle__track {
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 182, 211, 0.22), transparent 34%),
+    radial-gradient(circle at 82% 50%, rgba(155, 255, 207, 0.26), transparent 36%),
+    linear-gradient(135deg, rgba(11, 18, 39, 0.9), rgba(43, 39, 76, 0.84));
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.42),
+    inset -1px -1px 8px rgba(171, 148, 255, 0.22),
+    0 0 22px rgba(155, 255, 207, 0.2),
+    0 0 28px rgba(255, 182, 211, 0.14);
+}
+
+.theme-toggle input:not(:checked) + .theme-toggle__track .theme-toggle__option--light,
+.theme-toggle input:checked + .theme-toggle__track .theme-toggle__option--dark {
+  color: rgb(57, 57, 92);
+}
+
+.theme-toggle input:checked + .theme-toggle__track .theme-toggle__thumb {
+  transform: translateX(calc(100% - 3px));
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.66), transparent 34%),
+    linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  box-shadow:
+    0 0 14px rgba(155, 255, 207, 0.5),
+    0 0 20px rgba(255, 182, 211, 0.42),
+    3px 4px 10px rgba(0, 0, 0, 0.32);
+}
+
+.home-user__button {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 2;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  padding: 5px;
+  background:
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.28), transparent 35%),
+    linear-gradient(135deg, rgba(241, 148, 194, 0.88), rgba(129, 129, 190, 0.76));
+  color: rgb(57, 57, 92);
+  cursor: pointer;
+  font: 700 16px/1 "Quattrocento Sans", system-ui, sans-serif;
+  box-shadow:
+    7px 9px 18px rgba(58, 58, 105, 0.18),
+    inset -2px -2px 8px rgba(255, 255, 255, 0.28),
+    inset 2px 2px 8px rgba(80, 75, 104, 0.08);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.home-user__button:hover,
+.home-user__button:focus-visible {
+  background:
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.34), transparent 35%),
+    linear-gradient(135deg, rgba(241, 148, 194, 0.96), rgba(129, 129, 190, 0.84));
+  box-shadow:
+    9px 11px 20px rgba(58, 58, 105, 0.2),
+    -2px -2px 8px rgba(255, 255, 255, 0.28);
+  outline: none;
+}
+
+.home-user__button[aria-expanded="true"] {
+  background:
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.34), transparent 35%),
+    linear-gradient(135deg, rgba(241, 148, 194, 0.98), rgba(194, 117, 171, 0.88));
+  box-shadow:
+    0 0 0 8px rgba(241, 148, 194, 0.16),
+    8px 10px 20px rgba(58, 58, 105, 0.18),
+    inset -2px -2px 8px rgba(255, 255, 255, 0.28);
+}
+
+.home-user__button:active {
+  transform: translateY(1px);
+}
+
+.character-preview {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  width: 100%;
+  min-height: clamp(112px, 21vh, 190px);
+}
+
+.character-preview::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 132px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(83, 61, 121, 0.34), rgba(83, 61, 121, 0.13) 40%, transparent 66%),
+    radial-gradient(ellipse at 52% 50%, rgba(118, 88, 145, 0.2), rgba(118, 88, 145, 0.07) 58%, transparent 78%);
+  filter: blur(7px);
+  transform: translateX(-50%) scaleY(0.86);
+}
+
+.character-preview img {
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  width: min(154px, 62%);
+  max-height: clamp(112px, 20vh, 190px);
+  object-fit: contain;
+  filter:
+    drop-shadow(0 11px 8px rgba(83, 61, 121, 0.12))
+    drop-shadow(0 18px 18px rgba(118, 88, 145, 0.07));
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  /* Use the same `--today-gap` variable that `.today-dashboard` uses for
+     its row gap (defaults to 14px-ish), so the horizontal spacing between
+     panels matches the vertical spacing between rows exactly — both
+     responsive overrides and base value stay in sync via one knob. The
+     `14px` fallback matches the goals list page's inter-card gap. */
+  gap: var(--today-gap, 14px);
+  align-items: start;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  min-height: 84px;
+  margin: 0 0 12px;
+}
+
+.dashboard-title {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: var(--planner-display-weight) 34px/1 var(--planner-font);
+  letter-spacing: var(--planner-display-tracking);
+}
+
+.task-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 104px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 14px;
+  background: rgb(129 129 190 / 51%);
+  color: rgb(57, 57, 92);
+  cursor: pointer;
+  font: var(--planner-label-weight) 15px/1 var(--planner-font);
+  letter-spacing: 0.08em;
+  box-shadow:
+    7px 6px 10px 0 rgb(58 58 105 / 22%),
+    -0.4px -0.4px 2.8px -0.875px rgb(255 255 255 / 58%),
+    -1.2px -1.2px 8.5px -1.75px rgb(255 255 255 / 48%);
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.task-add:hover,
+.task-add:focus-visible {
+  box-shadow:
+    inset 2px 1px 3px 1px rgb(58 58 105 / 26%),
+    inset -1px -1px 4px 0 rgb(255 255 255 / 58%);
+}
+
+.task-add:focus-visible {
+  outline: 2px solid rgba(63, 63, 65, 0.48);
+  outline-offset: 4px;
+}
+
+.task-add:active {
+  transform: translateY(1px);
+}
+
+.task-add span[aria-hidden="true"] {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.34);
+  font: 700 15px/1 var(--planner-font);
+}
+
+.fade-scroll {
+  --fade-size: 28px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 100%);
+          mask-image: linear-gradient(to bottom, #000 0, #000 100%);
+  transition: -webkit-mask-image 180ms ease, mask-image 180ms ease;
+}
+
+.fade-scroll[data-overflow-top="true"][data-overflow-bottom="true"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-size),
+    #000 calc(100% - var(--fade-size)),
+    transparent 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-size),
+    #000 calc(100% - var(--fade-size)),
+    transparent 100%
+  );
+}
+
+.fade-scroll[data-overflow-top="false"][data-overflow-bottom="true"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--fade-size)),
+    transparent 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--fade-size)),
+    transparent 100%
+  );
+}
+
+.fade-scroll[data-overflow-top="true"][data-overflow-bottom="false"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-size),
+    #000 100%
+  );
+          mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-size),
+    #000 100%
+  );
+}
+
+.fade-scroll[data-overflow-top="false"][data-overflow-bottom="false"] {
+  overflow-y: hidden;
+}
+
+.app-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(241, 148, 194, 0.75) transparent;
+}
+
+.app-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: var(--radius-md);
+}
+
+.app-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, #faa08a 0%, #f194c2 58%, #bf95e6 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 0 8px rgba(241, 148, 194, 0.32);
+}
+
+.app-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ffb6d3 0%, #c69df0 60%, #9b91ff 100%);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Soft gradient checkbox — adapted from Uiverse (PriyanshuGupta28) */
+.checkbox-wrapper * {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.checkbox-wrapper {
+  --size: 22px;
+  --lift-color: rgba(110, 80, 150, 0.32);
+  --inner-color: rgba(255, 255, 255, 0.92);
+  --inner-shadow: rgba(241, 148, 194, 0.42);
+  --inner-shadow-hover: rgba(191, 149, 230, 0.6);
+  --gradient: linear-gradient(43deg, #faa08a 0%, #f194c2 46%, #bf95e6 100%);
+  --shadow: calc(var(--size) * 0.07) calc(var(--size) * 0.1);
+  position: relative;
+  display: inline-block;
+  width: var(--size);
+  height: var(--size);
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-wrapper label {
+  position: relative;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  margin: 0;
+  background: var(--gradient);
+  border-radius: 50%;
+  box-shadow: 0 var(--shadow) var(--lift-color);
+  cursor: pointer;
+  transition:
+    0.2s ease transform,
+    0.2s ease background-color,
+    0.2s ease box-shadow;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.checkbox-wrapper label:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  width: calc(var(--size) * 0.7);
+  height: calc(var(--size) * 0.7);
+  margin: 0 auto;
+  background-color: var(--inner-color);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  box-shadow: inset 0 var(--shadow) var(--inner-shadow);
+  transition:
+    0.2s ease width,
+    0.2s ease height,
+    0.2s ease box-shadow;
+}
+
+.checkbox-wrapper label:hover:before {
+  width: calc(var(--size) * 0.55);
+  height: calc(var(--size) * 0.55);
+  box-shadow: inset 0 var(--shadow) var(--inner-shadow-hover);
+}
+
+.checkbox-wrapper label:active {
+  transform: scale(0.9);
+}
+
+.checkbox-wrapper .tick_mark {
+  position: absolute;
+  top: -1px;
+  right: 0;
+  left: calc(var(--size) * -0.05);
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 0.6);
+  margin: 0 auto;
+  margin-left: calc(var(--size) * 0.14);
+  transform: rotateZ(-40deg);
+}
+
+.checkbox-wrapper .tick_mark:before,
+.checkbox-wrapper .tick_mark:after {
+  content: "";
+  position: absolute;
+  background-color: #fff;
+  border-radius: 2px;
+  opacity: 0;
+  transition:
+    0.2s ease transform,
+    0.2s ease opacity;
+}
+
+.checkbox-wrapper .tick_mark:before {
+  left: 0;
+  bottom: 0;
+  width: calc(var(--size) * 0.1);
+  height: calc(var(--size) * 0.3);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.18);
+  transform: translateY(calc(var(--size) * -0.68));
+}
+
+.checkbox-wrapper .tick_mark:after {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: calc(var(--size) * 0.1);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.18);
+  transform: translateX(calc(var(--size) * 0.78));
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + label {
+  background: var(--gradient);
+  box-shadow:
+    0 calc(var(--size) * 0.18) calc(var(--size) * 0.3) rgba(110, 80, 150, 0.34),
+    0 calc(var(--size) * 0.08) calc(var(--size) * 0.18) rgba(241, 148, 194, 0.3);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + label:before {
+  width: 0;
+  height: 0;
+}
+
+/* Hovering a checked box must NOT morph it back toward the unchecked look:
+   the inner dot only returns once the box is actually unchecked (on click).
+   Higher specificity than the per-surface hover sizings (e.g. Today's
+   `.task-checkbox label:hover:before`) so it stays hidden on hover. */
+.checkbox-wrapper input[type="checkbox"]:checked + label:hover:before {
+  width: 0;
+  height: 0;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + label .tick_mark:before,
+.checkbox-wrapper input[type="checkbox"]:checked + label .tick_mark:after {
+  transform: translate(0);
+  opacity: 1;
+}
+
+.checkbox-wrapper input[type="checkbox"]:focus-visible + label {
+  outline: 2px solid rgba(99, 73, 145, 0.5);
+  outline-offset: 3px;
+}
+
+.task-add,
+.task-modal__queue-add,
+.task-modal__submit,
+.default-task-pool button:not(.default-task-pool__delete),
+.character-onboarding__confirm {
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  box-shadow:
+    0 14px 30px -10px rgba(110, 80, 150, 0.55),
+    0 6px 16px -6px rgba(241, 148, 194, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.task-add:hover,
+.task-add:focus-visible,
+.task-modal__queue-add:hover,
+.task-modal__queue-add:focus-visible,
+.task-modal__submit:hover,
+.task-modal__submit:focus-visible,
+.default-task-pool button:not(.default-task-pool__delete):hover,
+.default-task-pool button:not(.default-task-pool__delete):focus-visible,
+.character-onboarding__confirm:hover,
+.character-onboarding__confirm:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 14px 30px -10px rgba(110, 80, 150, 0.55),
+    0 6px 16px -6px rgba(241, 148, 194, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  outline: none;
+}
+
+.task-add:active,
+.task-modal__queue-add:active,
+.task-modal__submit:active,
+.default-task-pool button:not(.default-task-pool__delete):active,
+.character-onboarding__confirm:active {
+  transform: scale(0.94);
+}
+
+.task-add:focus-visible,
+.task-modal__queue-add:focus-visible,
+.task-modal__submit:focus-visible,
+.default-task-pool button:not(.default-task-pool__delete):focus-visible,
+.character-onboarding__confirm:focus-visible {
+  outline: 2px solid rgba(99, 73, 145, 0.55);
+  outline-offset: 3px;
+}
+
+/* Disabled (e.g. Save with nothing to save): clearly inactive — dimmed, flat,
+   no hover lift, not-allowed cursor. */
+.task-add:disabled,
+.task-modal__queue-add:disabled,
+.task-modal__submit:disabled,
+.default-task-pool button:not(.default-task-pool__delete):disabled,
+.character-onboarding__confirm:disabled,
+.task-add:disabled:hover,
+.task-add:disabled:focus-visible {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-soft);
+}
+
+.task-add span[aria-hidden="true"] {
+  background: rgba(255, 255, 255, 0.26);
+  color: #fff;
+}
+
+@keyframes fluid-coral {
+  0%,
+  100% {
+    transform: translate(0%, 0%);
+  }
+
+  50% {
+    transform: translate(20%, 25%);
+  }
+}
+
+@keyframes fluid-pink {
+  0%,
+  100% {
+    transform: translate(0%, 0%);
+  }
+
+  50% {
+    transform: translate(-20%, 20%);
+  }
+}
+
+@keyframes fluid-violet {
+  0%,
+  100% {
+    transform: translate(0%, 0%);
+  }
+
+  50% {
+    transform: translate(15%, -20%);
+  }
+}
+
+@keyframes task-focus-ping {
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+@keyframes task-focus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes task-focus-breath {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 7px 14px -8px rgba(110, 80, 150, 0.64),
+      0 0 0 0 rgba(241, 148, 194, 0),
+      inset 0 1px 0 rgba(255, 255, 255, 0.44);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 10px 18px -8px rgba(110, 80, 150, 0.72),
+      0 0 14px 2px rgba(241, 148, 194, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes task-focus-breath-strong {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 7px 14px -8px rgba(110, 80, 150, 0.64),
+      0 0 0 0 rgba(241, 148, 194, 0),
+      inset 0 1px 0 rgba(255, 255, 255, 0.44);
+  }
+  50% {
+    transform: scale(1.14);
+    box-shadow:
+      0 14px 24px -8px rgba(110, 80, 150, 0.8),
+      0 0 24px 5px rgba(241, 148, 194, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+}
+
+.pomodoro-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.pomodoro-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pomodoro-btn--ghost {
+  background: rgba(255, 255, 255, 0.34);
+  color: rgb(57, 57, 92);
+  box-shadow:
+    inset -2px -2px 7px rgba(255, 255, 255, 0.45),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06),
+    6px 7px 14px -8px rgba(58, 58, 105, 0.32);
+}
+
+.pomodoro-btn--ghost svg {
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.pomodoro-btn--ghost:hover {
+  transform: translateY(-1px);
+}
+
+.pomodoro-btn--primary {
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  box-shadow:
+    0 14px 30px -10px rgba(110, 80, 150, 0.55),
+    0 6px 16px -6px rgba(241, 148, 194, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.pomodoro-btn--primary svg {
+  width: 22px;
+  height: 22px;
+  fill: #fff;
+  stroke: none;
+}
+
+.pomodoro-btn--primary:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.pomodoro-btn--primary.is-pulse {
+  animation: pomodoro-start-breath 1.8s ease-in-out infinite;
+}
+
+@keyframes pomodoro-start-breath {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 14px 30px -10px rgba(110, 80, 150, 0.55),
+      0 6px 16px -6px color-mix(in srgb, var(--accent-grad-mid) 50%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--accent-grad-mid) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--accent-grad-mid) 0%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    transform: scale(1.16);
+    box-shadow:
+      0 22px 40px -10px rgba(110, 80, 150, 0.75),
+      0 10px 26px -6px color-mix(in srgb, var(--accent-grad-mid) 70%, transparent),
+      0 0 36px 10px color-mix(in srgb, var(--accent-grad-mid) 60%, transparent),
+      0 0 0 14px color-mix(in srgb, var(--accent-grad-mid) 18%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+}
+
+.pomodoro-btn--primary:active,
+.pomodoro-btn--ghost:active {
+  transform: scale(0.94);
+}
+
+.pomodoro-btn:focus-visible {
+  outline: 2px solid rgba(99, 73, 145, 0.55);
+  outline-offset: 3px;
+}
+
+.pomodoro-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  border-radius: 34px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 84% 0%, rgba(250, 160, 138, 0.2), transparent 36%),
+    radial-gradient(circle at 8% 12%, rgba(191, 149, 230, 0.2), transparent 40%),
+    rgba(247, 240, 250, 0.78);
+  backdrop-filter: blur(22px) saturate(1.16);
+  -webkit-backdrop-filter: blur(22px) saturate(1.16);
+}
+
+.pomodoro-confirm__card {
+  width: min(100%, 336px);
+  border-radius: 28px;
+  padding: 22px 20px 18px;
+  border: var(--app-widget-border);
+  background: var(--app-widget-bg);
+  backdrop-filter: var(--app-widget-backdrop);
+  -webkit-backdrop-filter: var(--app-widget-backdrop);
+  box-shadow: var(--app-widget-shadow);
+  text-align: center;
+}
+
+.pomodoro-confirm__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  box-shadow:
+    0 12px 24px -12px rgba(110, 80, 150, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.pomodoro-confirm__icon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pomodoro-confirm__content h3 {
+  margin: 0 0 8px;
+  color: rgb(57, 57, 92);
+  font: 700 19px/1.1 "Quattrocento Sans", system-ui, sans-serif;
+}
+
+.pomodoro-confirm__content p {
+  margin: 0;
+  color: rgba(57, 57, 92, 0.72);
+  font: 600 15px/1.45 var(--planner-font);
+}
+
+.pomodoro-confirm__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pomodoro-confirm__button {
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  cursor: pointer;
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  letter-spacing: 0.05em;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.pomodoro-confirm__button:hover,
+.pomodoro-confirm__button:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.pomodoro-confirm__button--ghost {
+  background: rgba(255, 255, 255, 0.38);
+  color: rgba(57, 57, 92, 0.74);
+  box-shadow:
+    inset -2px -2px 7px rgba(255, 255, 255, 0.42),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.06);
+}
+
+.pomodoro-confirm__button--primary {
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  box-shadow:
+    0 14px 24px -14px rgba(110, 80, 150, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.pomodoro-btn--ghost-text {
+  width: auto;
+  height: 42px;
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  background: transparent;
+  color: rgba(57, 57, 92, 0.7);
+  box-shadow: none;
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  letter-spacing: 0.08em;
+  transition: color 160ms ease, background 160ms ease, transform 180ms ease;
+}
+
+/* Cancel / ghost / dismiss buttons stay quiet until hovered, then the text
+   brightens to the primary color with a soft surface so the affordance reads.
+   Themed via tokens so it works in every theme. The per-theme resting-color
+   overrides further down have equal-or-higher specificity, so each theme also
+   needs the matching :root[data-theme] hover rule below to win. */
+.pomodoro-btn--ghost-text:hover {
+  color: var(--c-text-primary);
+  background: var(--c-surface-soft);
+}
+
+/* Beats the per-theme `:root[data-theme="x"] .pomodoro-btn--ghost-text`
+   resting-color rules (specificity 0,4,0 > 0,3,0) so the hover brighten
+   applies in every theme, not just light. */
+:root[data-theme] .pomodoro-btn--ghost-text:hover {
+  color: var(--c-text-primary);
+  background: var(--c-surface-soft);
+}
+
+.theme-toggle {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  padding: 4px;
+  background: rgba(243, 235, 245, 0.76);
+  color: rgba(82, 70, 132, 0.82);
+  box-shadow:
+    5px 6px 12px rgba(58, 58, 105, 0.1),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.52),
+    inset 2px 2px 7px rgba(80, 75, 104, 0.08);
+}
+
+.theme-toggle__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--theme-toggle-count, 3), minmax(0, 1fr));
+  align-items: center;
+  width: 100%;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 14% 50%, rgba(250, 160, 138, 0.22), transparent 34%),
+    radial-gradient(circle at 50% 50%, rgba(191, 149, 230, 0.16), transparent 38%),
+    radial-gradient(circle at 86% 50%, rgba(184, 237, 255, 0.18), transparent 38%),
+    rgba(232, 225, 238, 0.72);
+  overflow: hidden;
+  box-shadow:
+    inset 2px 2px 6px rgba(80, 60, 130, 0.18),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.55),
+    0 0 18px rgba(155, 116, 205, 0.16);
+  transition:
+    background 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.theme-toggle__thumb {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--theme-toggle-count, 3));
+  height: calc(100% - 6px);
+  border-radius: var(--radius-xs);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.6), transparent 38%),
+    linear-gradient(135deg, #faa08a 0%, #f194c2 52%, #bf95e6 100%);
+  box-shadow:
+    3px 4px 9px rgba(110, 80, 150, 0.26),
+    -1px -1px 4px rgba(255, 255, 255, 0.5),
+    0 0 12px rgba(241, 148, 194, 0.34),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  transform: translateX(calc(var(--theme-toggle-active, 0) * 100%));
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.theme-toggle__option {
+  position: relative;
+  z-index: 2;
+  appearance: none;
+  height: 100%;
+  border: 0;
+  padding: 0 2px;
+  background: transparent;
+  color: rgba(82, 70, 132, 0.72);
+  cursor: pointer;
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  letter-spacing: 0.08em;
+  transition: color 220ms ease, transform 180ms ease;
+}
+
+.theme-toggle__option:hover,
+.theme-toggle__option:focus-visible {
+  color: rgb(86, 77, 134);
+  outline: none;
+}
+
+.theme-toggle__option:active {
+  transform: translateY(1px);
+}
+
+.theme-toggle__option.is-active {
+  color: rgb(57, 57, 92);
+}
+
+.theme-toggle__track[data-theme-mode="dark"] {
+  background:
+    radial-gradient(circle at 18% 50%, rgba(255, 182, 211, 0.18), transparent 34%),
+    radial-gradient(circle at 50% 50%, rgba(171, 148, 255, 0.18), transparent 36%),
+    radial-gradient(circle at 84% 50%, rgba(155, 255, 207, 0.2), transparent 36%),
+    linear-gradient(135deg, rgba(11, 18, 39, 0.92), rgba(43, 39, 76, 0.84));
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.42),
+    inset -1px -1px 8px rgba(171, 148, 255, 0.18),
+    0 0 22px rgba(155, 255, 207, 0.14),
+    0 0 28px rgba(255, 182, 211, 0.1);
+}
+
+.theme-toggle__track[data-theme-mode="dark"] .theme-toggle__thumb {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.66), transparent 34%),
+    linear-gradient(135deg, #9bffcf 0%, #bf95e6 54%, #7a71ff 100%);
+  box-shadow:
+    0 0 14px rgba(155, 255, 207, 0.38),
+    0 0 20px rgba(255, 182, 211, 0.28),
+    3px 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle__track[data-theme-mode="dream"] {
+  background:
+    radial-gradient(circle at 16% 50%, rgba(184, 237, 255, 0.32), transparent 34%),
+    radial-gradient(circle at 52% 48%, rgba(216, 182, 255, 0.24), transparent 36%),
+    radial-gradient(circle at 86% 50%, rgba(244, 190, 232, 0.28), transparent 34%),
+    rgba(243, 246, 255, 0.9);
+  box-shadow:
+    inset 2px 2px 6px rgba(136, 149, 201, 0.18),
+    inset -2px -2px 8px rgba(255, 255, 255, 0.72),
+    0 0 18px rgba(184, 237, 255, 0.2);
+}
+
+.theme-toggle__track[data-theme-mode="dream"] .theme-toggle__thumb {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.72), transparent 34%),
+    linear-gradient(135deg, #b8edff 0%, #d8b6ff 55%, #f4bee8 100%);
+  box-shadow:
+    0 0 12px rgba(184, 237, 255, 0.34),
+    0 0 18px rgba(216, 182, 255, 0.22),
+    3px 4px 10px rgba(122, 135, 190, 0.2);
+}
+
+:root[data-theme="forest"] .theme-toggle__option {
+  color: color-mix(in srgb, var(--c-text-secondary) 82%, transparent);
+}
+
+:root[data-theme="forest"] .theme-toggle__option.is-active {
+  color: var(--c-text-primary);
+}
+
+.theme-toggle__track[data-theme-mode="forest"] {
+  background:
+    radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--c-warning) 18%, transparent), transparent 34%),
+    radial-gradient(circle at 52% 48%, color-mix(in srgb, var(--c-accent) 22%, transparent), transparent 38%),
+    radial-gradient(circle at 86% 50%, color-mix(in srgb, var(--c-success) 18%, transparent), transparent 38%),
+    color-mix(in srgb, var(--c-surface-elevated) 78%, transparent);
+  box-shadow:
+    inset 2px 2px 6px color-mix(in srgb, var(--c-text-secondary) 12%, transparent),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.72),
+    0 0 18px color-mix(in srgb, var(--c-accent) 16%, transparent);
+}
+
+.theme-toggle__track[data-theme-mode="forest"] .theme-toggle__thumb {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.72), transparent 38%),
+    var(--c-accent-gradient);
+  box-shadow:
+    3px 4px 9px color-mix(in srgb, var(--c-text-secondary) 22%, transparent),
+    -1px -1px 4px rgba(255, 255, 255, 0.68),
+    0 0 12px color-mix(in srgb, var(--c-accent) 28%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+/* ─────────── Forest theme ─────────── */
+
+:root[data-theme="forest"] body {
+  /* Sand photo from the login page covers the whole canvas. A warm solid
+     fallback underneath so nothing shows through before the image loads. */
+  background-color: var(--c-background);
+  background-image: url("/theme-forest/forest-sand-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .home-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* The sand photo IS the background now — hide the app's ambient pink/green
+   gradient washes and the decorative dot/glow overlays entirely in Forest. */
+:root[data-theme="forest"] .fluid-gradient {
+  display: none;
+}
+
+:root[data-theme="forest"] .home-page::before,
+:root[data-theme="forest"] .home-page::after {
+  content: none;
+  display: none;
+}
+
+/* Only a light, soft ground shadow under the mascot — no green halo. */
+:root[data-theme="forest"] .character-preview::before,
+:root[data-theme="forest"] .sidebar-character::before {
+  width: 104px;
+  height: 21px;
+  bottom: -11px;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(70, 64, 56, 0.2), rgba(70, 64, 56, 0.08) 42%, transparent 68%),
+    radial-gradient(ellipse at 52% 52%, rgba(86, 74, 58, 0.12), rgba(86, 74, 58, 0.04) 60%, transparent 78%);
+  filter: blur(7px);
+}
+
+:root[data-theme="forest"] .character-preview img {
+  bottom: -14px;
+  width: min(174px, 74%);
+  max-width: none;
+  max-height: clamp(98px, 17vh, 148px);
+  filter:
+    drop-shadow(0 10px 8px rgba(60, 70, 56, 0.13))
+    drop-shadow(0 18px 18px rgba(60, 70, 56, 0.08));
+}
+
+/* Primary buttons mirror the login "Log in" button: solid deep eucalyptus
+   (via --c-accent-gradient above), cream text, soft green-shadow lift. */
+:root[data-theme="forest"] .task-add,
+:root[data-theme="forest"] .pomodoro-btn--primary,
+:root[data-theme="forest"] .task-modal__queue-add,
+:root[data-theme="forest"] .task-modal__submit,
+:root[data-theme="forest"] .default-task-pool button:not(.default-task-pool__delete),
+:root[data-theme="forest"] .character-onboarding__confirm,
+:root[data-theme="forest"] .category-toggle__thumb,
+:root[data-theme="forest"] .pomodoro-cycle__dot.is-complete,
+:root[data-theme="forest"] .task-checkbox input:checked + .task-checkmark,
+:root[data-theme="forest"] .checkbox-wrapper input[type="checkbox"]:checked + label {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 14px 28px -12px rgba(63, 86, 58, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+:root[data-theme="forest"] .task-add:hover,
+:root[data-theme="forest"] .task-add:focus-visible,
+:root[data-theme="forest"] .pomodoro-btn--primary:hover,
+:root[data-theme="forest"] .pomodoro-btn--primary:focus-visible {
+  background: #6f8a5d;
+  box-shadow:
+    0 16px 32px -12px rgba(63, 86, 58, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+/* Disabled primary stays visibly inactive even over the forest gradient/hover
+   rules above (needs equal/higher specificity to win). */
+:root[data-theme="forest"] .task-add:disabled,
+:root[data-theme="forest"] .task-add:disabled:hover,
+:root[data-theme="forest"] .task-add:disabled:focus-visible,
+:root[data-theme="forest"] .pomodoro-btn--primary:disabled,
+:root[data-theme="forest"] .task-modal__submit:disabled,
+:root[data-theme="forest"] .task-modal__queue-add:disabled,
+:root[data-theme="forest"] .character-onboarding__confirm:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+  transform: none;
+  background: var(--c-accent-gradient);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="forest"] .pomodoro-btn--ghost,
+:root[data-theme="forest"] .profile-dropdown__menu-btn,
+:root[data-theme="forest"] .profile-dropdown__item--toggle .theme-toggle {
+  color: var(--c-text-primary);
+}
+
+/* Solid eucalyptus primary buttons keep cream text (matches login "Log in"). */
+:root[data-theme="forest"] .task-add,
+:root[data-theme="forest"] .task-add .task-add__label,
+:root[data-theme="forest"] .pomodoro-btn--primary {
+  color: var(--c-text-on-accent);
+}
+
+/* "+ Today" on the Needs-attention widget is its own component
+   (.add-to-today__btn) and was never themed — it kept the pink brand gradient.
+   Bring it in line with the other filled buttons (.task-add / start button). */
+:root[data-theme="forest"] .add-to-today__btn {
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -12px rgba(63, 86, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+:root[data-theme="forest"] .add-to-today__btn:hover:not(:disabled),
+:root[data-theme="forest"] .add-to-today__btn:focus-visible:not(:disabled) {
+  box-shadow:
+    0 14px 28px -12px rgba(63, 86, 58, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="forest"] .add-to-today__hint {
+  color: color-mix(in srgb, var(--c-danger) 88%, var(--c-text-primary));
+}
+
+:root[data-theme="forest"] .pomodoro-btn--ghost:hover,
+:root[data-theme="forest"] .pomodoro-btn--ghost:focus-visible {
+  background: rgba(252, 248, 241, 0.8);
+  color: var(--c-accent-hover);
+}
+
+:root[data-theme="forest"] .pomodoro-confirm__card {
+  background:
+    radial-gradient(circle at 84% 0%, color-mix(in srgb, var(--c-success) 12%, transparent), transparent 36%),
+    linear-gradient(145deg, rgba(252, 248, 241, 0.9), rgba(244, 249, 239, 0.82));
+  box-shadow:
+    0 18px 34px -22px color-mix(in srgb, var(--c-success) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.58);
+}
+
+:root[data-theme="forest"] .pomodoro-confirm__card--reset {
+  background: rgba(251, 247, 240, 0.94);
+  box-shadow:
+    0 18px 34px -22px rgba(86, 74, 58, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(150, 132, 108, 0.14);
+}
+
+:root[data-theme="forest"] .pomodoro-confirm__icon,
+:root[data-theme="forest"] .pomodoro-confirm__button--primary {
+  background: var(--c-accent-gradient);
+}
+
+:root[data-theme="forest"] .pomodoro-confirm__content h3,
+:root[data-theme="forest"] .task-modal__header h2,
+:root[data-theme="forest"] .default-task-pool h3,
+:root[data-theme="forest"] .default-task-pool strong,
+:root[data-theme="forest"] .task-modal__queue-item strong,
+:root[data-theme="forest"] .pomodoro-settings__header h3 {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .pomodoro-confirm__content p,
+:root[data-theme="forest"] .pomodoro-confirm__button--ghost,
+:root[data-theme="forest"] .task-modal__save-default,
+:root[data-theme="forest"] .default-task-pool span,
+:root[data-theme="forest"] .default-task-pool p,
+:root[data-theme="forest"] .task-modal__queue-empty,
+:root[data-theme="forest"] .task-modal__queue-item span,
+:root[data-theme="forest"] .character-onboarding__kicker,
+:root[data-theme="forest"] .character-onboarding__option span,
+:root[data-theme="forest"] .soft-modal__status,
+:root[data-theme="forest"] .default-task-pool__pending {
+  color: var(--c-text-muted);
+}
+
+:root[data-theme="forest"] input,
+:root[data-theme="forest"] select,
+:root[data-theme="forest"] textarea,
+:root[data-theme="forest"] .soft-modal__field input,
+:root[data-theme="forest"] .task-modal__title-input,
+:root[data-theme="forest"] .task-modal__meta-row input,
+:root[data-theme="forest"] .task-modal__meta-row select,
+:root[data-theme="forest"] .task-modal__dropdown-trigger,
+:root[data-theme="forest"] .task-edit-field input,
+:root[data-theme="forest"] .task-edit-field select,
+:root[data-theme="forest"] .task-edit-field .task-modal__dropdown-trigger,
+:root[data-theme="forest"] .task-modal__close,
+:root[data-theme="forest"] .task-modal__queue-item button,
+:root[data-theme="forest"] .character-onboarding__option {
+  background: rgba(252, 248, 241, 0.58);
+  color: var(--c-text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 2px 2px 8px color-mix(in srgb, var(--c-success) 9%, transparent),
+    0 10px 18px -18px color-mix(in srgb, var(--c-success) 24%, transparent);
+}
+
+:root[data-theme="forest"] input::placeholder,
+:root[data-theme="forest"] textarea::placeholder,
+:root[data-theme="forest"] .soft-modal__field input::placeholder,
+:root[data-theme="forest"] .task-modal__title-input::placeholder,
+:root[data-theme="forest"] .task-modal__meta-row input::placeholder {
+  color: color-mix(in srgb, var(--c-text-muted) 66%, transparent);
+}
+
+:root[data-theme="forest"] input:hover,
+:root[data-theme="forest"] input:focus,
+:root[data-theme="forest"] select:hover,
+:root[data-theme="forest"] select:focus,
+:root[data-theme="forest"] textarea:hover,
+:root[data-theme="forest"] textarea:focus,
+:root[data-theme="forest"] .task-modal__dropdown-trigger:hover,
+:root[data-theme="forest"] .task-modal__dropdown-trigger:focus-visible {
+  background: rgba(252, 248, 241, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 2px 2px 8px color-mix(in srgb, var(--c-success) 8%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--c-accent) 18%, transparent);
+}
+
+/* Profile theme toggle */
+.theme-toggle__track {
+  grid-template-columns: repeat(var(--theme-toggle-count, 3), minmax(0, 1fr));
+}
+
+.theme-toggle__thumb {
+  width: calc((100% - 6px) / var(--theme-toggle-count, 3));
+}
+
+.theme-toggle__track[data-theme-mode="moon"] {
+  background:
+    radial-gradient(circle at 14% 48%, rgba(248, 223, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 52% 48%, rgba(179, 136, 255, 0.28), transparent 38%),
+    radial-gradient(circle at 88% 50%, rgba(78, 66, 174, 0.28), transparent 38%),
+    linear-gradient(135deg, rgba(11, 9, 31, 0.96), rgba(31, 21, 62, 0.9) 54%, rgba(56, 37, 92, 0.86));
+  box-shadow:
+    inset 2px 2px 7px rgba(0, 0, 0, 0.52),
+    inset -1px -1px 8px rgba(222, 184, 255, 0.18),
+    0 0 22px rgba(179, 136, 255, 0.18),
+    0 0 30px rgba(248, 223, 255, 0.08);
+}
+
+.theme-toggle__track[data-theme-mode="moon"] .theme-toggle__thumb {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 245, 255, 0.76), transparent 34%),
+    linear-gradient(135deg, #f3d6ff 0%, #b388ff 52%, #6d56d8 100%);
+  box-shadow:
+    0 0 14px rgba(243, 214, 255, 0.42),
+    0 0 22px rgba(179, 136, 255, 0.36),
+    3px 4px 10px rgba(0, 0, 0, 0.42);
+}
+
+.moon-theme-background,
+.sidebar-moon-decor {
+  display: none;
+}
+
+@keyframes pomodoro-start-breath-dream {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 14px 30px -10px rgba(128, 143, 191, 0.36),
+      0 6px 16px -6px rgba(216, 182, 255, 0.34),
+      0 0 0 0 rgba(216, 182, 255, 0),
+      0 0 0 0 rgba(184, 237, 255, 0),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+  50% {
+    transform: scale(1.16);
+    box-shadow:
+      0 22px 40px -10px rgba(128, 143, 191, 0.46),
+      0 10px 26px -6px rgba(216, 182, 255, 0.52),
+      0 0 36px 10px rgba(216, 182, 255, 0.42),
+      0 0 0 14px rgba(184, 237, 255, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  }
+}
+
+:root[data-theme="forest"] .checkbox-wrapper {
+  --gradient: var(--c-accent-gradient);
+  --lift-color: color-mix(in srgb, var(--c-success) 22%, transparent);
+  --inner-color: rgba(252, 248, 241, 0.96);
+  --inner-shadow: color-mix(in srgb, var(--c-success) 18%, transparent);
+  --inner-shadow-hover: color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+
+:root[data-theme="forest"] .checkbox-wrapper label {
+  background: var(--gradient);
+  box-shadow:
+    0 var(--shadow) var(--lift-color),
+    0 0 0 1px rgba(255, 255, 255, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+:root[data-theme="forest"] .checkbox-wrapper label:before {
+  background-color: rgba(252, 248, 241, 0.96);
+  box-shadow:
+    inset 0 var(--shadow) var(--inner-shadow),
+    0 0 0 1px color-mix(in srgb, var(--c-accent) 12%, transparent);
+}
+
+:root[data-theme="forest"] .app-scroll {
+  scrollbar-color: color-mix(in srgb, var(--c-accent) 70%, transparent) transparent;
+}
+
+:root[data-theme="forest"] .app-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 54%, var(--accent-grad-end) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 0 10px color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+
+:root[data-theme="forest"] .app-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-grad-start) 82%, white) 0%, var(--accent-grad-mid) 54%, var(--accent-grad-end) 100%);
+}
+
+:root[data-theme="forest"] .pomodoro-btn--primary.is-pulse {
+  animation-name: pomodoro-start-breath-forest;
+}
+
+@keyframes pomodoro-start-breath-forest {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 14px 30px -10px rgba(63, 86, 58, 0.4),
+      0 6px 16px -6px rgba(127, 162, 104, 0.42),
+      0 0 0 0 rgba(127, 162, 104, 0),
+      0 0 0 0 rgba(111, 156, 96, 0),
+      inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  }
+  50% {
+    transform: scale(1.16);
+    box-shadow:
+      0 22px 40px -10px rgba(63, 86, 58, 0.5),
+      0 10px 26px -6px rgba(127, 162, 104, 0.58),
+      0 0 36px 10px rgba(127, 162, 104, 0.5),
+      0 0 0 14px rgba(127, 162, 104, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+}
+
+@keyframes pomodoro-start-breath-moon {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 14px 30px -10px rgba(0, 0, 0, 0.7),
+      0 6px 18px -6px rgba(179, 136, 255, 0.5),
+      0 0 0 0 rgba(179, 136, 255, 0),
+      0 0 0 0 rgba(243, 214, 255, 0),
+      inset 0 1px 0 rgba(255, 248, 255, 0.42);
+  }
+  50% {
+    transform: scale(1.16);
+    box-shadow:
+      0 22px 42px -10px rgba(0, 0, 0, 0.82),
+      0 12px 28px -6px rgba(179, 136, 255, 0.68),
+      0 0 40px 11px rgba(179, 136, 255, 0.48),
+      0 0 0 14px rgba(243, 214, 255, 0.13),
+      inset 0 1px 0 rgba(255, 248, 255, 0.52);
+  }
+}
+
+@keyframes goals-empty-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.goal-ghost-button {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(57, 57, 92, 0.7);
+}
+
+/* Goals layout + modal scroll fixes v3
+   - keep the route/page as the scroll owner when goals/tasks exceed the viewport
+   - make the goal editor scroll as one full overlay so Save/Cancel are reachable
+   - make goal create/edit panels visually match the denser task/pomodoro modals */
+.home-content {
+  height: 100vh;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Today modal viewport fit + goal selector v6 */
+.dashboard-grid--modal-open {
+  min-height: 0;
+  align-items: stretch;
+}
+
+.dashboard-grid--modal-open .tasks-panel--today {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-grid--modal-open .task-modal-overlay {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-grid--modal-open .task-modal__content:not(.task-modal__content--compact) {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.goal-ghost-button--danger {
+  color: rgb(190, 76, 93);
+}
+
+/* Slightly smaller avatar, nudged higher/right, without changing menu geometry */
+.home-user {
+  top: 4px;
+  right: 4px;
+}
+
+.home-user {
+  top: 6px;
+  right: 4px;
+}
+
+/* Final polish: centered profile avatar/dropdown + wider goal cards */
+.home-user {
+  top: 16px;
+  right: 16px;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+
+/* v-next: larger centered avatar ring, nudged away from timer card, dropdown still attached */
+.home-user {
+  top: 6px;
+  right: 4px;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+
+/* v-next-2: avatar/ring perfectly centered, slightly smaller, nudged up/right so Completed stays visible */
+.home-user {
+  top: 2px;
+  right: -2px;
+}
+
+/* Completion-scope confirm (Today widget): close X (top-right), the two scope
+   choices on a single row, and a standard ghost-text Cancel at the bottom-left.
+   Scoped to `.scope-confirm` so the other confirm dialogs are unaffected. */
+.pomodoro-confirm__card.scope-confirm {
+  position: relative;
+  width: min(100%, 400px);
+  padding-top: 30px;
+}
+.scope-confirm__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.scope-confirm .pomodoro-confirm__actions {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.scope-confirm .pomodoro-confirm__actions .task-add {
+  min-width: 0;
+  white-space: nowrap;
+}
+.scope-confirm .pomodoro-confirm__actions .pomodoro-btn--ghost-text {
+  height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+/* Cancel: standard ghost-text, shrunk to content and pinned bottom-left. */
+.scope-confirm__cancel.pomodoro-btn--ghost-text {
+  width: fit-content;
+  height: auto;
+  margin-top: 14px;
+  padding: 4px 2px;
+}
+@keyframes notes-emoji-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* "Add to today" button on goal task / subtask rows.                */
+/* ---------------------------------------------------------------- */
+/* "Add to today" action. Adopts the app's primary CTA visual language — the
+   same coral→pink→lavender gradient and shadow stack used by `.task-add`,
+   `.task-modal__submit`, `.character-onboarding__confirm`, etc. Sized down
+   to row-pill scale (28px high, 14px font) so it lines up with the
+   status / health pills inside the goal task table. */
+.add-to-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.add-to-today__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 92px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0 12px 0 6px;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  color: #fff;
+  cursor: pointer;
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow:
+    0 10px 22px -12px rgba(58, 58, 105, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease,
+    opacity 180ms ease;
+}
+
+/* The "+" / "✓" sits in a soft white circle, matching `.task-add`. */
+.add-to-today__btn span[aria-hidden="true"] {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.26);
+  color: #fff;
+  font: 700 14px/1 var(--planner-font);
+}
+
+.add-to-today__btn--sm {
+  height: 28px;
+  font-size: 14px;
+}
+.add-to-today__btn--md {
+  height: 32px;
+  font-size: 15px;
+  padding: 0 14px 0 8px;
+}
+.add-to-today__btn--md span[aria-hidden="true"] {
+  width: 20px;
+  height: 20px;
+  font-size: 15px;
+}
+
+.add-to-today__btn-label {
+  display: inline-block;
+}
+
+.add-to-today__btn:hover:not(:disabled),
+.add-to-today__btn:focus-visible:not(:disabled) {
+  transform: translateY(-1px) scale(1.02);
+  outline: none;
+}
+.add-to-today__btn:focus-visible {
+  outline: 2px solid rgba(99, 73, 145, 0.55);
+  outline-offset: 3px;
+}
+.add-to-today__btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+/* "Added" / pending / disabled — keep the same gradient but desaturate it
+   visually so the button reads as inactive. */
+.add-to-today__btn.is-on-today,
+.add-to-today__btn:disabled,
+.add-to-today__btn.is-disabled {
+  cursor: default;
+  transform: none;
+  opacity: 0.5;
+  box-shadow:
+    0 6px 14px -12px rgba(58, 58, 105, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.add-to-today__hint {
+  font: 500 11px/1.2 var(--planner-font);
+  color: rgba(220, 67, 105, 0.92);
+  max-width: 180px;
+}

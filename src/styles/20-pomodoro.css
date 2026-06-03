@@ -1,0 +1,560 @@
+/* 20-pomodoro.css — Focus / Pomodoro feature (panel, ring, timer). NOTE: the shared .pomodoro-btn lives in 02-base.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+/* ─────────── Pomodoro panel ─────────── */
+
+.tasks-shell:has(.focus-workspace) {
+  width: min(2000px, 100%);
+  height: 100dvh;
+  min-height: 100dvh;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.focus-workspace {
+  --focus-page-pad: var(--today-page-pad, var(--space-6));
+  display: grid;
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: var(--focus-page-pad) 0;
+}
+
+.pomodoro-panel {
+  position: relative;
+  overflow: hidden;
+  height: 421px;
+  padding-top: 20px;
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) 38px 56px;
+  align-items: stretch;
+  row-gap: 4px;
+}
+
+.pomodoro-panel:not(.has-focus-task) {
+  grid-template-rows: auto auto minmax(0, 1fr) 0 56px;
+}
+
+.pomodoro-panel--full {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  padding: clamp(var(--space-8), 3vh, var(--space-10));
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, auto) auto;
+  row-gap: clamp(var(--space-5), 1.8vh, var(--space-7));
+}
+
+.pomodoro-panel--full:not(.has-focus-task) {
+  grid-template-rows: auto minmax(0, 1fr) 0 auto;
+}
+
+.pomodoro-panel--full .tasks-panel__header {
+  display: none;
+}
+
+.pomodoro-panel--full .pomodoro-mode-toggle {
+  justify-self: center;
+  width: min(420px, 100%);
+}
+
+.pomodoro-panel .tasks-panel__header {
+  margin-bottom: 0;
+}
+
+.pomodoro-mode-toggle {
+  margin: 0;
+}
+
+.pomodoro-ring-shell {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  margin-top: 0;
+}
+
+.pomodoro-panel:not(.has-focus-task) .pomodoro-ring-shell {
+  margin-top: 0;
+}
+
+.pomodoro-panel--full .pomodoro-ring-shell {
+  align-self: stretch;
+}
+
+.pomodoro-panel--full .pomodoro-ring {
+  height: min(62vmin, 100%);
+}
+
+.pomodoro-panel--full .pomodoro-ring__content {
+  gap: var(--space-3);
+  padding-inline: clamp(var(--space-7), 5vmin, var(--space-10));
+}
+
+.pomodoro-panel--full .pomodoro-ring__kicker {
+  font-size: clamp(var(--text-body-small-size), 1.8vmin, var(--text-body-size));
+}
+
+.pomodoro-panel--full .pomodoro-ring__time,
+.pomodoro-panel--full:not(.has-focus-task) .pomodoro-ring__time {
+  font-size: clamp(52px, 9vmin, 86px);
+}
+
+.pomodoro-panel--full .pomodoro-focus-slot {
+  min-height: var(--space-10);
+}
+
+.pomodoro-panel--full:not(.has-focus-task) .pomodoro-focus-slot {
+  min-height: 0;
+}
+
+.pomodoro-panel--full .pomodoro-controls {
+  align-self: center;
+  min-height: clamp(58px, 8vh, 72px);
+}
+
+.pomodoro-cycle {
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  min-width: 126px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(57, 57, 92, 0.82);
+  font: 800 15px/1 var(--planner-font);
+  text-align: center;
+}
+
+.pomodoro-cycle__label {
+  white-space: nowrap;
+}
+
+.pomodoro-cycle__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.pomodoro-cycle__dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(226, 222, 232, 0.28);
+  box-shadow:
+    inset 1px 1px 4px rgba(80, 75, 104, 0.12),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.72),
+    0 0 0 2px rgba(191, 149, 230, 0.2);
+  transition: background 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+
+.pomodoro-cycle__dot.is-complete {
+  background: linear-gradient(135deg, #faa08a 0%, #f194c2 54%, #bf95e6 100%);
+  box-shadow:
+    0 5px 12px -6px rgba(110, 80, 150, 0.72),
+    0 0 14px rgba(241, 148, 194, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  transform: translateY(-1px);
+}
+
+.pomodoro-ring {
+  position: relative;
+  align-self: center;
+  /* Square ring that scales down to fit the available shell height. The
+     intrinsic size is `--ring-size` (218 large / 178 compact), but when the
+     panel is short the ring shrinks via `min(…, 100%)` so it never overflows
+     onto the controls below or the focus-task pill. `aspect-ratio` keeps it
+     circular while only the height drives the limit. */
+  height: min(var(--ring-size, 218px), 100%);
+  aspect-ratio: 1 / 1;
+  width: auto;
+  max-width: 100%;
+  transition: height 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: height;
+}
+
+.pomodoro-ring svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.pomodoro-ring__tick {
+  stroke: rgba(57, 57, 92, 0.32);
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.pomodoro-ring__tick.is-long {
+  stroke-width: 1.8;
+  opacity: 0.85;
+}
+
+.pomodoro-ring__track {
+  stroke: rgba(226, 222, 232, 0.85);
+}
+
+.pomodoro-ring__progress {
+  filter: drop-shadow(0 4px 12px rgba(241, 148, 194, 0.32));
+  transition: stroke-dashoffset 0.4s linear;
+}
+
+.pomodoro-ring__progress--glow {
+  transition: stroke-dashoffset 0.4s linear;
+}
+
+.pomodoro-ring__handle {
+  fill: #fff;
+  stroke: #bf95e6;
+  stroke-width: 2;
+  filter: drop-shadow(0 4px 10px rgba(191, 149, 230, 0.55));
+}
+
+.pomodoro-ring__handle-dot {
+  fill: rgba(241, 148, 194, 0.9);
+}
+
+.pomodoro-ring__content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 34px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pomodoro-ring__content > * {
+  pointer-events: auto;
+}
+
+.pomodoro-ring__kicker {
+  margin: 0;
+  color: rgba(57, 57, 92, 0.6);
+  font: 800 13px/1 var(--planner-font);
+  letter-spacing: 0.28em;
+}
+
+.pomodoro-ring__time {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: 300 36px/1 "Quattrocento Sans", system-ui, sans-serif;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-panel:not(.has-focus-task) .pomodoro-ring__time {
+  font-size: 41px;
+}
+
+.pomodoro-ring__time-slot {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 0.58em;
+  height: 1em;
+  overflow: hidden;
+}
+
+.pomodoro-ring__time-slot:has(.pomodoro-ring__time-colon) {
+  width: 0.28em;
+  overflow: visible;
+}
+
+.pomodoro-ring__time-digit,
+.pomodoro-ring__time-colon {
+  display: block;
+  line-height: 1;
+}
+
+.pomodoro-ring__time-digit {
+  grid-area: 1 / 1;
+  will-change: transform, opacity, filter;
+}
+
+.pomodoro-ring__focus {
+  align-self: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.32);
+  box-shadow:
+    inset -1px -1px 5px rgba(255, 255, 255, 0.32),
+    inset 2px 2px 6px rgba(80, 75, 104, 0.08);
+  width: min(330px, calc(100% - 28px));
+  max-width: 100%;
+  text-align: center;
+}
+
+.pomodoro-focus-slot {
+  display: grid;
+  place-items: center;
+  min-height: 36px;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.pomodoro-panel:not(.has-focus-task) .pomodoro-focus-slot {
+  min-height: 0;
+}
+
+.pomodoro-ring__focus-label {
+  display: block;
+  margin-bottom: 2px;
+  color: rgba(57, 57, 92, 0.6);
+  font: 800 10px/1 var(--planner-font);
+  letter-spacing: 0.22em;
+}
+
+.pomodoro-ring__focus input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: rgb(57, 57, 92);
+  text-align: center;
+  font: 700 15px/1.15 var(--planner-font);
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+}
+
+.pomodoro-ring__focus input::placeholder {
+  color: rgba(57, 57, 92, 0.42);
+}
+
+.pomodoro-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: end;
+  gap: 11px;
+  min-height: 54px;
+  margin-top: 0;
+}
+
+.pomodoro-panel:not(.has-focus-task) .pomodoro-controls {
+  margin-top: 0;
+}
+
+.focus-flyer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  box-shadow:
+    0 8px 18px -6px rgba(241, 148, 194, 0.55),
+    0 0 22px 5px rgba(241, 148, 194, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+/* Settings overlay — fills the pomodoro panel itself */
+.pomodoro-settings-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  border-radius: 34px;
+  padding: 20px 24px 18px;
+  border: var(--app-widget-border);
+  background: var(--app-widget-bg);
+  backdrop-filter: var(--app-widget-backdrop);
+  -webkit-backdrop-filter: var(--app-widget-backdrop);
+  box-shadow: var(--app-widget-shadow);
+}
+
+.pomodoro-settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+}
+
+.pomodoro-settings__header h3 {
+  margin: 0;
+  color: rgb(57, 57, 92);
+  font: 700 18px/1 "Quattrocento Sans", system-ui, sans-serif;
+}
+
+.pomodoro-settings__body {
+  display: grid;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.pomodoro-settings__slider {
+  display: grid;
+  gap: 6px;
+}
+
+.pomodoro-settings__slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pomodoro-settings__label {
+  color: rgba(57, 57, 92, 0.68);
+  font: 800 12px/1 var(--planner-font);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.pomodoro-settings__value {
+  color: rgb(57, 57, 92);
+  font: 700 15px/1 var(--planner-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.pomodoro-settings__slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(241, 148, 194, 0.4), rgba(191, 149, 230, 0.4));
+  outline: none;
+}
+
+.pomodoro-settings__slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  box-shadow: 0 4px 10px rgba(110, 80, 150, 0.45);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+.pomodoro-settings__slider input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
+  box-shadow: 0 4px 10px rgba(110, 80, 150, 0.45);
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+.pomodoro-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pomodoro-settings__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.pomodoro-settings__footer .task-modal__submit {
+  height: 38px;
+  padding: 0 18px;
+  width: auto;
+}
+
+/* The flyer dot that animates from the focus button to the timer was pink. */
+:root[data-theme="forest"] .focus-flyer {
+  background: var(--c-accent-gradient);
+  box-shadow:
+    0 8px 18px -6px color-mix(in srgb, var(--c-success) 36%, transparent),
+    0 0 22px 5px color-mix(in srgb, var(--c-accent) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+:root[data-theme="forest"] .pomodoro-cycle__dot {
+  background: rgba(252, 248, 241, 0.72);
+  box-shadow:
+    inset 1px 1px 4px color-mix(in srgb, var(--c-text-secondary) 10%, transparent),
+    inset -1px -1px 5px rgba(255, 255, 255, 0.84),
+    0 0 0 2px color-mix(in srgb, var(--c-accent) 14%, transparent);
+}
+
+:root[data-theme="forest"] .pomodoro-ring__tick {
+  stroke: color-mix(in srgb, var(--c-text-secondary) 24%, transparent);
+}
+
+:root[data-theme="forest"] .pomodoro-ring__track {
+  stroke: color-mix(in srgb, var(--c-success-soft) 70%, rgba(255, 255, 255, 0.72));
+}
+
+/* The progress arc cast a pink drop-shadow glow — re-tint it sage. */
+:root[data-theme="forest"] .pomodoro-ring__progress {
+  filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--c-success) 32%, transparent));
+}
+
+:root[data-theme="forest"] .pomodoro-ring__handle {
+  fill: rgba(252, 248, 241, 0.96);
+  stroke: var(--c-accent);
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--c-success) 28%, transparent));
+}
+
+:root[data-theme="forest"] .pomodoro-ring__handle-dot {
+  fill: var(--c-accent);
+}
+
+:root[data-theme="forest"] .pomodoro-ring__kicker,
+:root[data-theme="forest"] .pomodoro-ring__time,
+:root[data-theme="forest"] .pomodoro-ring__focus input,
+:root[data-theme="forest"] .pomodoro-cycle,
+:root[data-theme="forest"] .pomodoro-btn--ghost {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .pomodoro-ring__focus,
+:root[data-theme="forest"] .pomodoro-btn--ghost {
+  background: rgba(252, 248, 241, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    6px 7px 16px -10px color-mix(in srgb, var(--c-success) 24%, transparent);
+}
+
+:root[data-theme="forest"] .pomodoro-settings-overlay,
+:root[data-theme="forest"] .task-modal__combobox-list,
+:root[data-theme="forest"] .task-modal-overlay,
+:root[data-theme="forest"] .pomodoro-confirm-overlay {
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  color: var(--c-text-primary);
+  box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .pomodoro-settings__slider input[type="range"]::-webkit-slider-thumb,
+:root[data-theme="forest"] .pomodoro-settings__slider input[type="range"]::-moz-range-thumb {
+  background: var(--c-accent-gradient);
+  border-color: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--c-success) 26%, transparent),
+    0 0 12px color-mix(in srgb, var(--c-accent) 20%, transparent);
+}

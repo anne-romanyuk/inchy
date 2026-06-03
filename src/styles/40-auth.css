@@ -1,0 +1,12 @@
+/* 40-auth.css — Auth / login page (Sprout).
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+.auth-stage {
+  display: grid;
+  gap: 24px;
+  justify-items: center;
+  min-height: 100vh;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+}

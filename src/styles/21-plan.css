@@ -1,0 +1,346 @@
+/* 21-plan.css — Plan / calendar page.
+   Part of the split of the old monolithic styles.css. Forest theme only. */
+
+.plan-workspace {
+  --plan-gap: var(--today-gap, var(--space-5));
+  --plan-page-pad: var(--today-page-pad, var(--space-4));
+  --plan-header-h: clamp(58px, 7.2vh, 72px);
+  --plan-widget-radius: var(--today-widget-radius, var(--radius-2xl));
+  --plan-widget-bg: var(--app-widget-bg);
+  --plan-widget-backdrop: var(--app-widget-backdrop);
+  --plan-widget-border: var(--app-widget-border);
+  --plan-widget-shadow: var(--app-widget-shadow);
+  display: grid;
+  grid-template-rows: var(--plan-header-h) minmax(0, 1fr);
+  gap: var(--plan-gap);
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 0 var(--plan-page-pad);
+  color: var(--c-text-primary);
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-width: 0;
+  min-height: 0;
+  height: var(--plan-header-h);
+}
+
+.plan-header .tasks-title {
+  font-size: clamp(30px, 3.25vh, 36px);
+}
+
+.plan-view-toggle {
+  width: min(360px, 100%);
+  flex: 0 0 auto;
+}
+
+.plan-calendar {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: clamp(18px, 2.2vh, 24px);
+  border-radius: var(--plan-widget-radius);
+  border: var(--plan-widget-border);
+  background: var(--plan-widget-bg);
+  backdrop-filter: var(--plan-widget-backdrop);
+  -webkit-backdrop-filter: var(--plan-widget-backdrop);
+  box-shadow: var(--plan-widget-shadow);
+  overflow: hidden;
+}
+
+.plan-calendar__toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.plan-calendar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.plan-calendar__nav .pomodoro-btn {
+  min-width: auto;
+  height: var(--space-10);
+  padding-inline: var(--space-4);
+}
+
+.plan-calendar__toolbar h2 {
+  margin: 0;
+  min-width: 0;
+  font: var(--text-section-title-weight) var(--text-section-title-size) / 1.2 var(--font-base);
+  letter-spacing: var(--text-section-title-tracking);
+}
+
+.plan-calendar__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  min-width: 0;
+  color: var(--c-text-muted);
+  font-size: var(--text-caption-size);
+  white-space: nowrap;
+}
+
+.plan-calendar__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.plan-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-pill);
+  background: var(--c-accent);
+}
+
+.plan-legend-dot--deadline {
+  background: var(--c-info);
+}
+
+.plan-legend-dot--due {
+  background: var(--c-warning);
+}
+
+.plan-legend-dot--overdue {
+  background: var(--c-danger);
+}
+
+.plan-calendar__status {
+  margin: 0;
+  color: var(--c-text-muted);
+  font: var(--text-body-weight) var(--text-body-small-size) / var(--text-body-line) var(--font-base);
+}
+
+.plan-calendar__grid {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(0, 1fr);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.plan-calendar__grid[data-view="today"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.plan-calendar__weekday {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--c-border-soft);
+  border-bottom: 1px solid var(--c-border-soft);
+  color: var(--c-text-secondary);
+  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
+  text-align: center;
+}
+
+.plan-calendar__weekday:nth-child(7) {
+  border-right: 0;
+}
+
+.plan-calendar__grid[data-view="today"] .plan-calendar__weekday {
+  border-right: 0;
+}
+
+.plan-day {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-right: 1px solid var(--c-border-soft);
+  border-bottom: 1px solid var(--c-border-soft);
+  overflow: hidden;
+}
+
+.plan-calendar__grid[data-view="month"] .plan-day:nth-child(7n + 14),
+.plan-calendar__grid[data-view="week"] .plan-day:nth-child(14) {
+  border-right: 0;
+}
+
+.plan-calendar__grid[data-view="today"] .plan-day {
+  border-right: 0;
+}
+
+.plan-day__number {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--c-text-secondary);
+  font: var(--text-item-title-weight) var(--text-body-small-size) / 1 var(--font-base);
+}
+
+.plan-day__number span {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-7);
+  height: var(--space-7);
+  border-radius: var(--radius-pill);
+}
+
+.plan-day.is-today .plan-day__number span {
+  background: var(--c-accent);
+  color: var(--c-text-inverse);
+  box-shadow: var(--shadow-soft);
+}
+
+.plan-day.is-muted .plan-day__number {
+  color: var(--c-text-faint);
+}
+
+.plan-day__events {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-right: var(--space-1);
+}
+
+.plan-event {
+  --plan-event-bg: var(--c-accent-soft);
+  --plan-event-text: var(--c-text-primary);
+  --plan-event-ring: var(--c-accent);
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--plan-event-ring) 26%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--plan-event-ring) 18%, transparent), transparent 58%),
+    color-mix(in srgb, var(--plan-event-bg) 78%, rgba(255, 255, 255, 0.58));
+  color: var(--plan-event-text);
+  box-shadow:
+    0 10px 18px -18px color-mix(in srgb, var(--plan-event-ring) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.plan-event--occurrence {
+  border-style: dashed;
+}
+
+.plan-event.is-completed {
+  opacity: 0.72;
+}
+
+.plan-event--peach {
+  --plan-event-bg: var(--c-danger-soft);
+  --plan-event-ring: var(--c-danger);
+}
+
+.plan-event--sky {
+  --plan-event-bg: var(--c-info-soft);
+  --plan-event-ring: var(--c-info);
+}
+
+.plan-event--lemon {
+  --plan-event-bg: var(--c-warning-soft);
+  --plan-event-ring: var(--c-warning);
+}
+
+.plan-event--teal {
+  --plan-event-bg: var(--c-success-soft);
+  --plan-event-ring: var(--c-success);
+}
+
+.plan-event--amber {
+  --plan-event-bg: var(--c-warning-soft);
+  --plan-event-ring: var(--c-warning);
+}
+
+.plan-event--indigo {
+  --plan-event-bg: var(--c-accent-soft);
+  --plan-event-ring: var(--c-accent);
+}
+
+.plan-event--slate {
+  --plan-event-bg: var(--c-surface-glass);
+  --plan-event-ring: var(--c-text-muted);
+}
+
+.plan-event__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-bottom: var(--space-2);
+}
+
+.plan-event__topline .task-category {
+  max-width: 58%;
+  min-width: 0;
+  height: 22px;
+  padding-inline: var(--space-3);
+  font-size: var(--text-caption-size);
+}
+
+.plan-event__label {
+  flex: 0 0 auto;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text-muted);
+  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
+}
+
+.plan-event__label--completed {
+  color: var(--c-success);
+}
+
+.plan-event__label--overdue {
+  color: var(--c-danger);
+}
+
+.plan-event__label--due-today {
+  color: var(--c-warning);
+}
+
+.plan-event__label--due-soon {
+  color: var(--c-info);
+}
+
+.plan-event strong {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--c-text-primary);
+  font: var(--text-item-title-weight) var(--text-body-small-size) / 1.25 var(--font-base);
+}
+
+.plan-event p {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: var(--space-1) 0 0;
+  color: var(--c-text-secondary);
+  font: var(--text-body-weight) var(--text-caption-size) / 1.35 var(--font-base);
+}
+
+.plan-workspace--today .plan-event strong,
+.plan-workspace--week .plan-event strong {
+  -webkit-line-clamp: 3;
+}
