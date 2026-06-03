@@ -44,8 +44,8 @@ export function handleStatic(req: IncomingMessage, res: ServerResponse): boolean
 
   if (pathname.startsWith("/api/")) return false;
 
-  // Public assets (avatars).
-  if (pathname.startsWith("/avatars/")) {
+  // Public assets (avatars, logo).
+  if (pathname.startsWith("/avatars/") || pathname === "/tokee-logo.png") {
     const filePath = safeJoin(publicDir, pathname);
     if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) {
       res.writeHead(404).end("Not found");

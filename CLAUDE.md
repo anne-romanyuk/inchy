@@ -27,23 +27,6 @@ visual invention.**
 ## Project layout
 
 - `src/features/*` — Today, goals, focus (Pomodoro), today widgets/modals, auth, profile.
+- `src/styles.css` — global CSS (~11k lines, being migrated onto tokens/primitives).
 - `server/` — Hono API + SQLite. `shared/` — zod schemas/constants.
 - Dev: `npm run go` (installs + runs server & client).
-
-### CSS file map (open the ONE file for the UI you're touching — don't read the whole stylesheet)
-
-`src/styles.css` is now just an `@import` barrel (load order). The actual rules live in
-per-feature files under `src/styles/`. **Edit the feature file, not the barrel.** Load order =
-tokens → base → features → responsive (matters for the cascade):
-
-- `design-tokens.css` / `ui-components.css` — Forest tokens + `.ui-*` primitives (existing).
-- `01-tokens.css` — leftover inline token block (`--pomodoro-grad-*`).
-- `02-base.css` — resets, layout shells, **shared buttons** (`.task-add`, `.pomodoro-btn*`,
-  `.add-to-today`, `.goal-ghost-button`, `.add-icon-btn`), shared modals/confirm, utils, keyframes.
-- `10-sidebar.css` · `11-profile.css` · `20-pomodoro.css` (focus panel/ring) · `21-plan.css` ·
-  `30-goals.css` (goal cards/detail/tasks/journey) · `31-today.css` (task rows/modals/widgets) ·
-  `32-notes.css` · `40-auth.css`.
-- `99-responsive.css` — **all** `@media`/`@supports` blocks; loaded last so overrides win.
-
-Shared things (buttons, `.ui-*`, element/global rules) live in `02-base.css`, NOT the feature files.
-Whole-stylesheet `grep` still works across `src/styles/`.

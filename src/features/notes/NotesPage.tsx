@@ -215,9 +215,7 @@ function noteIcon(category: string) {
 }
 
 function noteExcerpt(note: Note) {
-  // Empty body → no placeholder copy; the card keeps a blank line instead.
-  const source = noteBodyPlainText(note.body).trim();
-  if (!source) return "";
+  const source = (noteBodyPlainText(note.body) || "Start writing small thoughts, plans, and reminders here.").trim();
   return source.replace(/\s+/g, " ").slice(0, 86);
 }
 
@@ -414,25 +412,10 @@ export function NotesPage() {
   );
   const activeCategory = activeNote ? noteCategory(activeNote) : "Personal";
 
-  // A brand-new note the user just created but never edited: it isn't in the DB
-  // yet and has an empty title and body. These shouldn't count as unsaved work —
-  // closing one needs no confirm and Save stays disabled until real content.
-  const isBlankNewNote = useCallback(
-    (note: Note | undefined): boolean => {
-      if (!note) return false;
-      if ((serverNotes ?? []).some((s) => s.id === note.id)) return false;
-      return note.title.trim().length === 0 && noteBodyPlainText(note.body).length === 0;
-    },
-    [serverNotes],
+  const dirty = useMemo(
+    () => working !== null && JSON.stringify(working) !== JSON.stringify(serverNotes ?? []),
+    [working, serverNotes],
   );
-
-  // Dirty = there is something worth saving. Untouched brand-new notes are
-  // ignored so an empty new note never enables Save or triggers a leave prompt.
-  const dirty = useMemo(() => {
-    if (working === null) return false;
-    const meaningful = working.filter((note) => !isBlankNewNote(note));
-    return JSON.stringify(meaningful) !== JSON.stringify(serverNotes ?? []);
-  }, [working, serverNotes, isBlankNewNote]);
   dirtyRef.current = dirty;
   pendingActionRef.current = pendingAction;
   activeIdRef.current = activeId;
@@ -679,62 +662,45 @@ export function NotesPage() {
 
   const persist = useCallback(async (next: Note[], preferredActiveId = activeId) => {
     const result = await saveNotes.mutateAsync(
-      // Never persist an untouched brand-new note.
-      next
-        .filter((n) => !isBlankNewNote(n))
-        .map((n) => ({
-          id: n.id,
-          title: n.title,
-          body: sanitizeNoteHtml(n.body),
-          category: n.category ?? noteCategory(n),
-          pinned: n.pinned ?? false,
-        })),
+      next.map((n) => ({
+        id: n.id,
+        title: n.title,
+        body: sanitizeNoteHtml(n.body),
+        category: n.category ?? noteCategory(n),
+        pinned: n.pinned ?? false,
+      })),
     );
     const saved = result.notes;
     setWorking(saved);
     // Keep the requested note open if it still exists, otherwise close the editor
     // (an empty preferred id intentionally means "no note open").
     setActiveId(saved.some((n) => n.id === preferredActiveId) ? preferredActiveId : "");
-  }, [activeId, isBlankNewNote, saveNotes]);
+  }, [activeId, saveNotes]);
   persistRef.current = persist;
-
-  // Drop the currently-open note when it's an untouched brand-new note, so it
-  // never lingers as an "Untitled" card after the user navigates away from it.
-  const dropActiveIfBlank = useCallback(() => {
-    setWorking((current) => {
-      if (!current) return current;
-      const id = activeIdRef.current;
-      const note = current.find((n) => n.id === id);
-      if (note && isBlankNewNote(note)) return current.filter((n) => n.id !== id);
-      return current;
-    });
-  }, [isBlankNewNote]);
 
   const requestNotesAction = useCallback((action: Exclude<PendingNotesAction, null>) => {
     if (action.type === "select" && action.noteId === activeId) return;
 
     if (!dirtyRef.current) {
-      dropActiveIfBlank();
       if (action.type === "select") setActiveId(action.noteId);
       if (action.type === "new") createNewNote();
       return;
     }
 
     setPendingAction(action);
-  }, [activeId, createNewNote, dropActiveIfBlank]);
+  }, [activeId, createNewNote]);
 
   const openNewNote = () => requestNotesAction({ type: "new" });
 
   // Close (X) the editor. If there are unsaved edits, ask first; otherwise just
-  // close back to the empty placeholder (discarding an untouched new note).
+  // close back to the empty placeholder.
   const requestCloseEditor = useCallback(() => {
-    if (dirtyRef.current) {
-      setPendingAction({ type: "close" });
+    if (!dirtyRef.current) {
+      setActiveId("");
       return;
     }
-    dropActiveIfBlank();
-    setActiveId("");
-  }, [dropActiveIfBlank]);
+    setPendingAction({ type: "close" });
+  }, []);
 
   const handleSave = () => {
     if (!working) return;
@@ -991,16 +957,14 @@ export function NotesPage() {
               {hasActiveFilters && (
                 <button
                   type="button"
-                  className="pomodoro-btn pomodoro-btn--ghost-text notes-filter-strip__clear"
-                  aria-label="Clear all filters"
-                  title="Clear all filters"
+                  className="pomodoro-btn pomodoro-btn--ghost-text"
                   onClick={() => {
                     setSearch("");
                     setCategory("All categories");
                     setDateRange("Any time");
                   }}
                 >
-                  <Icon name="Close" />
+                  Clear all
                 </button>
               )}
             </div>
@@ -1012,19 +976,12 @@ export function NotesPage() {
           </div>
 
           <div className="notes-content">
-            {notes.length === 0 ? (
-              <div className="goals-empty notes-empty-all">
-                <strong>No notes yet</strong>
-                <span>Capture your first thought and keep all your ideas in one calm place.</span>
-                <button type="button" className="task-add goals-empty__cta" onClick={openNewNote}>
-                  <span aria-hidden="true">+</span> Create your first note
-                </button>
-              </div>
-            ) : (
-            <>
             <section className="notes-list app-scroll" aria-label="Notes list">
               {filteredNotes.length === 0 ? (
                 <div className="ui-empty notes-list__empty">
+                  <div className="ui-empty__art" aria-hidden="true">
+                    <Icon name="Search" />
+                  </div>
                   <h2 className="ui-empty__title">No notes found</h2>
                   <p className="ui-empty__text">Try another search or clear the active filters.</p>
                 </div>
@@ -1096,11 +1053,7 @@ export function NotesPage() {
                         )}
                       </div>
                       <strong>{note.title || "Untitled"}</strong>
-                      {(() => {
-                        const excerpt = noteExcerpt(note);
-                        // Keep the line height even when the body is empty.
-                        return <span>{excerpt ? `${excerpt}...` : " "}</span>;
-                      })()}
+                      <span>{noteExcerpt(note)}...</span>
                       <span className="notes-list-card__meta">
                         <span className={`ui-badge ui-badge--${noteTone(currentCategory)} ui-badge--md`}>
                           <Icon name={noteIcon(currentCategory)} /> {currentCategory}
@@ -1277,8 +1230,12 @@ export function NotesPage() {
                     </footer>
                   </article>
               ) : (
-                <div className="notes-editor-empty">
-                  <p className="notes-editor-empty__hint">Open a note from the list, or create a new one.</p>
+                <div className="ui-empty notes-editor-empty">
+                  <div className="ui-empty__art" aria-hidden="true">
+                    <Icon name="Note" />
+                  </div>
+                  <h2 className="ui-empty__title">No note open</h2>
+                  <p className="ui-empty__text">Open a note from the list, or create a new one.</p>
                 </div>
               )}
 
@@ -1365,8 +1322,6 @@ export function NotesPage() {
                 </div>
               )}
             </section>
-            </>
-            )}
           </div>
         </div>
       </div>

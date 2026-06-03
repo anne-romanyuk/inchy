@@ -23,6 +23,8 @@ import { NeedsAttentionWidget } from "./NeedsAttentionWidget";
 import PomodoroPanel from "../focus/Pomodoro";
 import { GoalJourney } from "../goals/GoalsPage";
 import { useGoals, useUpdateGoal } from "../goals/useGoals";
+import { getGoalIconSrc } from "../goals/goalIcons";
+import { useTheme } from "../../shared/hooks/useTheme";
 
 function formatFocusDuration(seconds: number): string {
   const totalMinutes = Math.floor(seconds / 60);
@@ -532,6 +534,7 @@ export function TodayPage() {
   const deleteTask = useDeleteTask();
   const reorderTasks = useReorderTasks();
   const goalsQuery = useGoals();
+  const [theme] = useTheme();
 
   // After the storage unification, `useTasks()` is just `useOccurrences(today)`
   // — every row on Today (standalone + goal-linked) comes from the same
@@ -1057,9 +1060,15 @@ export function TodayPage() {
           >
             <div className="goal-journey goal-journey--empty">
               <div className="goal-journey__empty-content">
+                <img
+                  className="goal-journey__empty-art"
+                  src={getGoalIconSrc("flag", theme)}
+                  alt=""
+                  aria-hidden="true"
+                />
                 <div className="goal-journey__empty-text">
                   <h2>No goals yet</h2>
-                  <p>Set your first goal and Inchy will help you break it into milestones.</p>
+                  <p>Set your first goal and Tokee will help you break it into milestones.</p>
                 </div>
                 <button
                   type="button"

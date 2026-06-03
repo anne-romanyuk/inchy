@@ -132,15 +132,13 @@
   width: min(420px, calc(100vw - 40px));
   padding: 38px 38px 32px;
   border-radius: 28px;
-  /* Same warm cream milk-glass surface as the app sidebar (see 10-sidebar.css
-     forest rule). Login owns this declaration outright so it is decoupled from
-     the shared `--app-widget-bg` panel surface. */
-  background: var(--c-sidebar-surface);
-  backdrop-filter: blur(26px) saturate(1.18);
-  -webkit-backdrop-filter: blur(26px) saturate(1.18);
-  border: 1px solid rgba(150, 132, 108, 0.18);
+  /* Warm milk-glass forest card. */
+  background: rgba(247, 248, 241, 0.86);
+  backdrop-filter: blur(22px) saturate(1.1);
+  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+  border: 1px solid rgba(127, 162, 104, 0.18);
   box-shadow:
-    18px 24px 48px -22px rgba(86, 74, 58, 0.34),
+    18px 24px 48px -22px rgba(63, 86, 58, 0.4),
     -6px -6px 26px -14px rgba(255, 255, 255, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
