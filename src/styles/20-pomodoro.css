@@ -26,11 +26,11 @@
   overflow: hidden;
   height: 421px;
   padding-top: 20px;
-  border: var(--app-popup-border);
-  background: var(--app-popup-bg);
-  backdrop-filter: var(--app-popup-backdrop);
-  -webkit-backdrop-filter: var(--app-popup-backdrop);
-  box-shadow: var(--app-popup-shadow);
+  border: var(--app-widget-border);
+  background: var(--app-widget-bg);
+  backdrop-filter: var(--app-widget-backdrop);
+  -webkit-backdrop-filter: var(--app-widget-backdrop);
+  box-shadow: var(--app-widget-shadow);
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) 38px 56px;
   align-items: stretch;
@@ -42,6 +42,10 @@
 }
 
 .pomodoro-panel--full {
+  --pomodoro-full-ghost-size: clamp(52px, 6.4vmin, 64px);
+  --pomodoro-full-primary-size: clamp(68px, 8.2vmin, 82px);
+  --pomodoro-full-ghost-icon: clamp(23px, 2.8vmin, 28px);
+  --pomodoro-full-primary-icon: clamp(31px, 3.8vmin, 38px);
   min-height: 0;
   height: 100%;
   max-height: 100%;
@@ -91,17 +95,17 @@
 }
 
 .pomodoro-panel--full .pomodoro-ring__content {
-  gap: var(--space-3);
+  gap: clamp(var(--space-3), 1.4vmin, var(--space-5));
   padding-inline: clamp(var(--space-7), 5vmin, var(--space-10));
 }
 
 .pomodoro-panel--full .pomodoro-ring__kicker {
-  font-size: clamp(var(--text-body-small-size), 1.8vmin, var(--text-body-size));
+  font-size: clamp(var(--text-body-size), 2.1vmin, 22px);
 }
 
 .pomodoro-panel--full .pomodoro-ring__time,
 .pomodoro-panel--full:not(.has-focus-task) .pomodoro-ring__time {
-  font-size: clamp(52px, 9vmin, 86px);
+  font-size: clamp(72px, 10.8vmin, 112px);
 }
 
 .pomodoro-panel--full .pomodoro-focus-slot {
@@ -114,7 +118,28 @@
 
 .pomodoro-panel--full .pomodoro-controls {
   align-self: center;
-  min-height: clamp(58px, 8vh, 72px);
+  gap: clamp(var(--space-4), 2.1vmin, var(--space-6));
+  min-height: clamp(78px, 10vh, 96px);
+}
+
+.pomodoro-panel--full .pomodoro-btn {
+  width: var(--pomodoro-full-ghost-size);
+  height: var(--pomodoro-full-ghost-size);
+}
+
+.pomodoro-panel--full .pomodoro-btn svg {
+  width: var(--pomodoro-full-ghost-icon);
+  height: var(--pomodoro-full-ghost-icon);
+}
+
+.pomodoro-panel--full .pomodoro-btn--primary {
+  width: var(--pomodoro-full-primary-size);
+  height: var(--pomodoro-full-primary-size);
+}
+
+.pomodoro-panel--full .pomodoro-btn--primary svg {
+  width: var(--pomodoro-full-primary-icon);
+  height: var(--pomodoro-full-primary-icon);
 }
 
 .pomodoro-cycle {
@@ -539,7 +564,6 @@
 }
 
 :root[data-theme="forest"] .pomodoro-settings-overlay,
-:root[data-theme="forest"] .task-modal__combobox-list,
 :root[data-theme="forest"] .task-modal-overlay,
 :root[data-theme="forest"] .pomodoro-confirm-overlay {
   border: var(--app-popup-border);
@@ -548,6 +572,34 @@
   -webkit-backdrop-filter: var(--app-popup-backdrop);
   color: var(--c-text-primary);
   box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .task-modal__combobox-list {
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  color: var(--c-text-primary);
+  box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .pomodoro-settings__label {
+  color: var(--c-text-secondary);
+}
+
+:root[data-theme="forest"] .pomodoro-settings__value {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .pomodoro-settings__slider input[type="range"] {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--c-accent) 26%, var(--c-sidebar-surface-solid)),
+    color-mix(in srgb, var(--c-success) 20%, var(--c-sidebar-surface-solid))
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 color-mix(in srgb, var(--c-border) 44%, transparent);
 }
 
 :root[data-theme="forest"] .pomodoro-settings__slider input[type="range"]::-webkit-slider-thumb,

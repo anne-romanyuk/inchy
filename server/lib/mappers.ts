@@ -41,6 +41,8 @@ export type UserRow = {
   email: string;
   password_hash: string;
   avatar_id: string | null;
+  google_id?: string | null;
+  google_email_verified?: number;
   created_at: string;
 };
 

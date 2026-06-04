@@ -1063,8 +1063,8 @@
   display: grid;
   place-items: center;
   min-height: 160px;
-  color: rgba(71, 71, 71, 0.58);
-  font: 700 17px/1.4 "Quattrocento Sans", system-ui, sans-serif;
+  color: var(--app-empty-text);
+  font: var(--app-empty-title-font);
   text-align: center;
 }
 
@@ -1527,7 +1527,7 @@
   padding: 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.1);
-  color: rgba(57, 57, 92, 0.55);
+  color: var(--app-empty-text);
   font: 700 14px/1.4 var(--planner-font);
   text-align: center;
 }
@@ -1724,7 +1724,7 @@
 :root[data-theme="forest"] .tasks-empty,
 :root[data-theme="forest"] .tasks-status,
 :root[data-theme="forest"] .pomodoro-btn--ghost-text {
-  color: var(--c-text-muted);
+  color: var(--app-empty-text);
 }
 
 :root[data-theme="forest"] .tasks-panel,
@@ -2120,12 +2120,12 @@
 }
 .needs-attention__empty-text h2 {
   margin: 0;
-  font: var(--planner-heading-weight) 20px/1.1 var(--planner-font);
+  font: var(--app-empty-title-font);
   color: rgba(45, 45, 78, 0.92);
 }
 .needs-attention__empty-text p {
   margin: 4px 0 0;
-  font: 500 13px/1.4 var(--planner-font);
+  font: var(--app-empty-body-font);
   color: rgba(57, 57, 92, 0.58);
   max-width: 240px;
 }
@@ -2137,14 +2137,17 @@
   color: var(--c-text-primary);
 }
 :root[data-theme="forest"] .needs-attention__title h2,
-:root[data-theme="forest"] .needs-attention__item-title,
-:root[data-theme="forest"] .needs-attention__empty-text h2 {
+:root[data-theme="forest"] .needs-attention__item-title {
   color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .needs-attention__empty-text h2 {
+  color: var(--app-empty-text);
 }
 :root[data-theme="forest"] .needs-attention__title p,
 :root[data-theme="forest"] .needs-attention__item-goal,
 :root[data-theme="forest"] .needs-attention__empty-text p {
-  color: var(--c-text-muted);
+  color: var(--app-empty-text);
 }
 :root[data-theme="forest"] .needs-attention__item {
   background: rgba(252, 249, 243, 0.5);
@@ -2566,6 +2569,21 @@
   overflow-y: visible;
 }
 
+.today-dashboard .today-goal-widget .goal-journey--no-steps {
+  min-height: clamp(170px, 22vh, 210px);
+}
+
+.today-dashboard .today-goal-widget .goal-journey__no-plan {
+  display: grid;
+  place-items: center;
+  min-height: clamp(108px, 14vh, 136px);
+  margin-top: var(--space-2);
+  color: var(--app-empty-text);
+  text-align: center;
+  font: var(--app-empty-title-font);
+  letter-spacing: 0;
+}
+
 /* -----------------------------------------------------------------
    Tasks-panel-scoped confirm overlay. Layered on top of just the
    Today widget's `.tasks-panel--today`, mirroring how the pomodoro
@@ -2762,8 +2780,15 @@
   height: calc(var(--size) * 0.66);
 }
 
-:root[data-theme="forest"] .task-modal-overlay,
 :root[data-theme="forest"] .task-modal__combobox-list {
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .task-modal-overlay {
   border: var(--app-popup-border);
   background: var(--app-popup-bg);
   backdrop-filter: var(--app-popup-backdrop);

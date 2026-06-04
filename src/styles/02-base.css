@@ -56,10 +56,13 @@ select {
   --app-widget-backdrop: none;
   --app-widget-border: 1px solid color-mix(in srgb, var(--c-border-soft) 72%, var(--c-surface-elevated));
   --app-widget-shadow: none;
-  --app-popup-bg: var(--c-sidebar-surface-solid);
+  --app-popup-bg: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, white);
   --app-popup-backdrop: none;
   --app-popup-border: var(--app-widget-border);
   --app-popup-shadow: var(--shadow-elevated);
+  --app-empty-text: var(--c-text-muted);
+  --app-empty-title-font: 700 var(--text-card-title-size) / 1.4 var(--font-base);
+  --app-empty-body-font: 700 14px / 1.45 var(--font-base);
 }
 
 .fluid-gradient {

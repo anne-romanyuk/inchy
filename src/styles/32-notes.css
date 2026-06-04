@@ -252,7 +252,7 @@
   height: 16px;
 }
 .notes-filter-strip__empty {
-  color: var(--c-text-muted);
+  color: var(--app-empty-text);
   font-size: var(--text-body-small-size);
 }
 .notes-filter-strip .ui-badge {
@@ -1029,8 +1029,8 @@
   margin: 0;
   max-width: 360px;
   text-align: center;
-  color: var(--c-text-muted);
-  font: 700 14px/1.45 var(--planner-font);
+  color: var(--app-empty-text);
+  font: var(--app-empty-body-font);
 }
 /* Whole-page empty state (no notes at all): one centered "No notes yet" across
    both content columns, matching the Goals empty-state typography. The backdrop
@@ -1056,6 +1056,14 @@
   backdrop-filter: var(--notes-widget-backdrop);
   -webkit-backdrop-filter: var(--notes-widget-backdrop);
   box-shadow: var(--notes-widget-shadow);
+}
+
+:root[data-theme="forest"] .notes-empty-all,
+:root[data-theme="forest"] .notes-empty-all strong,
+:root[data-theme="forest"] .notes-empty-all > span,
+:root[data-theme="forest"] .notes-list__empty .ui-empty__title,
+:root[data-theme="forest"] .notes-list__empty .ui-empty__text {
+  color: var(--app-empty-text);
 }
 
 .notes-search .ui-field__control,

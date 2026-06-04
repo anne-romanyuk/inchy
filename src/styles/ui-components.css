@@ -283,8 +283,8 @@ textarea.ui-field__control { min-height: 88px; resize: vertical; }
   color: var(--c-text-secondary);
 }
 .ui-empty__art { width: 72px; height: 72px; opacity: 0.9; }
-.ui-empty__title { margin: 0; font: var(--text-card-title-weight) var(--text-card-title-size) / 1.2 var(--font-base); color: var(--c-text-primary); }
-.ui-empty__text { margin: 0; max-width: 34ch; font-size: var(--text-body-small-size); line-height: var(--text-body-line); }
+.ui-empty__title { margin: 0; font: var(--app-empty-title-font, var(--text-card-title-weight) var(--text-card-title-size) / 1.2 var(--font-base)); color: var(--c-text-primary); }
+.ui-empty__text { margin: 0; max-width: 34ch; font: var(--app-empty-body-font, var(--text-body-weight) var(--text-body-small-size) / var(--text-body-line) var(--font-base)); }
 
 /* ----------------------------------------------------------------------------
    PAGE / SECTION HEADERS

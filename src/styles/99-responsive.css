@@ -471,6 +471,10 @@
   }
 
   .pomodoro-panel--full {
+    --pomodoro-full-ghost-size: clamp(46px, 11vmin, 54px);
+    --pomodoro-full-primary-size: clamp(58px, 14vmin, 68px);
+    --pomodoro-full-ghost-icon: clamp(20px, 5vmin, 24px);
+    --pomodoro-full-primary-icon: clamp(28px, 6.5vmin, 34px);
     padding: var(--space-7);
     row-gap: var(--space-6);
   }
@@ -485,7 +489,15 @@
 
   .pomodoro-panel--full .pomodoro-ring__time,
   .pomodoro-panel--full:not(.has-focus-task) .pomodoro-ring__time {
-    font-size: clamp(42px, 12vmin, 68px);
+    font-size: clamp(54px, 14vmin, 78px);
+  }
+
+  .pomodoro-panel--full .pomodoro-ring__kicker {
+    font-size: clamp(var(--text-body-small-size), 3.8vmin, var(--text-body-size));
+  }
+
+  .pomodoro-panel--full .pomodoro-controls {
+    min-height: clamp(64px, 16vmin, 78px);
   }
 }
 
@@ -520,8 +532,7 @@
   }
 
   .today-dashboard .today-goal-widget .goal-journey__selector,
-  .today-dashboard .today-goal-widget .goal-journey__date,
-  .today-dashboard .today-goal-widget .goal-journey__status {
+  .today-dashboard .today-goal-widget .goal-journey__date {
     min-height: 34px;
   }
 }

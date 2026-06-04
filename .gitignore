@@ -8,7 +8,7 @@ data/
 dist/
 
 # env & local secrets
-.env
+server/routes/.env
 .env.*
 *.local
 

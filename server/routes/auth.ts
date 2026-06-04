@@ -1,4 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
+import type { Context } from "hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { randomBytes } from "node:crypto";
 import { db } from "../db";
 import { newId } from "../lib/ids";
 import { hashPassword, verifyPassword } from "../lib/password";
@@ -26,6 +29,156 @@ export const authRoutes = createApp();
 
 const jsonBody = <S extends Parameters<typeof createRoute>[0]["request"] extends infer R ? unknown : never>() => undefined;
 void jsonBody;
+
+const GOOGLE_STATE_COOKIE = "planner_google_oauth_state";
+const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+type GoogleProfile = {
+  sub: string;
+  email: string;
+  email_verified?: boolean;
+  name?: string;
+  given_name?: string;
+};
+
+function getGoogleConfig(c: Context) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI ?? new URL("/api/auth/google/callback", c.req.url).toString();
+  return clientId && clientSecret ? { clientId, clientSecret, redirectUri } : null;
+}
+
+function redirectWithAuthError(c: Context, message: string) {
+  return c.redirect(`/?authError=${encodeURIComponent(message)}`, 302);
+}
+
+function makeOAuthPasswordHash(provider: string, subject: string) {
+  return `oauth:${provider}:${subject}`;
+}
+
+async function exchangeGoogleCode(code: string, config: { clientId: string; clientSecret: string; redirectUri: string }) {
+  const response = await fetch(GOOGLE_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      redirect_uri: config.redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  const payload = await response.json().catch(() => null) as { access_token?: string; error_description?: string } | null;
+  if (!response.ok || !payload?.access_token) {
+    throw new Error(payload?.error_description ?? "Could not complete Google sign-in.");
+  }
+  return payload.access_token;
+}
+
+async function fetchGoogleProfile(accessToken: string): Promise<GoogleProfile> {
+  const response = await fetch(GOOGLE_USERINFO_URL, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const profile = await response.json().catch(() => null) as GoogleProfile | null;
+  if (!response.ok || !profile?.sub || !profile.email) {
+    throw new Error("Could not read Google profile.");
+  }
+  return profile;
+}
+
+function findOrCreateGoogleUser(profile: GoogleProfile): UserRow {
+  if (!profile.email_verified) {
+    throw new Error("Google account email is not verified.");
+  }
+
+  const byGoogleId = db.prepare("SELECT * FROM users WHERE google_id = ?").get(profile.sub) as UserRow | undefined;
+  if (byGoogleId) return byGoogleId;
+
+  const now = new Date().toISOString();
+  const email = profile.email.trim().toLowerCase();
+  const existing = db.prepare("SELECT * FROM users WHERE lower(email) = ?").get(email) as UserRow | undefined;
+  if (existing) {
+    if (existing.google_id && existing.google_id !== profile.sub) {
+      throw new Error("This email is already connected to another Google account.");
+    }
+    db.prepare("UPDATE users SET google_id = ?, google_email_verified = 1 WHERE id = ?").run(profile.sub, existing.id);
+    return { ...existing, email };
+  }
+
+  const user: UserRow = {
+    id: newId(),
+    name: (profile.name || profile.given_name || email.split("@")[0] || "Google user").trim(),
+    email,
+    password_hash: makeOAuthPasswordHash("google", profile.sub),
+    avatar_id: null,
+    created_at: now,
+  };
+
+  db.prepare(
+    `INSERT INTO users (id, name, email, password_hash, avatar_id, created_at, google_id, google_email_verified)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+  ).run(user.id, user.name, user.email, user.password_hash, user.avatar_id, user.created_at, profile.sub);
+
+  return user;
+}
+
+authRoutes.get("/auth/google", (c) => {
+  const config = getGoogleConfig(c);
+  if (!config) {
+    return redirectWithAuthError(c, "Google sign-in is not configured yet.");
+  }
+
+  const state = randomBytes(24).toString("hex");
+  setCookie(c, GOOGLE_STATE_COOKIE, state, {
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
+    maxAge: 10 * 60,
+  });
+
+  const params = new URLSearchParams({
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+    access_type: "online",
+    prompt: "select_account",
+  });
+
+  return c.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`, 302);
+});
+
+authRoutes.get("/auth/google/callback", async (c) => {
+  const config = getGoogleConfig(c);
+  if (!config) {
+    return redirectWithAuthError(c, "Google sign-in is not configured yet.");
+  }
+
+  const code = c.req.query("code");
+  const state = c.req.query("state");
+  const expectedState = getCookie(c, GOOGLE_STATE_COOKIE);
+  deleteCookie(c, GOOGLE_STATE_COOKIE, { path: "/" });
+
+  if (!code || !state || !expectedState || state !== expectedState) {
+    return redirectWithAuthError(c, "Google sign-in could not be verified.");
+  }
+
+  try {
+    const accessToken = await exchangeGoogleCode(code, config);
+    const profile = await fetchGoogleProfile(accessToken);
+    const user = findOrCreateGoogleUser(profile);
+    setSessionCookie(c, createSession(user.id));
+    return c.redirect("/today", 302);
+  } catch (error) {
+    console.error("[google auth error]", error);
+    const message = error instanceof Error ? error.message : "Google sign-in failed.";
+    return redirectWithAuthError(c, message);
+  }
+});
 
 const registerRoute = createRoute({
   method: "post",

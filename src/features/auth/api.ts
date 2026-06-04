@@ -14,6 +14,10 @@ export function register(input: RegisterInput) {
   return apiFetch<{ user: PublicUser }>("/api/register", { method: "POST", body: input });
 }
 
+export function googleLoginUrl() {
+  return "/api/auth/google";
+}
+
 export function logout() {
   return apiFetch<{ ok: true }>("/api/logout", { method: "POST" });
 }

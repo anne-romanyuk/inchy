@@ -210,13 +210,9 @@
     radial-gradient(ellipse at 52% 72%, color-mix(in srgb, var(--c-success) 22%, transparent) 0 12%, color-mix(in srgb, var(--c-success) 9%, transparent) 36%, transparent 80%);
 }
 
-:root[data-theme="forest"] .sidebar-brand img {
-  filter:
-    brightness(0.72)
-    sepia(0.22)
-    saturate(0.72)
-    hue-rotate(42deg)
-    drop-shadow(0 2px 4px color-mix(in srgb, var(--c-text-secondary) 24%, transparent));
+:root[data-theme="forest"] .sidebar-brand__wordmark {
+  color: var(--c-text-secondary);
+  text-shadow: 0 2px 4px color-mix(in srgb, var(--c-text-secondary) 18%, transparent);
 }
 
 :root[data-theme="forest"] .sidebar-nav :is(button, a) {
@@ -233,6 +229,19 @@
   color: var(--c-text-primary);
   box-shadow:
     0 0 0 1px rgba(150, 132, 108, 0.2),
+    10px 14px 20px -16px rgba(86, 74, 58, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+/* Logout turns red on hover/focus — quiet by default, clearly destructive on
+   intent. The icon uses currentColor, so it follows the danger ink. */
+:root[data-theme="forest"] .sidebar-nav .sidebar-nav__logout:hover,
+:root[data-theme="forest"] .sidebar-nav .sidebar-nav__logout:focus-visible {
+  /* Neutral cream fill stays — only the text, outline and icon turn red. */
+  background: rgba(252, 249, 243, 0.78);
+  color: var(--c-danger);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c-danger) 60%, transparent),
     10px 14px 20px -16px rgba(86, 74, 58, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }

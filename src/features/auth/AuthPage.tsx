@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   SoftLoginModal,
@@ -14,6 +14,7 @@ import "./sprout-auth.css";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   const [authMode, setAuthMode] = useState<AuthMode>("login");
@@ -21,6 +22,19 @@ export function AuthPage() {
   const [status, setStatus] = useState("");
   const [statusVariant, setStatusVariant] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const authError = searchParams.get("authError");
+    if (!authError) return;
+
+    setStatus(authError);
+    setStatusVariant("error");
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("authError");
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleModeChange = (next: AuthMode) => {
     setAuthMode(next);
@@ -76,6 +90,11 @@ export function AuthPage() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    setLoading(true);
+    window.location.assign(authApi.googleLoginUrl());
+  };
+
   const isRegister = authMode === "register";
 
   return (
@@ -98,7 +117,7 @@ export function AuthPage() {
           }
           withFieldIcons
           secondaryAction={
-            <button type="button" className="sprout-auth__google">
+            <button type="button" className="sprout-auth__google" onClick={handleGoogleLogin} disabled={loading}>
               <GoogleMark className="sprout-auth__google-mark" />
               Continue with Google
             </button>

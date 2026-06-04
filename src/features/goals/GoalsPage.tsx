@@ -20,9 +20,8 @@ import {
   useGoals,
   useUpdateGoal,
 } from "./useGoals";
-import { defaultGoalIcon, forestGoalIcons, getForestGoalIconId, getGoalIcon, getGoalIconSrc, goalIcons } from "./goalIcons";
+import { defaultGoalIcon, forestGoalIcons, getForestGoalIconId, getGoalIconSrc } from "./goalIcons";
 import { AddToTodayButton } from "./AddToTodayButton";
-import { useTheme } from "../../shared/hooks/useTheme";
 import { GoalDatePicker } from "./GoalDatePicker";
 
 type DraftTask = {
@@ -160,16 +159,13 @@ function getStatusClassName(goal: Goal) {
 }
 
 function GoalTaskIcon({ iconId, alt = "" }: { iconId?: string | null; alt?: string }) {
-  const icon = getGoalIcon(iconId);
-  const [theme] = useTheme();
-  const effectiveIconId = theme === "forest" ? getForestGoalIconId(iconId) : icon.id;
-  return <img src={getGoalIconSrc(effectiveIconId, theme)} alt={alt} className="goal-task-icon" data-icon={effectiveIconId} draggable={false} />;
+  const effectiveIconId = getForestGoalIconId(iconId);
+  return <img src={getGoalIconSrc(effectiveIconId)} alt={alt} className="goal-task-icon" data-icon={effectiveIconId} draggable={false} />;
 }
 
 function IconPicker({ value, onChange }: { value: string | null; onChange: (iconId: string | null) => void }) {
-  const [theme] = useTheme();
-  const options = theme === "forest" ? forestGoalIcons : [defaultGoalIcon, ...goalIcons];
-  const selectedIconId = theme === "forest" ? getForestGoalIconId(value) : value ?? defaultGoalIcon.id;
+  const options = forestGoalIcons;
+  const selectedIconId = getForestGoalIconId(value);
   return (
     <div className="goal-icon-picker" aria-label="Choose a goal task icon">
       {options.map((icon) => {
@@ -184,7 +180,7 @@ function IconPicker({ value, onChange }: { value: string | null; onChange: (icon
             aria-label={icon.label}
             title={icon.label}
           >
-            <img src={getGoalIconSrc(icon.id, theme)} alt="" draggable={false} />
+            <img src={getGoalIconSrc(icon.id)} alt="" draggable={false} />
             {selected ? <span className="goal-icon-choice__check">✓</span> : null}
           </button>
         );
@@ -658,6 +654,7 @@ export function GoalJourney({
   const journeyClassName = [
     "goal-journey",
     compact ? "goal-journey--compact" : "",
+    !fallbackTasks.length ? "goal-journey--no-steps" : "",
     hiddenLeft ? "goal-journey--has-hidden-left" : "",
     hiddenRight ? "goal-journey--has-hidden-right" : "",
   ]
@@ -674,10 +671,11 @@ export function GoalJourney({
     "--goal-visible-count": Math.max(visibleTasks.length, 1),
     "--goal-progress-fill": fillFraction,
   } as CSSProperties;
+  const selectorIconId = goal.tasks[activeIndex]?.iconId ?? goal.iconId;
 
   const goalSelector = canSelectGoal ? (
     <label className="goal-journey__selector goal-journey__selector--select">
-      <GoalTaskIcon iconId={goal.tasks[activeIndex]?.iconId} />
+      <GoalTaskIcon iconId={selectorIconId} />
       <span className="sr-only">Select goal</span>
       <select
         value={selectedGoalId ?? goal.id}
@@ -691,7 +689,7 @@ export function GoalJourney({
     </label>
   ) : (
     <span className="goal-journey__selector">
-      <GoalTaskIcon iconId={goal.tasks[activeIndex]?.iconId} />
+      <GoalTaskIcon iconId={selectorIconId} />
       {goal.title}
     </span>
   );
@@ -736,29 +734,35 @@ export function GoalJourney({
         </header>
       )}
 
-      <ol className="goal-journey__steps">
-        {hiddenLeft ? <span className="goal-journey__edge-line goal-journey__edge-line--left" aria-hidden="true" /> : null}
-        <div className="goal-journey__track" aria-hidden="true">
-          <span className="goal-journey__track-fill" />
+      {visibleTasks.length ? (
+        <ol className="goal-journey__steps">
+          {hiddenLeft ? <span className="goal-journey__edge-line goal-journey__edge-line--left" aria-hidden="true" /> : null}
+          <div className="goal-journey__track" aria-hidden="true">
+            <span className="goal-journey__track-fill" />
+          </div>
+          {hiddenRight ? <span className="goal-journey__edge-line goal-journey__edge-line--right" aria-hidden="true" /> : null}
+          {visibleTasks.map((task, index) => {
+            const absoluteIndex = startIndex + index;
+            const state = getTaskState(task, absoluteIndex, activeIndex);
+            return (
+              <li key={task.id} className={`goal-journey-step is-${state}`}>
+                <div className="goal-journey-step__node">
+                  <GoalTaskIcon iconId={task.iconId} alt="" />
+                  {state === "completed" ? (
+                    <span className="goal-journey-step__badge">✓</span>
+                  ) : null}
+                </div>
+                <strong>{task.title}</strong>
+                <span>{state === "completed" ? "Completed" : state === "in-progress" ? "In progress" : "Upcoming"}</span>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="goal-journey__no-plan" role="status">
+          No plan yet — suspiciously peaceful.
         </div>
-        {hiddenRight ? <span className="goal-journey__edge-line goal-journey__edge-line--right" aria-hidden="true" /> : null}
-        {visibleTasks.map((task, index) => {
-          const absoluteIndex = startIndex + index;
-          const state = getTaskState(task, absoluteIndex, activeIndex);
-          return (
-            <li key={task.id} className={`goal-journey-step is-${state}`}>
-              <div className="goal-journey-step__node">
-                <GoalTaskIcon iconId={task.iconId} alt="" />
-                {state === "completed" ? (
-                  <span className="goal-journey-step__badge">✓</span>
-                ) : null}
-              </div>
-              <strong>{task.title}</strong>
-              <span>{state === "completed" ? "Completed" : state === "in-progress" ? "In progress" : "Upcoming"}</span>
-            </li>
-          );
-        })}
-      </ol>
+      )}
     </section>
   );
 }
@@ -1034,12 +1038,7 @@ function GoalDetailTaskRow({
                 </div>
               ) : null}
             </div>
-            <div
-              className="goal-detail-task__title-edit"
-              style={{
-                ["--goal-title-width" as string]: `${Math.min(Math.max(draft.title.length + 3, 14), 34)}ch`,
-              } as CSSProperties}
-            >
+            <div className="goal-detail-task__title-edit">
               <input
                 value={draft.title}
                 onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
@@ -1328,7 +1327,7 @@ function GoalTaskNoteAndSubtasks({
             aria-label="New subtask title"
             disabled={subtasksFull}
           />
-          <button type="submit" disabled={!newSubtaskTitle.trim() || subtasksFull}>
+          <button className="task-add" type="submit" disabled={!newSubtaskTitle.trim() || subtasksFull}>
             <span aria-hidden="true">+</span> Add
           </button>
         </form>
@@ -1353,7 +1352,7 @@ function GoalTaskNoteAndSubtasks({
           </span>
           <button
             type="button"
-            className="goal-task-expand__note-save"
+            className="task-add goal-task-expand__note-save"
             onClick={saveNote}
             disabled={!noteDirty}
           >
@@ -1716,7 +1715,6 @@ export function GoalDetailPage() {
             <section className="goal-detail-tasks tasks-panel tasks-panel--today" aria-label="Goal tasks">
             <header className="goal-detail-section-header">
               <div>
-                <p className="goal-kicker">Goal tasks</p>
                 <h2>Steps to achieve your goal</h2>
               </div>
               <button
@@ -1762,7 +1760,6 @@ export function GoalDetailPage() {
             )}
             </section>
 
-            {goal.tasks.length ? <GoalJourney goal={goal} /> : null}
           </div>
 
           <AnimatePresence initial={false}>

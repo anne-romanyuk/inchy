@@ -341,6 +341,12 @@
   outline: none;
 }
 
+.sprout-auth__google:disabled {
+  cursor: wait;
+  opacity: 0.68;
+  transform: none;
+}
+
 .sprout-auth__google-mark {
   width: 18px;
   height: 18px;
