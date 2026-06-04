@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Occurrence } from "../../../shared/schemas";
+import { ApiError } from "../../shared/api/client";
 import { queryKeys } from "../../shared/api/queryClient";
 import * as api from "./occurrencesApi";
 
@@ -63,7 +64,17 @@ export function useUpdateOccurrence() {
       );
       return { previous, key };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (error, variables, ctx) => {
+      // 404 = the occurrence is already gone server-side (most often its goal
+      // task/subtask was deleted, cascading the occurrence away). Drop the
+      // ghost row instead of restoring it, then resync from the server.
+      if (error instanceof ApiError && error.status === 404 && ctx?.key) {
+        client.setQueryData<Occurrence[]>(ctx.key, (current = []) =>
+          current.filter((o) => o.id !== variables.id),
+        );
+        client.invalidateQueries({ queryKey: ctx.key });
+        return;
+      }
       if (ctx?.previous) client.setQueryData(ctx.key, ctx.previous);
     },
     onSuccess: ({ occurrence }, variables) => {
@@ -92,7 +103,10 @@ export function useDeleteOccurrence() {
       );
       return { previous, key };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (error, _v, ctx) => {
+      // Already gone server-side (e.g. cascaded away with its goal task/subtask)
+      // — the optimistic removal was correct, so keep it removed.
+      if (error instanceof ApiError && error.status === 404) return;
       if (ctx?.previous) client.setQueryData(ctx.key, ctx.previous);
     },
   });

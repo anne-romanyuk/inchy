@@ -30,6 +30,7 @@ export function AddTaskModal({
   const deleteDefaultTask = useDeleteDefaultTask();
   const [draftTitle, setDraftTitle] = useState("");
   const [draftCategory, setDraftCategory] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const [draftDuration, setDraftDuration] = useState("");
   const [draftSaveToDefault, setDraftSaveToDefault] = useState(false);
   const [queuedTasks, setQueuedTasks] = useState<QueuedTask[]>([]);
@@ -46,10 +47,15 @@ export function AddTaskModal({
   }, [categories, defaultTasks, queuedTasks]);
 
   const filteredCategoryOptions = useMemo(() => {
-    const query = draftCategory.trim().toLowerCase();
+    const query = categorySearch.trim().toLowerCase();
     if (!query) return categoryOptions;
     return categoryOptions.filter((option) => option.toLowerCase().includes(query));
-  }, [categoryOptions, draftCategory]);
+  }, [categoryOptions, categorySearch]);
+  const categorySearchValue = categorySearch.trim().slice(0, MAX_CATEGORY_LENGTH);
+  const canCreateCategory =
+    categorySearchValue.length > 0 &&
+    !categoryOptions.some((option) => option.toLowerCase() === categorySearchValue.toLowerCase());
+  const selectedCategoryTone = draftCategory.trim() ? categoryTone(draftCategory.trim()) : "";
   const categoryDropdownOptions = useMemo(
     () => ["", ...filteredCategoryOptions],
     [filteredCategoryOptions],
@@ -76,6 +82,7 @@ export function AddTaskModal({
   const resetDraft = () => {
     setDraftTitle("");
     setDraftCategory("");
+    setCategorySearch("");
     setDraftDuration("");
     setDraftSaveToDefault(false);
   };
@@ -118,6 +125,15 @@ export function AddTaskModal({
 
   const removeFromQueue = (localId: string) => {
     setQueuedTasks((current) => current.filter((item) => item.localId !== localId));
+  };
+
+  const chooseDraftCategory = (value: string) => {
+    const normalized = value.trim().slice(0, MAX_CATEGORY_LENGTH);
+    const nextCategory =
+      categoryOptions.find((option) => option.toLowerCase() === normalized.toLowerCase()) ?? normalized;
+    setDraftCategory(nextCategory);
+    setCategorySearch("");
+    setCategoryOpen(false);
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -201,17 +217,34 @@ export function AddTaskModal({
               />
               <div className="task-modal__combobox" ref={categoryRef}>
                 <input
+                  className={
+                    selectedCategoryTone && !categoryOpen
+                      ? `task-modal__category-input task-modal__category-input--selected task-modal__category-input--${selectedCategoryTone}`
+                      : "task-modal__category-input"
+                  }
                   type="text"
                   maxLength={MAX_CATEGORY_LENGTH}
                   placeholder="Category"
-                  value={draftCategory}
-                  onFocus={() => setCategoryOpen(true)}
+                  value={categoryOpen ? categorySearch : draftCategory}
+                  onFocus={() => {
+                    setCategorySearch("");
+                    setCategoryOpen(true);
+                  }}
+                  onClick={() => {
+                    if (!categoryOpen) setCategorySearch("");
+                    setCategoryOpen(true);
+                  }}
                   onChange={(event) => {
+                    setCategorySearch(event.target.value);
                     setDraftCategory(event.target.value);
                     setCategoryOpen(true);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") setCategoryOpen(false);
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      chooseDraftCategory(categorySearch || draftCategory);
+                    }
                   }}
                   aria-autocomplete="list"
                   aria-expanded={categoryOpen}
@@ -232,15 +265,26 @@ export function AddTaskModal({
                               : "task-modal__category-pill task-modal__category-pill--empty ui-badge ui-badge--muted"
                           }
                           onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            setDraftCategory(option);
-                            setCategoryOpen(false);
-                          }}
+                          onClick={() => chooseDraftCategory(option)}
                         >
                           {option || "No category"}
                         </button>
                       </li>
                     ))}
+                    {canCreateCategory && (
+                      <li className="task-modal__dropdown-item">
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={false}
+                          className={`task-modal__category-pill task-category task-category--${categoryTone(categorySearchValue)} task-modal__category-pill--create`}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => chooseDraftCategory(categorySearchValue)}
+                        >
+                          <span aria-hidden="true">+</span> Create "{categorySearchValue}"
+                        </button>
+                      </li>
+                    )}
                   </ul>
                 </div>
               </div>

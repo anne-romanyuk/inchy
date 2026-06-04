@@ -39,9 +39,16 @@ function getTaskHealth(task: GoalTask): Health | null {
 }
 
 type Alert = {
-  task: GoalTask;
+  // Unique row key (the subtask or task id).
+  id: string;
+  // What the row shows as its main label — a subtask title or the task title.
+  title: string;
   goal: Goal;
   health: Health;
+  // The owning task's deadline, kept for stable ordering (subtasks inherit it).
+  deadline: string | null;
+  // Which kind of occurrence the "+ Today" button should create.
+  source: { kind: "task"; goalTaskId: string } | { kind: "subtask"; goalSubtaskId: string };
 };
 
 const GROUPS: { health: Health; label: string }[] = [
@@ -61,11 +68,35 @@ export function NeedsAttentionWidget() {
     for (const goal of goals) {
       for (const task of goal.tasks) {
         const health = getTaskHealth(task);
-        if (health) collected.push({ task, goal, health });
+        if (!health) continue;
+        if (task.subtasks.length > 0) {
+          // A task with subtasks can't be added to Today directly — surface its
+          // open subtasks instead, each independently actionable.
+          for (const subtask of task.subtasks) {
+            if (subtask.completed) continue;
+            collected.push({
+              id: subtask.id,
+              title: subtask.title,
+              goal,
+              health,
+              deadline: task.deadline,
+              source: { kind: "subtask", goalSubtaskId: subtask.id },
+            });
+          }
+        } else {
+          collected.push({
+            id: task.id,
+            title: task.title,
+            goal,
+            health,
+            deadline: task.deadline,
+            source: { kind: "task", goalTaskId: task.id },
+          });
+        }
       }
     }
-    // Stable ordering: by deadline ascending (most overdue first).
-    collected.sort((a, b) => (a.task.deadline ?? "").localeCompare(b.task.deadline ?? ""));
+    // Stable ordering: by the owning task's deadline ascending (most overdue first).
+    collected.sort((a, b) => (a.deadline ?? "").localeCompare(b.deadline ?? ""));
     return collected;
   }, [goalsQuery.data]);
 
@@ -137,19 +168,23 @@ export function NeedsAttentionWidget() {
                 {label}
               </h3>
               <ul className="needs-attention__list">
-                {items.map(({ task, goal }) => (
-                  <li key={task.id} className="needs-attention__item">
+                {items.map((alert) => (
+                  <li key={alert.id} className="needs-attention__item">
                     <span className={`needs-attention__dot needs-attention__dot--${health}`} aria-hidden="true" />
                     <button
                       type="button"
                       className="needs-attention__item-main"
-                      onClick={() => navigate(`/goals/${goal.id}`)}
-                      title={task.title}
+                      onClick={() => navigate(`/goals/${alert.goal.id}`)}
+                      title={alert.title}
                     >
-                      <span className="needs-attention__item-title">{task.title}</span>
-                      <span className="needs-attention__item-goal">{goal.title}</span>
+                      <span className="needs-attention__item-title">{alert.title}</span>
+                      <span className="needs-attention__item-goal">{alert.goal.title}</span>
                     </button>
-                    <AddToTodayButton goalTaskId={task.id} size="sm" className="needs-attention__add" />
+                    {alert.source.kind === "subtask" ? (
+                      <AddToTodayButton goalSubtaskId={alert.source.goalSubtaskId} size="sm" className="needs-attention__add" />
+                    ) : (
+                      <AddToTodayButton goalTaskId={alert.source.goalTaskId} size="sm" className="needs-attention__add" />
+                    )}
                   </li>
                 ))}
               </ul>

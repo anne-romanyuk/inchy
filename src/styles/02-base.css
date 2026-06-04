@@ -186,13 +186,23 @@ select {
 .app-loader {
   position: fixed;
   z-index: 50;
-  inset: 0;
+  inset: 0 0 0 calc(clamp(204px, 14vw, 300px) + 34px);
   display: grid;
   place-items: center;
   background: rgba(42, 38, 66, 0.28);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   animation: app-loader-fade-in 0.18s ease-out;
+}
+
+.app-loader--bare {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-app-loading-route="app"] .tasks-shell > * {
+  visibility: hidden;
 }
 
 .app-loader__spinner {

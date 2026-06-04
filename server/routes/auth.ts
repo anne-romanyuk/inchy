@@ -58,6 +58,11 @@ function makeOAuthPasswordHash(provider: string, subject: string) {
   return `oauth:${provider}:${subject}`;
 }
 
+function googleFirstName(profile: GoogleProfile, email: string) {
+  const source = profile.given_name || profile.name || email.split("@")[0] || "Google user";
+  return source.trim().split(/\s+/)[0] || "Google user";
+}
+
 async function exchangeGoogleCode(code: string, config: { clientId: string; clientSecret: string; redirectUri: string }) {
   const response = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
@@ -95,22 +100,30 @@ function findOrCreateGoogleUser(profile: GoogleProfile): UserRow {
   }
 
   const byGoogleId = db.prepare("SELECT * FROM users WHERE google_id = ?").get(profile.sub) as UserRow | undefined;
-  if (byGoogleId) return byGoogleId;
+  if (byGoogleId) {
+    const name = googleFirstName(profile, byGoogleId.email);
+    if (byGoogleId.name !== name) {
+      db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, byGoogleId.id);
+      return { ...byGoogleId, name };
+    }
+    return byGoogleId;
+  }
 
   const now = new Date().toISOString();
   const email = profile.email.trim().toLowerCase();
+  const name = googleFirstName(profile, email);
   const existing = db.prepare("SELECT * FROM users WHERE lower(email) = ?").get(email) as UserRow | undefined;
   if (existing) {
     if (existing.google_id && existing.google_id !== profile.sub) {
       throw new Error("This email is already connected to another Google account.");
     }
-    db.prepare("UPDATE users SET google_id = ?, google_email_verified = 1 WHERE id = ?").run(profile.sub, existing.id);
-    return { ...existing, email };
+    db.prepare("UPDATE users SET google_id = ?, google_email_verified = 1, name = ? WHERE id = ?").run(profile.sub, name, existing.id);
+    return { ...existing, email, name };
   }
 
   const user: UserRow = {
     id: newId(),
-    name: (profile.name || profile.given_name || email.split("@")[0] || "Google user").trim(),
+    name,
     email,
     password_hash: makeOAuthPasswordHash("google", profile.sub),
     avatar_id: null,

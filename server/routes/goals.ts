@@ -59,6 +59,45 @@ function readGoal(userId: string, id: string) {
 }
 
 /**
+ * Detach (rather than cascade-delete) any task_occurrences tied to goal items
+ * that are about to be removed: flip them to `standalone`, drop the goal links,
+ * and snapshot the live title. The occurrence is the user's actual record of
+ * work — it may be completed on past days and have focus sessions attached — so
+ * deleting a goal/task/subtask must NOT erase that history. Instead the Today
+ * entry lives on as a plain standalone task.
+ *
+ * MUST run before the DELETE so the title subqueries still resolve. `column` is
+ * a fixed whitelist (not user input), so the interpolation is safe.
+ *
+ * Note: subtask-linked occurrences also store the parent `goal_task_id`, so
+ * detaching by `goal_task_id` covers both the task's own and its subtasks'
+ * occurrences in one pass.
+ */
+function detachOccurrencesByColumn(
+  userId: string,
+  column: "goal_task_id" | "goal_subtask_id" | "goal_id",
+  ids: string[],
+  now: string,
+) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  db.prepare(
+    `UPDATE task_occurrences
+     SET title = CASE source_kind
+                   WHEN 'goal_subtask' THEN COALESCE((SELECT title FROM goal_subtasks WHERE id = task_occurrences.goal_subtask_id), title)
+                   WHEN 'goal_task'    THEN COALESCE((SELECT title FROM goal_tasks    WHERE id = task_occurrences.goal_task_id),    title)
+                   ELSE title
+                 END,
+         source_kind = 'standalone',
+         goal_id = NULL,
+         goal_task_id = NULL,
+         goal_subtask_id = NULL,
+         updated_at = ?
+     WHERE ${column} IN (${placeholders}) AND user_id = ?`,
+  ).run(now, ...ids, userId);
+}
+
+/**
  * Diff-based upsert of a goal's tasks and subtasks.
  *
  * Why not just DELETE+INSERT?  task_occurrences has FK ON DELETE CASCADE to
@@ -66,7 +105,9 @@ function readGoal(userId: string, id: string) {
  * would cascade-delete every occurrence the user has scheduled for those
  * tasks.  This diff approach keeps the goal_task / goal_subtask rows alive
  * for items whose id was reused and only deletes the ones the client truly
- * dropped — so occurrences survive a goal edit.
+ * dropped.  For those truly-dropped items we DETACH their occurrences to
+ * standalone first (see `detachOccurrencesByColumn`) so the user's Today
+ * entries and history survive even a deletion.
  *
  * It also enforces the "first subtask appears → reassign open parent
  * occurrences" invariant: when a goal_task gains its first subtask, every
@@ -95,9 +136,11 @@ function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[]
     taskInsertsOrUpdates.push({ id, index: i, task, isNew: !existingTaskIds.has(id) });
   }
 
-  // Delete tasks that disappeared from the input.
+  // Delete tasks that disappeared from the input — but first detach their
+  // occurrences (and their subtasks' occurrences) so history isn't cascaded away.
   const toDelete = [...existingTaskIds].filter((id) => !seenTaskIds.has(id));
   if (toDelete.length > 0) {
+    detachOccurrencesByColumn(userId, "goal_task_id", toDelete, now);
     const placeholders = toDelete.map(() => "?").join(",");
     db.prepare(`DELETE FROM goal_tasks WHERE id IN (${placeholders})`).run(...toDelete);
   }
@@ -180,6 +223,7 @@ function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[]
 
     const subsToDelete = [...existingSubIds].filter((sid) => !seenSubIds.has(sid));
     if (subsToDelete.length > 0) {
+      detachOccurrencesByColumn(userId, "goal_subtask_id", subsToDelete, now);
       const placeholders = subsToDelete.map(() => "?").join(",");
       db.prepare(`DELETE FROM goal_subtasks WHERE id IN (${placeholders})`).run(...subsToDelete);
     }
@@ -330,8 +374,17 @@ const deleteGoalRoute = createRoute({
 goalRoutes.openapi(deleteGoalRoute, (c) => {
   const userId = c.get("userId");
   const { id } = c.req.valid("param");
-  const info = db.prepare("DELETE FROM goals WHERE id = ? AND user_id = ?").run(id, userId);
-  if (info.changes === 0) return c.json({ message: "Goal not found." }, 404);
+  const now = new Date().toISOString();
+  let deleted = false;
+  db.transaction(() => {
+    // Detach this goal's occurrences to standalone first so deleting the goal
+    // doesn't cascade away the user's Today entries / past-day history. All
+    // goal-linked occurrences carry goal_id, so this one pass covers them.
+    detachOccurrencesByColumn(userId, "goal_id", [id], now);
+    const info = db.prepare("DELETE FROM goals WHERE id = ? AND user_id = ?").run(id, userId);
+    deleted = info.changes > 0;
+  })();
+  if (!deleted) return c.json({ message: "Goal not found." }, 404);
   checkpointDatabase();
   return c.json({ ok: true as const }, 200);
 });

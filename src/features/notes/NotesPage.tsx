@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useBlocker } from "react-router-dom";
 import type { Note } from "../../../shared/schemas";
 import { MAX_CATEGORY_LENGTH, MAX_NOTE_TITLE_LENGTH } from "../../../shared/constants";
+import { GoalDatePicker } from "../goals/GoalDatePicker";
 import { categoryTone } from "../today/categoryColor";
 import { useNotes, useSaveNotes } from "./useNotes";
 
@@ -11,7 +12,8 @@ const MAX_TITLE = MAX_NOTE_TITLE_LENGTH;
 const CATEGORY_FILTER_ALL = "All categories";
 const CATEGORY_FILTER_NONE = "__no_category__";
 const NO_CATEGORY_LABEL = "No category";
-const DATE_OPTIONS = ["Any time", "Last 30 days", "Pinned"] as const;
+const DATE_FILTER_ANY = "Any time";
+const DATE_FILTER_LAST_30 = "Last 30 days";
 const EmojiPicker = lazy(() => import("emoji-picker-react"));
 const NOTE_DATE_FORMAT = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
 const NOTE_TIME_FORMAT = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
@@ -21,6 +23,10 @@ const NOTE_ALLOWED_INLINE_TAGS = new Set(["b", "strong", "i", "em", "u", "s", "s
 const NOTE_ALLOWED_BLOCK_TAGS = new Set(["div", "p", "br", "ul", "ol", "li"]);
 
 type EditorFormat = "bold" | "italic" | "underline" | "unorderedList" | "orderedList";
+type NotesDateFilter =
+  | { mode: "any" }
+  | { mode: "last30" }
+  | { mode: "date"; value: string };
 type PendingNotesAction =
   | { type: "select"; noteId: string }
   | { type: "new" }
@@ -184,6 +190,31 @@ function formatNoteDate(note: Note): string {
 
 function formatNoteTimestamp(date: Date): string {
   return `${NOTE_DATE_FORMAT.format(date)} • ${NOTE_TIME_FORMAT.format(date)}`;
+}
+
+function toNoteIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function noteIsoDate(note: Note): string {
+  const time = noteActivityTime(note);
+  return time > 0 ? toNoteIsoDate(new Date(time)) : "";
+}
+
+function formatNoteIsoDate(value: string): string {
+  if (!value) return DATE_FILTER_ANY;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, (month ?? 1) - 1, day ?? 1);
+  return Number.isNaN(date.getTime()) ? value : NOTE_DATE_FORMAT.format(date);
+}
+
+function noteDateFilterLabel(filter: NotesDateFilter): string {
+  if (filter.mode === "any") return DATE_FILTER_ANY;
+  if (filter.mode === "last30") return DATE_FILTER_LAST_30;
+  return filter.value === toNoteIsoDate(new Date()) ? "Today" : formatNoteIsoDate(filter.value);
 }
 
 function noteCategory(note: Note): string {
@@ -383,7 +414,8 @@ export function NotesPage() {
   const [activeId, setActiveId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>(CATEGORY_FILTER_ALL);
-  const [dateRange, setDateRange] = useState<(typeof DATE_OPTIONS)[number]>("Any time");
+  const [dateFilter, setDateFilter] = useState<NotesDateFilter>({ mode: "any" });
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [categoryDraft, setCategoryDraft] = useState("");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
@@ -400,6 +432,7 @@ export function NotesPage() {
   });
   const noteTitleRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const categoryPickerRef = useRef<HTMLDivElement>(null);
@@ -475,6 +508,11 @@ export function NotesPage() {
     return (categoryCounts.get("") ?? 0) > 0 ? ["", ...options] : options;
   }, [categoryCounts, noteCategoryOptions]);
 
+  const categoryFilterOptions = useMemo(
+    () => [CATEGORY_FILTER_ALL, ...navCategoryOptions],
+    [navCategoryOptions],
+  );
+
   const categoryDropdownOptions = useMemo(() => {
     const query = categoryDraft.trim().toLowerCase();
     if (!query) return noteCategoryOptions;
@@ -497,9 +535,14 @@ export function NotesPage() {
 
   const filteredNotes = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const last30Cutoff = new Date();
+    last30Cutoff.setHours(0, 0, 0, 0);
+    last30Cutoff.setDate(last30Cutoff.getDate() - 29);
     return notes
       .filter((note) => {
         const noteText = noteBodyPlainText(note.body).toLowerCase();
+        const noteTime = noteActivityTime(note);
+        const noteDate = noteIsoDate(note);
         const matchesSearch =
           query.length === 0 ||
           note.title.toLowerCase().includes(query) ||
@@ -507,18 +550,21 @@ export function NotesPage() {
         const matchesCategory =
           category === CATEGORY_FILTER_ALL ||
           (category === CATEGORY_FILTER_NONE ? noteCategory(note) === "" : noteCategory(note) === category);
-        const matchesDate = dateRange !== "Pinned" || isPinned(note);
+        const matchesDate =
+          dateFilter.mode === "any" ||
+          (dateFilter.mode === "last30" && noteTime >= last30Cutoff.getTime()) ||
+          (dateFilter.mode === "date" && noteDate === dateFilter.value);
         return matchesSearch && matchesCategory && matchesDate;
       })
       .sort(
         (a, b) =>
           Number(isPinned(b)) - Number(isPinned(a)) || noteActivityTime(b) - noteActivityTime(a),
       );
-  }, [category, dateRange, notes, search]);
+  }, [category, dateFilter, notes, search]);
 
   useEffect(() => {
     setCategoryMenuOpen(false);
-    setCategoryDraft(activeNote ? noteCategory(activeNote) : "");
+    setCategoryDraft("");
     setEmojiPickerOpen(false);
     setDeleteTargetId(null);
   }, [activeNote?.id]);
@@ -545,8 +591,11 @@ export function NotesPage() {
   }, [cardMenuId]);
 
   useEffect(() => {
-    if (!categoryMenuOpen && !emojiPickerOpen) return;
+    if (!categoryFilterOpen && !categoryMenuOpen && !emojiPickerOpen) return;
     const onClickOut = (event: MouseEvent) => {
+      if (categoryFilterRef.current && !categoryFilterRef.current.contains(event.target as Node)) {
+        setCategoryFilterOpen(false);
+      }
       if (categoryPickerRef.current && !categoryPickerRef.current.contains(event.target as Node)) {
         setCategoryMenuOpen(false);
       }
@@ -556,7 +605,7 @@ export function NotesPage() {
     };
     document.addEventListener("mousedown", onClickOut);
     return () => document.removeEventListener("mousedown", onClickOut);
-  }, [categoryMenuOpen, emojiPickerOpen]);
+  }, [categoryFilterOpen, categoryMenuOpen, emojiPickerOpen]);
 
   const updateActive = useCallback((patch: Partial<Note>) =>
     setWorking((current) =>
@@ -570,7 +619,7 @@ export function NotesPage() {
     const nextCategory =
       noteCategoryOptions.find((option) => option.toLowerCase() === normalized.toLowerCase()) ?? normalized;
     updateActive({ category: nextCategory });
-    setCategoryDraft(nextCategory);
+    setCategoryDraft("");
     setCategoryMenuOpen(false);
   }, [noteCategoryOptions, updateActive]);
 
@@ -740,9 +789,9 @@ export function NotesPage() {
     setWorking((current) => [...(current ?? []), note]);
     setActiveId(note.id);
     setSearch("");
-    setDateRange("Any time");
+    setDateFilter({ mode: "any" });
     window.setTimeout(() => noteTitleRef.current?.focus(), 0);
-  }, [category]);
+  }, []);
 
   const persist = useCallback(async (next: Note[], preferredActiveId = activeId) => {
     const result = await saveNotes.mutateAsync(
@@ -905,8 +954,10 @@ export function NotesPage() {
   }
 
   const saving = saveNotes.isPending;
+  const selectedDateValue = dateFilter.mode === "date" ? dateFilter.value : "";
+  const dateFilterDisplay = noteDateFilterLabel(dateFilter);
   const hasActiveFilters =
-    search.trim().length > 0 || dateRange !== "Any time" || category !== CATEGORY_FILTER_ALL;
+    search.trim().length > 0 || dateFilter.mode !== "any" || category !== CATEGORY_FILTER_ALL;
 
   return (
     <motion.section
@@ -1000,41 +1051,84 @@ export function NotesPage() {
               />
             </label>
 
-            <label className="ui-field notes-select">
-              <span className="notes-control-icon">
-                <Icon name="Tag" />
-              </span>
-              <select
-                className="ui-field__control"
-                value={category}
+            <div className="notes-category-filter" ref={categoryFilterRef}>
+              <button
+                type="button"
+                className={`notes-category-filter__trigger ${
+                  category === CATEGORY_FILTER_ALL
+                    ? "notes-category-filter__trigger--all"
+                    : noteCategoryBadgeClass(category === CATEGORY_FILTER_NONE ? "" : category)
+                }`.trim()}
                 aria-label="Filter by category"
-                onChange={(event) => setCategory(event.target.value)}
+                aria-haspopup="listbox"
+                aria-expanded={categoryFilterOpen}
+                onClick={() => setCategoryFilterOpen((open) => !open)}
               >
-                <option value={CATEGORY_FILTER_ALL}>{CATEGORY_FILTER_ALL}</option>
-                {(categoryCounts.get("") ?? 0) > 0 && <option value={CATEGORY_FILTER_NONE}>{NO_CATEGORY_LABEL}</option>}
-                {noteCategoryOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
+                <Icon name={category === CATEGORY_FILTER_ALL ? "Tag" : noteIcon(category === CATEGORY_FILTER_NONE ? "" : category)} />
+                {category === CATEGORY_FILTER_ALL
+                  ? CATEGORY_FILTER_ALL
+                  : noteCategoryLabel(category === CATEGORY_FILTER_NONE ? "" : category)}
+                <span className="task-modal__dropdown-caret" aria-hidden="true" />
+              </button>
+              <div
+                className="task-modal__dropdown-wrap notes-category-filter__dropdown"
+                data-open={categoryFilterOpen ? "true" : "false"}
+              >
+                <ul
+                  className="task-modal__combobox-list task-modal__combobox-list--pills notes-category-filter__list app-scroll"
+                  role="listbox"
+                  aria-label="Filter by category"
+                >
+                  {categoryFilterOptions.map((option) => {
+                    const filterValue =
+                      option === CATEGORY_FILTER_ALL ? CATEGORY_FILTER_ALL : option ? option : CATEGORY_FILTER_NONE;
+                    const isAll = filterValue === CATEGORY_FILTER_ALL;
+                    const categoryValue = filterValue === CATEGORY_FILTER_NONE ? "" : filterValue;
+                    return (
+                      <li key={filterValue} className="task-modal__dropdown-item">
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={category === filterValue}
+                          className={
+                            isAll
+                              ? "notes-category-filter__option notes-category-filter__option--all"
+                              : `${noteCategoryBadgeClass(categoryValue)} notes-category-filter__option`
+                          }
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            setCategory(filterValue);
+                            setCategoryFilterOpen(false);
+                          }}
+                        >
+                          <Icon name={isAll ? "Tag" : noteIcon(categoryValue)} />
+                          {isAll ? CATEGORY_FILTER_ALL : noteCategoryLabel(categoryValue)}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
 
-            <label className="ui-field notes-select">
-              <span className="notes-control-icon">
-                <Icon name="Calendar" />
-              </span>
-              <select
-                className="ui-field__control"
-                value={dateRange}
-                aria-label="Filter by date"
-                onChange={(event) => setDateRange(event.target.value as (typeof DATE_OPTIONS)[number])}
-              >
-                {DATE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <GoalDatePicker
+              className="notes-date-picker"
+              value={selectedDateValue}
+              onChange={(value) => setDateFilter(value ? { mode: "date", value } : { mode: "any" })}
+              ariaLabel="Filter notes by date"
+              emptyDisplayValue={DATE_FILTER_ANY}
+              displayValueOverride={
+                dateFilter.mode === "last30" || selectedDateValue === toNoteIsoDate(new Date())
+                  ? dateFilterDisplay
+                  : undefined
+              }
+              footerActions={[
+                {
+                  label: DATE_FILTER_LAST_30,
+                  onClick: () => setDateFilter({ mode: "last30" }),
+                },
+              ]}
+            />
 
             <div className="notes-filter-strip ui-card ui-card--soft">
               <span>Filters:</span>
@@ -1043,9 +1137,9 @@ export function NotesPage() {
                   Search x
                 </button>
               )}
-              {dateRange !== "Any time" && (
-                <button type="button" className="ui-badge ui-badge--accent ui-badge--md" onClick={() => setDateRange("Any time")}>
-                  {dateRange} x
+              {dateFilter.mode !== "any" && (
+                <button type="button" className="ui-badge ui-badge--accent ui-badge--md" onClick={() => setDateFilter({ mode: "any" })}>
+                  {dateFilterDisplay} x
                 </button>
               )}
               {category !== CATEGORY_FILTER_ALL && (
@@ -1067,7 +1161,7 @@ export function NotesPage() {
                   onClick={() => {
                     setSearch("");
                     setCategory(CATEGORY_FILTER_ALL);
-                    setDateRange("Any time");
+                    setDateFilter({ mode: "any" });
                   }}
                 >
                   <Icon name="Close" />
@@ -1199,7 +1293,7 @@ export function NotesPage() {
                             aria-haspopup="listbox"
                             aria-expanded={categoryMenuOpen}
                             onClick={() => {
-                              setCategoryDraft(activeCategory);
+                              setCategoryDraft("");
                               setCategoryMenuOpen((open) => !open);
                             }}
                           >

@@ -90,6 +90,9 @@ export function GoalDatePicker({
   ariaLabel,
   allowClear = true,
   formatDisplayValue,
+  emptyDisplayValue = "No due date",
+  displayValueOverride,
+  footerActions = [],
   leadingControl,
   trailingControl,
 }: {
@@ -99,6 +102,9 @@ export function GoalDatePicker({
   ariaLabel: string;
   allowClear?: boolean;
   formatDisplayValue?: (value: string) => string;
+  emptyDisplayValue?: string;
+  displayValueOverride?: string;
+  footerActions?: Array<{ label: string; onClick: () => void }>;
   leadingControl?: ReactNode;
   trailingControl?: ReactNode;
 }) {
@@ -108,7 +114,8 @@ export function GoalDatePicker({
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const today = todayIsoDate();
   const days = useMemo(() => getVisibleDays(viewMonth), [viewMonth]);
-  const displayValue = selectedDate ? formatDisplayValue?.(value) ?? formatDate(value) : "No due date";
+  const displayValue =
+    displayValueOverride ?? (selectedDate ? formatDisplayValue?.(value) ?? formatDate(value) : emptyDisplayValue);
   const hasCompoundTrigger = Boolean(leadingControl || trailingControl);
 
   useEffect(() => {
@@ -229,11 +236,38 @@ export function GoalDatePicker({
           </div>
 
           <div className="goal-date-picker__footer">
-            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => onChange(today)}>
+            {footerActions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className="pomodoro-btn pomodoro-btn--ghost-text"
+                onClick={() => {
+                  action.onClick();
+                  setIsOpen(false);
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="pomodoro-btn pomodoro-btn--ghost-text"
+              onClick={() => {
+                onChange(today);
+                setIsOpen(false);
+              }}
+            >
               Today
             </button>
             {allowClear ? (
-              <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => onChange("")}>
+              <button
+                type="button"
+                className="pomodoro-btn pomodoro-btn--ghost-text"
+                onClick={() => {
+                  onChange("");
+                  setIsOpen(false);
+                }}
+              >
                 Clear
               </button>
             ) : null}

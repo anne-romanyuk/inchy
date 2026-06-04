@@ -193,16 +193,97 @@
   white-space: nowrap;
 }
 .notes-search,
-.notes-select {
+.notes-date-picker,
+.notes-category-filter {
   position: relative;
 }
-.notes-search .ui-field__control,
-.notes-select .ui-field__control {
+.notes-search .ui-field__control {
   width: 100%;
   padding-left: var(--space-10);
 }
-.notes-select .ui-field__control {
+.notes-category-filter__trigger {
   appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(var(--space-10) + var(--space-1));
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  color: var(--c-text-secondary);
+  box-shadow: none;
+  cursor: pointer;
+  font: var(--text-body-weight) var(--text-body-size) / 1 var(--font-base);
+  text-align: left;
+}
+.notes-category-filter__trigger > svg {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+}
+.notes-category-filter__trigger .task-modal__dropdown-caret {
+  margin-left: auto;
+  transform: translateY(-2px) rotate(45deg);
+}
+.notes-category-filter__trigger[aria-expanded="true"] .task-modal__dropdown-caret {
+  transform: translateY(2px) rotate(225deg);
+}
+.notes-category-filter__trigger:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  box-shadow: var(--shadow-focus-ring);
+}
+.notes-category-filter__trigger.notes-category-badge {
+  border-radius: var(--radius-sm);
+}
+.notes-category-filter__trigger--all {
+  color: var(--c-text-secondary);
+}
+.notes-category-filter__dropdown {
+  left: 0;
+  right: 0;
+  min-width: calc(var(--space-10) * 5);
+  padding: var(--space-2);
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+.notes-category-filter__list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  max-height: calc(var(--space-10) * 5);
+  padding: 0;
+}
+.notes-category-filter__option {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
+  letter-spacing: var(--text-badge-tracking);
+  cursor: pointer;
+}
+.notes-category-filter__option--all {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+.notes-category-filter__option:hover,
+.notes-category-filter__option:focus-visible,
+.notes-category-filter__option[aria-selected="true"] {
+  outline: none;
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 .notes-control-icon {
   position: absolute;
@@ -217,6 +298,17 @@
 }
 .notes-filter-btn {
   justify-self: end;
+}
+.notes-date-picker .goal-date-picker__trigger {
+  grid-template-columns: calc(var(--space-7) + var(--space-1)) minmax(0, 1fr) calc(var(--space-7) + var(--space-1));
+  gap: var(--space-3);
+  min-height: calc(var(--space-10) + var(--space-1));
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  font: var(--text-body-weight) var(--text-body-size) / 1 var(--font-base);
+}
+.notes-date-picker .goal-date-picker__popover {
+  width: min(92vw, calc(var(--space-10) * 7));
 }
 .notes-filter-strip {
   min-width: 0;
@@ -597,6 +689,11 @@
   right: 0;
   min-width: calc(var(--space-10) * 5 + var(--space-4));
   padding: var(--space-2);
+  border: var(--app-popup-border);
+  background: var(--app-popup-bg);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
 }
 .notes-category-picker__input {
   width: 100%;
@@ -1049,6 +1146,7 @@
 
 :root[data-theme="forest"] .notes-card-menu__dropdown,
 :root[data-theme="forest"] .notes-emoji-picker__popover,
+:root[data-theme="forest"] .notes-category-picker__dropdown,
 :root[data-theme="forest"] .notes-category-picker__dropdown .task-modal__combobox-list {
   border: var(--app-popup-border);
   background: var(--app-popup-bg);
@@ -1126,7 +1224,8 @@
 }
 
 .notes-search .ui-field__control,
-.notes-select .ui-field__control,
+.notes-date-picker .goal-date-picker__trigger,
+.notes-category-filter__trigger,
 .notes-filter-strip,
 .notes-list-card,
 .notes-editor-card,
@@ -1144,7 +1243,8 @@
 /* `.notes-tools` prefix keeps these above the global forest `input/select`
    surface rule (02-base.css) so the cream fill actually wins. */
 .notes-tools .notes-search .ui-field__control,
-.notes-tools .notes-select .ui-field__control,
+.notes-tools .notes-date-picker .goal-date-picker__trigger,
+.notes-tools .notes-category-filter__trigger,
 .notes-tools .notes-filter-strip {
   min-height: calc(var(--space-10) + var(--space-1));
   border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
@@ -1169,8 +1269,9 @@
 }
 .notes-tools .notes-search .ui-field__control:focus,
 .notes-tools .notes-search .ui-field__control:focus-visible,
-.notes-tools .notes-select .ui-field__control:focus,
-.notes-tools .notes-select .ui-field__control:focus-visible {
+.notes-tools .notes-date-picker .goal-date-picker__trigger:focus-visible,
+.notes-tools .notes-date-picker .goal-date-picker__trigger[aria-expanded="true"],
+.notes-tools .notes-category-filter__trigger:focus-visible {
   border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
   box-shadow: var(--shadow-focus-ring);
 }

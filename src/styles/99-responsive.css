@@ -75,6 +75,10 @@
 }
 
 @media (max-width: 1100px) {
+  .app-loader {
+    inset: 0;
+  }
+
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
   }

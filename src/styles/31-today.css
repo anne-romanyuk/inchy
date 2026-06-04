@@ -826,22 +826,19 @@
 .task-edit-field .task-modal__dropdown-wrap {
   top: calc(100% + 5px);
   z-index: 1003;
+  background: var(--app-popup-bg);
+  border: var(--app-popup-border);
+  box-shadow: var(--app-popup-shadow);
 }
 
 .task-edit-field .task-modal__combobox-list {
   max-height: 150px;
   padding: 5px;
   border-radius: 15px;
-  background:
-    linear-gradient(145deg, rgba(247, 240, 250, 0.98), rgba(241, 233, 246, 0.98) 48%, rgba(232, 220, 244, 0.97)),
-    rgb(247, 240, 250);
-  backdrop-filter: blur(22px) saturate(1.18);
-  -webkit-backdrop-filter: blur(22px) saturate(1.18);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.34),
-    14px 18px 32px -14px rgba(58, 58, 105, 0.36),
-    inset -1px -1px 8px rgba(255, 255, 255, 0.34),
-    inset 2px 2px 8px rgba(80, 75, 104, 0.08);
+  background: var(--app-popup-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
 .task-edit-field .task-modal__combobox-list button {
@@ -1235,6 +1232,48 @@
   padding-right: 32px;
 }
 
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--selected {
+  box-shadow:
+    inset 2px 2px 7px color-mix(in srgb, currentColor 10%, transparent),
+    inset -2px -2px 7px color-mix(in srgb, var(--c-surface-elevated) 62%, transparent),
+    0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--peach {
+  background: color-mix(in srgb, var(--c-warning-soft) 70%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-warning) 78%, var(--c-text-primary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--sky {
+  background: color-mix(in srgb, var(--c-info-soft) 68%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-info) 72%, var(--c-text-primary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--lemon {
+  background: color-mix(in srgb, var(--c-warning-soft) 52%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-warning) 64%, var(--c-text-secondary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--teal {
+  background: color-mix(in srgb, var(--c-success-soft) 56%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-success) 72%, var(--c-text-primary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--amber {
+  background: color-mix(in srgb, var(--c-warning-soft) 74%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-warning) 82%, var(--c-text-primary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--indigo {
+  background: color-mix(in srgb, var(--c-accent-soft) 68%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--c-accent) 76%, var(--c-text-primary));
+}
+
+.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--slate {
+  background: color-mix(in srgb, var(--c-border-soft) 62%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+}
+
 .task-modal__dropdown-trigger {
   display: flex;
   align-items: center;
@@ -1412,6 +1451,16 @@
 .task-modal__combobox-list--pills .task-modal__category-pill--empty {
   background: var(--c-surface-soft);
   color: var(--c-text-muted);
+}
+
+.task-modal__combobox-list--pills .task-modal__category-pill--create {
+  gap: var(--space-2);
+  font-weight: var(--text-badge-weight);
+}
+
+.task-modal__combobox-list--pills .task-modal__category-pill--create span {
+  font-weight: 900;
+  line-height: 1;
 }
 
 .task-modal__combobox-list--pills .task-modal__category-pill:hover,
@@ -2472,6 +2521,27 @@
   overflow: hidden;
 }
 
+.today-dashboard .today-goal-widget:has(.goal-journey__selector-dropdown[data-open="true"]) {
+  overflow: visible;
+  z-index: 30;
+}
+
+.today-dashboard .today-goal-widget:has(.goal-journey__selector-dropdown[data-open="true"]) .goal-journey {
+  overflow: visible;
+}
+
+.today-dashboard .today-goal-widget .goal-journey__header:has(.goal-journey__selector-dropdown[data-open="true"]) {
+  z-index: 90;
+}
+
+/* Let the open goal dropdown escape the grid's content clip too (the widget and
+   journey are already lifted above). Without this a downward dropdown is cut at
+   the grid's bottom edge when the widget sits low in the column. Overflow only —
+   no stacking context — so it doesn't trigger the backdrop-filter leak. */
+.today-dashboard .dashboard-grid:has(.goal-journey__selector-dropdown[data-open="true"]) {
+  overflow: visible;
+}
+
 /* Each dashboard column is its own flex stack. The big card (tasks panel /
    pomodoro) grows to fill the height; the small card (goal widget /
    needs-attention) keeps its natural size and is pushed to the bottom. This
@@ -2545,7 +2615,7 @@
 /* Keep the compact path inside the widget instead of letting meta float into the top cards */
 .today-dashboard .today-goal-widget .goal-journey__header {
   display: grid;
-  grid-template-columns: minmax(180px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, auto) minmax(0, 1fr);
   align-items: start;
   gap: 16px;
   margin-bottom: 2px;
@@ -2559,11 +2629,30 @@
 }
 
 .today-dashboard .today-goal-widget .goal-journey__selector {
-  max-width: min(260px, 34vw);
+  max-width: min(360px, 42vw);
 }
 
-.today-dashboard .today-goal-widget .goal-journey__selector--select select {
-  max-width: min(210px, 26vw);
+.today-dashboard .today-goal-widget .goal-journey__selector-trigger {
+  max-width: min(320px, 36vw);
+}
+
+.today-dashboard .today-goal-widget .goal-journey__selector-dropdown {
+  border: 0;
+  box-shadow: 0 18px 36px -28px color-mix(in srgb, var(--c-text-primary) 28%, transparent);
+}
+
+.today-dashboard .today-goal-widget .goal-journey__selector-dropdown .goal-journey__selector-list {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.today-dashboard .today-goal-widget .goal-journey__selector-option-icon {
+  background: transparent;
 }
 
 .today-dashboard .today-goal-widget .goal-journey__progress {

@@ -15,12 +15,29 @@ const MASCOT_BY_THEME: Record<ThemeMode, string> = {
   forest: "avatar-forest",
 };
 
+const LOADING_USER: PublicUser = {
+  id: "loading",
+  name: "",
+  email: "",
+  avatarId: null,
+  needsAvatar: false,
+};
+
+export function loadingShellUser() {
+  return LOADING_USER;
+}
+
+function firstName(name: string) {
+  return name.trim().split(/\s+/)[0] ?? "";
+}
+
 export function AppShell({ user }: { user: PublicUser }) {
   const navigate = useNavigate();
   const [theme] = useTheme();
   const logout = useLogout();
 
   const displayAvatarId = MASCOT_BY_THEME[theme] ?? "avatar-1";
+  const displayName = firstName(user.name);
 
   const handleLogout = async () => {
     await logout.mutateAsync();
@@ -40,7 +57,7 @@ export function AppShell({ user }: { user: PublicUser }) {
           <div className="sidebar-brand">
             <span className="sidebar-brand__greeting">
               <span className="sidebar-brand__hello">
-                Hello, <strong>{user.name}</strong>
+                Hello{displayName ? ", " : ""}{displayName && <strong>{displayName}</strong>}
               </span>
               <span className="sidebar-brand__tagline">New day, new progress</span>
             </span>

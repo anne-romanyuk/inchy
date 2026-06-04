@@ -28,6 +28,11 @@ export function useUpdateGoal() {
       client.setQueryData<Goal[]>(queryKeys.goals, (current = []) =>
         current.map((item) => (item.id === goal.id ? goal : item)),
       );
+      // A goal edit can change Today's occurrences server-side: deleting a
+      // task/subtask cascade-removes its occurrence, and gaining a first
+      // subtask reassigns open parent-task occurrences. Resync so Today drops
+      // any stale rows (otherwise completing a removed row 404s).
+      client.invalidateQueries({ queryKey: ["occurrences"] });
     },
   });
 }
@@ -44,6 +49,10 @@ export function useDeleteGoal() {
     },
     onError: (_error, _id, context) => {
       if (context?.previous) client.setQueryData(queryKeys.goals, context.previous);
+    },
+    onSuccess: () => {
+      // Deleting a goal cascade-removes all of its tasks'/subtasks' occurrences.
+      client.invalidateQueries({ queryKey: ["occurrences"] });
     },
   });
 }

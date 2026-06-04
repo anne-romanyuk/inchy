@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   AnimatePresence,
@@ -632,7 +632,11 @@ export function GoalJourney({
   const rawActiveIndex = goal.tasks.findIndex((task) => !isTaskComplete(task));
   const activeIndex = rawActiveIndex >= 0 ? rawActiveIndex : Math.max(0, goal.tasks.length - 1);
   const fallbackTasks: GoalTask[] = goal.tasks.length ? goal.tasks : [];
-  const canSelectGoal = Boolean(selectableGoals?.length && onSelectGoal);
+  const selectableGoalOptions = useMemo(
+    () => (selectableGoals ?? []).filter((option) => getStatusLabel(option) !== "Completed"),
+    [selectableGoals],
+  );
+  const canSelectGoal = Boolean(selectableGoalOptions.length && onSelectGoal);
   const statusLabel = getStatusLabel(goal);
   const statusClassName = `goal-journey__status goal-journey__status--${statusLabel.toLowerCase().replace(/\s+/g, "-")}`;
   const maxVisible = compact ? 5 : 7;
@@ -672,23 +676,111 @@ export function GoalJourney({
     "--goal-progress-fill": fillFraction,
   } as CSSProperties;
   const selectorIconId = goal.tasks[activeIndex]?.iconId ?? goal.iconId;
+  const selectedGoalOption = selectableGoals?.find((option) => option.id === (selectedGoalId ?? goal.id)) ?? goal;
+  const selectedGoalIconId = selectedGoalOption.iconId ?? selectedGoalOption.tasks.find((task) => !isTaskComplete(task))?.iconId ?? selectedGoalOption.tasks[0]?.iconId;
+  const [goalSelectorOpen, setGoalSelectorOpen] = useState(false);
+  const [goalSelectorPlacement, setGoalSelectorPlacement] = useState<"down" | "up">("down");
+  const [goalSelectorMaxHeight, setGoalSelectorMaxHeight] = useState<number | null>(null);
+  const goalSelectorRef = useRef<HTMLDivElement>(null);
+
+  // Pick a side (down/up) AND clamp the list height to the room actually
+  // available on that side, so the whole scroll window stays on-screen and the
+  // list can always scroll down to the last goal. Without the clamp the fixed
+  // 200px window can extend past the viewport/`100dvh` clip when the widget
+  // sits low, leaving the bottom options unreachable.
+  const measureGoalSelector = useCallback(() => {
+    const selector = goalSelectorRef.current;
+    if (!selector) return;
+    const rect = selector.getBoundingClientRect();
+    // Gap below/above the trigger + the dropdown's own padding + breathing room.
+    const GAP = 18;
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const placeUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+    const available = Math.max(140, Math.floor(placeUp ? spaceAbove : spaceBelow));
+    setGoalSelectorPlacement(placeUp ? "up" : "down");
+    setGoalSelectorMaxHeight(Math.min(available, Math.round(window.innerHeight * 0.6)));
+  }, []);
+
+  useEffect(() => {
+    if (!goalSelectorOpen) return;
+    const onClickOut = (event: MouseEvent) => {
+      if (goalSelectorRef.current && !goalSelectorRef.current.contains(event.target as Node)) {
+        setGoalSelectorOpen(false);
+      }
+    };
+    measureGoalSelector();
+    window.addEventListener("resize", measureGoalSelector);
+    window.addEventListener("scroll", measureGoalSelector, true);
+    document.addEventListener("mousedown", onClickOut);
+    return () => {
+      window.removeEventListener("resize", measureGoalSelector);
+      window.removeEventListener("scroll", measureGoalSelector, true);
+      document.removeEventListener("mousedown", onClickOut);
+    };
+  }, [goalSelectorOpen, measureGoalSelector]);
+
+  const toggleGoalSelector = () => {
+    measureGoalSelector();
+    setGoalSelectorOpen((open) => !open);
+  };
 
   const goalSelector = canSelectGoal ? (
-    <label className="goal-journey__selector goal-journey__selector--select">
-      <span className="goal-journey__selector-icon">
-        <GoalTaskIcon iconId={selectorIconId} />
-      </span>
+    <div className="goal-journey__selector goal-journey__selector--select" ref={goalSelectorRef}>
       <span className="sr-only">Select goal</span>
-      <select
-        value={selectedGoalId ?? goal.id}
-        onChange={(event) => onSelectGoal?.(event.target.value)}
+      <button
+        type="button"
+        className="goal-journey__selector-trigger"
         aria-label="Select goal for the path map"
+        aria-haspopup="listbox"
+        aria-expanded={goalSelectorOpen}
+        onClick={toggleGoalSelector}
       >
-        {selectableGoals!.map((option) => (
-          <option key={option.id} value={option.id}>{option.title}</option>
-        ))}
-      </select>
-    </label>
+        <span className="goal-journey__selector-icon">
+          <GoalTaskIcon iconId={selectedGoalIconId} />
+        </span>
+        <span>{selectedGoalOption.title}</span>
+        <span className="task-modal__dropdown-caret" aria-hidden="true" />
+      </button>
+      <div
+        className="task-modal__dropdown-wrap goal-journey__selector-dropdown"
+        data-open={goalSelectorOpen ? "true" : "false"}
+        data-placement={goalSelectorPlacement}
+      >
+        <ul
+          className="task-modal__combobox-list goal-journey__selector-list app-scroll"
+          role="listbox"
+          aria-label="Select goal"
+          style={goalSelectorMaxHeight ? { maxHeight: `${goalSelectorMaxHeight}px` } : undefined}
+        >
+          {selectableGoalOptions.map((option) => {
+            const optionIconId = option.iconId ?? option.tasks.find((task) => !isTaskComplete(task))?.iconId ?? option.tasks[0]?.iconId;
+            const selected = option.id === (selectedGoalId ?? goal.id);
+            return (
+              <li key={option.id} className="task-modal__dropdown-item">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className="goal-journey__selector-option"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onSelectGoal?.(option.id);
+                    setGoalSelectorOpen(false);
+                  }}
+                >
+                  <span className="goal-journey__selector-option-icon">
+                    <GoalTaskIcon iconId={optionIconId} />
+                  </span>
+                  <span>{option.title}</span>
+                  {selected ? <span className="goal-journey__selector-check" aria-hidden="true">✓</span> : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
   ) : (
     <span className="goal-journey__selector">
       <span className="goal-journey__selector-icon">
@@ -1462,12 +1554,18 @@ function SubtaskRow({
   );
 }
 
-function GoalTaskAddPanel({
+function GoalDetailTaskAddRow({
   goal,
-  onClose,
+  disabled,
+  addRowRef,
+  titleInputRef,
+  onSaved,
 }: {
   goal: Goal;
-  onClose: () => void;
+  disabled: boolean;
+  addRowRef: RefObject<HTMLLIElement | null>;
+  titleInputRef: RefObject<HTMLInputElement | null>;
+  onSaved: () => void;
 }) {
   const updateGoal = useUpdateGoal();
   const [draft, setDraft] = useState<DetailTaskDraft>(() => emptyDetailTaskDraft());
@@ -1480,100 +1578,117 @@ function GoalTaskAddPanel({
     setPickerOpen(false);
   }, [goal.id]);
 
+  const clearDraft = () => {
+    setDraft(emptyDetailTaskDraft());
+    setError("");
+    setPickerOpen(false);
+  };
+
   const saveTask = async () => {
-    if (!draft.title.trim()) {
+    if (disabled) return;
+    const title = draft.title.trim();
+    if (!title) {
       setError("Task needs a name before it joins the quest.");
       return;
     }
     setError("");
-    try {
-      await updateGoal.mutateAsync({
-        id: goal.id,
-        input: { tasks: serializeTasks(goal.tasks, draft) },
-      });
-      setDraft(emptyDetailTaskDraft());
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save task.");
-    }
+    await updateGoal.mutateAsync({
+      id: goal.id,
+      input: { tasks: serializeTasks(goal.tasks, { ...draft, title }) },
+    });
+    clearDraft();
+    onSaved();
   };
 
   return (
-    <motion.aside
-      className="goal-detail-editor tasks-panel tasks-panel--today"
-      aria-label="Add goal task"
+    <motion.li
+      ref={addRowRef}
+      className={`goal-detail-task goal-detail-task--add is-editing ${disabled ? "is-disabled" : ""}`.trim()}
       layout
-      initial={{ opacity: 0, x: 28, y: 10, scale: 0.98, filter: "blur(8px)" }}
-      animate={{ opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, x: 24, y: 8, scale: 0.98, filter: "blur(8px)" }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
     >
-      <header className="goal-detail-editor__header">
-        <div>
-          <p className="goal-kicker">Add goal task</p>
-          <h2>Create a new step</h2>
-        </div>
-        <button type="button" className="goal-icon-button" onClick={onClose} aria-label="Close task editor">
-          ×
-        </button>
-      </header>
-
-      <div className="goal-detail-editor__icon-wrap">
-        <button
-          type="button"
-          className="goal-detail-editor__icon"
-          onClick={() => setPickerOpen((current) => !current)}
-          aria-label="Choose task icon"
-        >
-          <GoalTaskIcon iconId={draft.iconId} />
-        </button>
-        <div>
-          <strong>Chosen icon</strong>
-          <span>Tap to make the task less boring. Tiny pixels, huge morale.</span>
-        </div>
-        {pickerOpen ? (
-          <div className="goal-detail-editor__popover">
-            <IconPicker
-              value={draft.iconId}
-              onChange={(iconId) => {
-                setDraft((current) => ({ ...current, iconId }));
-                setPickerOpen(false);
+      <div className="goal-detail-task__head">
+        <span className="goal-detail-task__drag goal-detail-task__drag--placeholder" aria-hidden="true" />
+        <span className="goal-detail-task__check goal-detail-task__check--add" aria-hidden="true">+</span>
+        <div className="goal-detail-task__main goal-detail-task__main--editing">
+          <div className="goal-detail-task__icon-edit-wrap">
+            <button
+              type="button"
+              className="goal-detail-task__icon-edit"
+              onClick={() => setPickerOpen((current) => !current)}
+              aria-label="Choose new task icon"
+              disabled={disabled}
+            >
+              <GoalTaskIcon iconId={draft.iconId} />
+            </button>
+            {pickerOpen ? (
+              <div className="goal-detail-task__icon-popover">
+                <IconPicker
+                  value={draft.iconId}
+                  onChange={(iconId) => {
+                    setDraft((current) => ({ ...current, iconId }));
+                    setPickerOpen(false);
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+          <div className="goal-detail-task__title-edit">
+            <input
+              ref={titleInputRef}
+              value={draft.title}
+              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void saveTask();
+                }
               }}
+              maxLength={MAX_TITLE_LENGTH}
+              placeholder={disabled ? `Task limit reached (${MAX_GOAL_TASKS})` : "New task"}
+              aria-label="New goal task title"
+              disabled={disabled || updateGoal.isPending}
             />
           </div>
-        ) : null}
+        </div>
+        <div className="goal-detail-task__deadline" aria-label="Deadline">
+          <span>Deadline</span>
+          <GoalDatePicker
+            value={draft.deadline}
+            onChange={(deadline) => setDraft((current) => ({ ...current, deadline }))}
+            className="goal-detail-task__date-picker"
+            ariaLabel="New task deadline"
+          />
+        </div>
+        <div className="goal-detail-task__health" aria-hidden="true" />
+        <div className="goal-detail-task__status" aria-hidden="true" />
+        <div className="goal-detail-task__today" aria-hidden="true" />
+        <div className="goal-detail-task__actions">
+          <button
+            type="button"
+            className="add-icon-btn goal-detail-task__add-submit"
+            onClick={() => void saveTask()}
+            disabled={disabled || updateGoal.isPending}
+            aria-label="Add goal task"
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+          <button
+            type="button"
+            className="pomodoro-btn pomodoro-btn--ghost-text goal-detail-task__cancel"
+            onClick={clearDraft}
+            disabled={updateGoal.isPending}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-
-      <label className="goal-field">
-        <span>Task title</span>
-        <input
-          className="goal-input goal-input--large"
-          value={draft.title}
-          onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-          maxLength={MAX_TITLE_LENGTH}
-          placeholder="e.g. Plan daily itinerary"
-        />
-      </label>
-
-      <label className="goal-field">
-        <span>Deadline · optional</span>
-        <GoalDatePicker
-          value={draft.deadline}
-          onChange={(deadline) => setDraft((current) => ({ ...current, deadline }))}
-          className="goal-date-picker--large"
-          ariaLabel="Task deadline"
-        />
-      </label>
-
-
-      <p className="goal-error" aria-live="polite">{error}</p>
-
-      <footer className="goal-detail-editor__footer">
-        <button type="button" className="task-add" onClick={saveTask} disabled={updateGoal.isPending}>
-          {updateGoal.isPending ? "Saving..." : "Create task"}
-        </button>
-      </footer>
-    </motion.aside>
+      {error ? (
+        <p className="goal-detail-task__error" aria-live="polite">{error}</p>
+      ) : null}
+    </motion.li>
   );
 }
 
@@ -1585,16 +1700,36 @@ export function GoalDetailPage() {
   const deleteGoal = useDeleteGoal();
   const goals = goalsQuery.data ?? [];
   const goal = goals.find((item) => item.id === goalId);
-  const [taskEditorOpen, setTaskEditorOpen] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [orderedTaskIds, setOrderedTaskIds] = useState<string[]>([]);
   const [editorGoal, setEditorGoal] = useState<Goal | null | undefined>(undefined);
+  const [pendingAddRowScroll, setPendingAddRowScroll] = useState(false);
+  const addRowRef = useRef<HTMLLIElement | null>(null);
+  const addTitleInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (goal) {
       setOrderedTaskIds(goal.tasks.map((task) => task.id));
     }
   }, [goal?.id, goal?.tasks.map((task) => task.id).join("|")]);
+
+  const scrollToAddRow = (focus = true) => {
+    window.requestAnimationFrame(() => {
+      addRowRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      if (focus) {
+        window.setTimeout(() => addTitleInputRef.current?.focus(), 260);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!pendingAddRowScroll) return;
+    const timeout = window.setTimeout(() => {
+      scrollToAddRow(true);
+      setPendingAddRowScroll(false);
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [pendingAddRowScroll, goal?.tasks.length]);
 
   if (goalsQuery.isLoading) {
     return <p className="goals-empty">Loading goal...</p>;
@@ -1642,7 +1777,7 @@ export function GoalDetailPage() {
   return (
     <>
       <motion.section
-        className={`goals-page goal-detail-page ${taskEditorOpen ? "has-task-editor" : ""}`.trim()}
+        className="goals-page goal-detail-page"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -1651,7 +1786,7 @@ export function GoalDetailPage() {
         </div>
 
         <motion.div
-          className={`goal-detail-workspace ${taskEditorOpen ? "has-task-editor" : ""}`.trim()}
+          className="goal-detail-workspace"
           layout
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         >
@@ -1736,7 +1871,7 @@ export function GoalDetailPage() {
               <button
                 type="button"
                 className="task-add"
-                onClick={() => setTaskEditorOpen(true)}
+                onClick={() => scrollToAddRow(true)}
                 disabled={goal.tasks.length >= MAX_GOAL_TASKS}
                 title={goal.tasks.length >= MAX_GOAL_TASKS ? `Limit reached (${MAX_GOAL_TASKS})` : undefined}
               >
@@ -1744,48 +1879,41 @@ export function GoalDetailPage() {
               </button>
             </header>
 
-            {goal.tasks.length ? (
-              <Reorder.Group
-                as="ol"
-                axis="y"
-                values={orderedTasks}
-                onReorder={(tasks) => setOrderedTaskIds(tasks.map((task) => task.id))}
-                className="goal-detail-task-list"
-              >
+            <Reorder.Group
+              as="ol"
+              axis="y"
+              values={orderedTasks}
+              onReorder={(tasks) => setOrderedTaskIds(tasks.map((task) => task.id))}
+              className="goal-detail-task-list"
+            >
+              <AnimatePresence initial={false}>
                 {orderedTasks.map((task, index) => (
                   <GoalDetailTaskRow
                     key={task.id}
-	                    goal={goal}
-	                    task={task}
-	                    index={index}
-	                    expanded={expandedTaskId === task.id}
-	                    onToggleExpand={() =>
-	                      setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
-	                    }
-	                    onDelete={() => deleteTask(task.id)}
-	                    onPersistOrder={persistTaskOrder}
-	                    onStartEdit={() => setTaskEditorOpen(false)}
-	                  />
+                    goal={goal}
+                    task={task}
+                    index={index}
+                    expanded={expandedTaskId === task.id}
+                    onToggleExpand={() =>
+                      setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
+                    }
+                    onDelete={() => deleteTask(task.id)}
+                    onPersistOrder={persistTaskOrder}
+                    onStartEdit={() => undefined}
+                  />
                 ))}
-              </Reorder.Group>
-            ) : (
-              <div className="goals-empty goal-detail-empty">
-                <strong>No tasks yet</strong>
-                <span>Add the first step. Even dragons need a to-do list.</span>
-              </div>
-            )}
+              </AnimatePresence>
+              <GoalDetailTaskAddRow
+                goal={goal}
+                disabled={goal.tasks.length >= MAX_GOAL_TASKS}
+                addRowRef={addRowRef}
+                titleInputRef={addTitleInputRef}
+                onSaved={() => setPendingAddRowScroll(true)}
+              />
+            </Reorder.Group>
             </section>
 
           </motion.div>
-
-          <AnimatePresence initial={false} mode="popLayout">
-	            {taskEditorOpen ? (
-	              <GoalTaskAddPanel
-	                goal={goal}
-	                onClose={() => setTaskEditorOpen(false)}
-	              />
-            ) : null}
-          </AnimatePresence>
         </motion.div>
       </motion.section>
 
