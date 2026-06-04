@@ -278,8 +278,8 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   })();
 
   const fetched = db
-    .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ?`)
-    .get(row.id) as OccurrenceRow;
+    .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ? AND o.user_id = ?`)
+    .get(row.id, userId) as OccurrenceRow;
   return c.json({ occurrence: toOccurrence(fetched) }, 201);
 });
 
@@ -333,21 +333,36 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
       updates.completed === true
     ) {
       if (existing.source_kind === "goal_task" && existing.goal_task_id) {
-        db.prepare("UPDATE goal_tasks SET status = 'done', updated_at = ? WHERE id = ?").run(
-          now,
-          existing.goal_task_id,
-        );
+        db.prepare(
+          `UPDATE goal_tasks
+           SET status = 'done', updated_at = ?
+           WHERE id = ?
+             AND EXISTS (
+               SELECT 1 FROM goals
+               WHERE goals.id = goal_tasks.goal_id
+                 AND goals.user_id = ?
+             )`,
+        ).run(now, existing.goal_task_id, userId);
       } else if (existing.source_kind === "goal_subtask" && existing.goal_subtask_id) {
         db.prepare(
-          "UPDATE goal_subtasks SET completed = 1, updated_at = ? WHERE id = ?",
-        ).run(now, existing.goal_subtask_id);
+          `UPDATE goal_subtasks
+           SET completed = 1, updated_at = ?
+           WHERE id = ?
+             AND EXISTS (
+               SELECT 1
+               FROM goal_tasks
+               JOIN goals ON goals.id = goal_tasks.goal_id
+               WHERE goal_tasks.id = goal_subtasks.goal_task_id
+                 AND goals.user_id = ?
+             )`,
+        ).run(now, existing.goal_subtask_id, userId);
       }
     }
   })();
 
   const fetched = db
-    .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ?`)
-    .get(id) as OccurrenceRow;
+    .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ? AND o.user_id = ?`)
+    .get(id, userId) as OccurrenceRow;
   return c.json({ occurrence: toOccurrence(fetched) }, 200);
 });
 

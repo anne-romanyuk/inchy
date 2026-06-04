@@ -15,7 +15,7 @@ const MASCOT_BY_THEME: Record<ThemeMode, string> = {
   forest: "avatar-forest",
 };
 
-export function AppShell({ user: _user }: { user: PublicUser }) {
+export function AppShell({ user }: { user: PublicUser }) {
   const navigate = useNavigate();
   const [theme] = useTheme();
   const logout = useLogout();
@@ -37,9 +37,14 @@ export function AppShell({ user: _user }: { user: PublicUser }) {
       ) : null}
       <div className="home-content">
         <aside className="app-sidebar" aria-label="Sidebar">
-          <NavLink className="sidebar-brand" to="/today" aria-label="Inchy home">
-            <span className="sidebar-brand__wordmark">Inchy</span>
-          </NavLink>
+          <div className="sidebar-brand">
+            <span className="sidebar-brand__greeting">
+              <span className="sidebar-brand__hello">
+                Hello, <strong>{user.name}</strong>
+              </span>
+              <span className="sidebar-brand__tagline">New day, new progress</span>
+            </span>
+          </div>
           <nav className="sidebar-nav" aria-label="Main menu">
             {sidebarItems.map((item) =>
               item.disabled ? (

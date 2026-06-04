@@ -62,6 +62,7 @@ const createFocusSessionRoute = createRoute({
   responses: {
     201: { description: "Focus session started", content: { "application/json": { schema: FocusSessionEnvelopeSchema } } },
     401: { description: "Not authenticated", content: { "application/json": { schema: ErrorResponseSchema } } },
+    404: { description: "Task not found", content: { "application/json": { schema: ErrorResponseSchema } } },
   },
 });
 
@@ -70,6 +71,14 @@ focusSessionRoutes.openapi(createFocusSessionRoute, (c) => {
   const input = c.req.valid("json");
   const now = new Date().toISOString();
   const id = newId();
+  const taskId = input.taskId ?? null;
+
+  if (taskId) {
+    const task = db
+      .prepare("SELECT id FROM task_occurrences WHERE id = ? AND user_id = ?")
+      .get(taskId, userId) as { id: string } | undefined;
+    if (!task) return c.json({ message: "Task not found." }, 404);
+  }
 
   const create = db.transaction(() => {
     abandonActiveSessions(userId, now);
@@ -77,7 +86,7 @@ focusSessionRoutes.openapi(createFocusSessionRoute, (c) => {
       `INSERT INTO focus_sessions
        (id, user_id, task_id, started_at, planned_seconds, duration_seconds, mode, label, status)
        VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'active')`,
-    ).run(id, userId, input.taskId ?? null, now, input.plannedSeconds, input.mode, input.label ?? "");
+    ).run(id, userId, taskId, now, input.plannedSeconds, input.mode, input.label ?? "");
   });
 
   create();

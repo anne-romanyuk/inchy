@@ -413,7 +413,7 @@ function GoalEditorModal({
       exit={{ opacity: 0 }}
     >
       <motion.section
-        className="goal-modal goal-side-sheet tasks-panel tasks-panel--today app-scroll"
+        className="goal-modal tasks-panel tasks-panel--today app-scroll"
         initial={{ opacity: 0, x: -32 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -28 }}
@@ -1502,9 +1502,11 @@ function GoalTaskAddPanel({
     <motion.aside
       className="goal-detail-editor tasks-panel tasks-panel--today"
       aria-label="Add goal task"
-      initial={{ opacity: 0, x: 28 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 24 }}
+      layout
+      initial={{ opacity: 0, x: 28, y: 10, scale: 0.98, filter: "blur(8px)" }}
+      animate={{ opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, x: 24, y: 8, scale: 0.98, filter: "blur(8px)" }}
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
     >
       <header className="goal-detail-editor__header">
         <div>
@@ -1648,8 +1650,16 @@ export function GoalDetailPage() {
           <Link className="goal-back-link" to="/goals">← All Goals</Link>
         </div>
 
-        <div className={`goal-detail-workspace ${taskEditorOpen ? "has-task-editor" : ""}`.trim()}>
-          <div className="goal-detail-main-stack">
+        <motion.div
+          className={`goal-detail-workspace ${taskEditorOpen ? "has-task-editor" : ""}`.trim()}
+          layout
+          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <motion.div
+            className="goal-detail-main-stack"
+            layout
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
             <section className="goal-detail-hero tasks-panel tasks-panel--today" aria-label="Goal summary">
           <div className="goal-detail-hero__image">
             <GoalTaskIcon iconId={goal.iconId ?? nextTask?.iconId} />
@@ -1766,9 +1776,9 @@ export function GoalDetailPage() {
             )}
             </section>
 
-          </div>
+          </motion.div>
 
-          <AnimatePresence initial={false}>
+          <AnimatePresence initial={false} mode="popLayout">
 	            {taskEditorOpen ? (
 	              <GoalTaskAddPanel
 	                goal={goal}
@@ -1776,7 +1786,7 @@ export function GoalDetailPage() {
 	              />
             ) : null}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </motion.section>
 
       <AnimatePresence>

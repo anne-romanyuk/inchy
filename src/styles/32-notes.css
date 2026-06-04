@@ -293,6 +293,25 @@
 .notes-content:has(.notes-empty-all)::before {
   display: none;
 }
+.notes-main.is-editor-expanded {
+  grid-template-rows: minmax(0, 1fr);
+}
+.notes-main.is-editor-expanded .notes-tools,
+.notes-main.is-editor-expanded .notes-list {
+  display: none;
+}
+.notes-main.is-editor-expanded .notes-content {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.notes-main.is-editor-expanded .notes-content::before {
+  display: none;
+}
+.notes-main.is-editor-expanded .notes-editor-compose,
+.notes-main.is-editor-expanded .notes-editor-card {
+  min-height: 0;
+  height: 100%;
+}
 .notes-list {
   min-width: 0;
   min-height: 0;
@@ -387,6 +406,29 @@
   width: 1em;
   height: 1em;
 }
+.notes-category-badge {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  border: 0;
+}
+.notes-category-badge svg {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+}
+.notes-category-badge--empty {
+  background: var(--c-surface-soft);
+  color: var(--c-text-muted);
+}
+.notes-list-card__meta .notes-category-badge {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 /* The whole card is clickable to open the note (a div with role=button). */
 .notes-list-card {
@@ -470,6 +512,13 @@
 }
 
 /* Editor header close (X) — neutral icon button. */
+.notes-entry-window-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+.notes-entry-expand,
 .notes-entry-close {
   flex: 0 0 auto;
 }
@@ -546,46 +595,53 @@
 .notes-category-picker__dropdown {
   left: auto;
   right: 0;
-  min-width: calc(var(--space-10) * 4 + var(--space-6));
+  min-width: calc(var(--space-10) * 5 + var(--space-4));
+  padding: var(--space-2);
+}
+.notes-category-picker__input {
+  width: 100%;
+  min-width: 0;
+  height: var(--space-10);
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-glass);
+  color: var(--c-text-primary);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1 var(--font-base);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-surface-elevated) 56%, transparent);
+}
+.notes-category-picker__input::placeholder {
+  color: var(--c-text-muted);
+}
+.notes-category-picker__input:focus-visible {
+  outline: none;
+  border-color: var(--c-focus);
+  box-shadow: var(--shadow-focus-ring);
 }
 .notes-category-picker__list {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-2);
-  padding: var(--space-2);
+  max-height: calc(var(--space-10) * 5);
+  padding: 0;
 }
-.notes-category-picker__list .notes-category-picker__option {
+.notes-category-picker__list .notes-category-badge {
   width: 100%;
   justify-content: flex-start;
   border-radius: var(--radius-pill);
   padding: var(--space-2) var(--space-4);
-  border: 0;
   font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
   letter-spacing: var(--text-badge-tracking);
+  cursor: pointer;
 }
-.notes-category-picker__list .task-modal__category-pill.notes-category-picker__option {
+.notes-category-picker__list .notes-category-badge {
   box-shadow: none;
 }
-.notes-category-picker__list .ui-badge--danger {
-  background: var(--c-danger-soft);
-  color: var(--c-danger);
-}
-.notes-category-picker__list .ui-badge--info {
-  background: var(--c-info-soft);
-  color: var(--c-info);
-}
-.notes-category-picker__list .ui-badge--warning {
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
-}
-.notes-category-picker__list .ui-badge--success {
-  background: var(--c-success-soft);
-  color: var(--c-success);
-}
-.notes-category-picker__list .notes-category-picker__option:hover,
-.notes-category-picker__list .notes-category-picker__option:focus-visible,
-.notes-category-picker__list .notes-category-picker__option[aria-selected="true"] {
+.notes-category-picker__list .notes-category-badge:hover,
+.notes-category-picker__list .notes-category-badge:focus-visible,
+.notes-category-picker__list .notes-category-badge[aria-selected="true"] {
   outline: none;
   box-shadow: inset 0 0 0 1px currentColor;
 }
@@ -705,6 +761,9 @@
 }
 .notes-entry-card__meta-main .notes-category-picker {
   margin-left: 0;
+}
+.notes-entry-card__meta-main .notes-category-badge {
+  min-width: 0;
 }
 .notes-entry-card__timestamp {
   display: inline-flex;

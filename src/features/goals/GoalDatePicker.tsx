@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, {
@@ -88,11 +88,19 @@ export function GoalDatePicker({
   onChange,
   className = "",
   ariaLabel,
+  allowClear = true,
+  formatDisplayValue,
+  leadingControl,
+  trailingControl,
 }: {
   value: string;
   onChange: (value: string) => void;
   className?: string;
   ariaLabel: string;
+  allowClear?: boolean;
+  formatDisplayValue?: (value: string) => string;
+  leadingControl?: ReactNode;
+  trailingControl?: ReactNode;
 }) {
   const selectedDate = parseIsoDate(value);
   const [isOpen, setIsOpen] = useState(false);
@@ -100,7 +108,8 @@ export function GoalDatePicker({
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const today = todayIsoDate();
   const days = useMemo(() => getVisibleDays(viewMonth), [viewMonth]);
-  const displayValue = selectedDate ? formatDate(value) : "No due date";
+  const displayValue = selectedDate ? formatDisplayValue?.(value) ?? formatDate(value) : "No due date";
+  const hasCompoundTrigger = Boolean(leadingControl || trailingControl);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,23 +130,46 @@ export function GoalDatePicker({
 
   return (
     <div ref={pickerRef} className={`goal-date-picker ${className}`.trim()}>
-      <button
-        type="button"
-        className={`goal-date-picker__trigger ${!value ? "is-empty" : ""}`.trim()}
-        onClick={() => setIsOpen((current) => !current)}
-        aria-label={ariaLabel}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-      >
-        <span className="goal-date-picker__icon">
-          <CalendarIcon />
-        </span>
-        <span className="goal-date-picker__value">{displayValue}</span>
-        <span className="goal-date-picker__chevrons">
-          <ChevronIcon direction="up" />
-          <ChevronIcon direction="down" />
-        </span>
-      </button>
+      {hasCompoundTrigger ? (
+        <div
+          className={`goal-date-picker__trigger goal-date-picker__trigger--compound ${!value ? "is-empty" : ""}`.trim()}
+          aria-expanded={isOpen}
+        >
+          <span className="goal-date-picker__side-control">{leadingControl}</span>
+          <button
+            type="button"
+            className="goal-date-picker__display"
+            onClick={() => setIsOpen((current) => !current)}
+            aria-label={ariaLabel}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+          >
+            <span className="goal-date-picker__icon">
+              <CalendarIcon />
+            </span>
+            <span className="goal-date-picker__value">{displayValue}</span>
+          </button>
+          <span className="goal-date-picker__side-control">{trailingControl}</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className={`goal-date-picker__trigger ${!value ? "is-empty" : ""}`.trim()}
+          onClick={() => setIsOpen((current) => !current)}
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+        >
+          <span className="goal-date-picker__icon">
+            <CalendarIcon />
+          </span>
+          <span className="goal-date-picker__value">{displayValue}</span>
+          <span className="goal-date-picker__chevrons">
+            <ChevronIcon direction="up" />
+            <ChevronIcon direction="down" />
+          </span>
+        </button>
+      )}
 
       {isOpen ? (
         <div className="goal-date-picker__popover" role="dialog" aria-label={`${ariaLabel} calendar`}>
@@ -200,9 +232,11 @@ export function GoalDatePicker({
             <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => onChange(today)}>
               Today
             </button>
-            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => onChange("")}>
-              Clear
-            </button>
+            {allowClear ? (
+              <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => onChange("")}>
+                Clear
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}

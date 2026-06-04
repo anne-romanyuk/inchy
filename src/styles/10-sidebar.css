@@ -30,33 +30,59 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  place-items: center;
-  width: min(138px, 100%);
-  min-height: 56px;
+  align-items: start;
+  width: min(calc(var(--sidebar-w, 204px) - 20px), 100%);
+  min-height: 78px;
   justify-self: center;
   border-radius: 0;
-  padding: 8px 12px;
+  padding: var(--space-8) 0 var(--space-3);
   text-decoration: none;
   background: transparent;
   box-shadow: none;
 }
 
-/* Brand glow removed — the wordmark sits clean on the sidebar like the mockup. */
+/* Keep the sidebar greeting clean, without decorative brand glow. */
 .sidebar-brand::before,
 .sidebar-brand::after {
   display: none;
 }
 
-.sidebar-brand__wordmark {
-  font-family: "Quattrocento", Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  font-size: 27px;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--c-text-secondary);
+.sidebar-brand__greeting {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  width: 100%;
+  color: var(--c-text-primary);
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.sidebar-brand__hello {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 18px / 1.2 var(--font-base);
+}
+
+.sidebar-brand__hello strong {
+  min-width: 0;
+  color: var(--c-text-primary);
+  font-weight: var(--text-section-title-weight);
+  letter-spacing: 0;
+}
+
+.sidebar-brand__tagline {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text-secondary);
+  font: var(--text-item-title-weight) clamp(11px, 0.82vw, 13px) / 1.2 var(--font-base);
+  letter-spacing: var(--text-item-title-tracking);
 }
 
 .sidebar-brand:hover,
@@ -210,9 +236,12 @@
     radial-gradient(ellipse at 52% 72%, color-mix(in srgb, var(--c-success) 22%, transparent) 0 12%, color-mix(in srgb, var(--c-success) 9%, transparent) 36%, transparent 80%);
 }
 
-:root[data-theme="forest"] .sidebar-brand__wordmark {
-  color: var(--c-text-secondary);
-  text-shadow: 0 2px 4px color-mix(in srgb, var(--c-text-secondary) 18%, transparent);
+:root[data-theme="forest"] .sidebar-brand__greeting {
+  color: var(--c-text-primary);
+}
+
+:root[data-theme="forest"] .sidebar-brand__hello strong {
+  color: var(--c-text-primary);
 }
 
 :root[data-theme="forest"] .sidebar-nav :is(button, a) {

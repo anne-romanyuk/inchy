@@ -74,7 +74,7 @@ function readGoal(userId: string, id: string) {
  * the first new subtask. This matches the UI rule that a task with subtasks
  * cannot be carried to Today directly.
  */
-function replaceGoalTasks(goalId: string, tasks: GoalTaskInput[], now: string) {
+function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[], now: string) {
   const existingTasks = db
     .prepare("SELECT id FROM goal_tasks WHERE goal_id = ?")
     .all(goalId) as Array<{ id: string }>;
@@ -199,8 +199,8 @@ function replaceGoalTasks(goalId: string, tasks: GoalTaskInput[], now: string) {
              goal_subtask_id = ?,
              title = ?,
              updated_at = ?
-         WHERE goal_task_id = ? AND source_kind = 'goal_task' AND completed = 0`,
-      ).run(firstSubId, subRow?.title ?? task.title, now, taskId);
+         WHERE user_id = ? AND goal_task_id = ? AND source_kind = 'goal_task' AND completed = 0`,
+      ).run(firstSubId, subRow?.title ?? task.title, now, userId, taskId);
     }
   }
 }
@@ -270,7 +270,7 @@ goalRoutes.openapi(createGoalRoute, (c) => {
     db.prepare(
       "INSERT INTO goals (id, user_id, title, description, deadline, icon_id, status, created_at, updated_at) VALUES (?, ?, ?, '', ?, ?, 'active', ?, ?)",
     ).run(id, userId, input.title, input.deadline ?? null, input.iconId ?? null, now, now);
-    replaceGoalTasks(id, input.tasks ?? [], now);
+    replaceGoalTasks(userId, id, input.tasks ?? [], now);
   })();
   checkpointDatabase();
   const goal = readGoal(userId, id)!;
@@ -309,7 +309,7 @@ goalRoutes.openapi(updateGoalRoute, (c) => {
       id,
       userId,
     );
-    if (input.tasks) replaceGoalTasks(id, input.tasks, now);
+    if (input.tasks) replaceGoalTasks(userId, id, input.tasks, now);
   })();
   checkpointDatabase();
   return c.json({ goal: readGoal(userId, id)! }, 200);

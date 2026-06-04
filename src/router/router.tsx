@@ -19,8 +19,8 @@ const GoalDetailPage = lazy(() =>
 const NotesPage = lazy(() =>
   import("../features/notes/NotesPage").then(({ NotesPage }) => ({ default: NotesPage })),
 );
-const PlanPage = lazy(() =>
-  import("../features/plan/PlanPage").then(({ PlanPage }) => ({ default: PlanPage })),
+const TasksHistoryPage = lazy(() =>
+  import("../features/history/TasksHistoryPage").then(({ TasksHistoryPage }) => ({ default: TasksHistoryPage })),
 );
 
 function PageChunk({ children }: { children: ReactNode }) {
@@ -38,7 +38,8 @@ export const router = createBrowserRouter([
       { path: "focus", element: <PageChunk><FocusPage /></PageChunk> },
       { path: "goals", element: <PageChunk><GoalsPage /></PageChunk> },
       { path: "goals/:goalId", element: <PageChunk><GoalDetailPage /></PageChunk> },
-      { path: "plan", element: <PageChunk><PlanPage /></PageChunk> },
+      { path: "plan", element: <PlaceholderPage label="Plan" /> },
+      { path: "tasks-history", element: <PageChunk><TasksHistoryPage /></PageChunk> },
       { path: "progress", element: <PlaceholderPage label="Progress" /> },
       { path: "notes", element: <PageChunk><NotesPage /></PageChunk> },
       { path: "templates", element: <PlaceholderPage label="Templates" /> },

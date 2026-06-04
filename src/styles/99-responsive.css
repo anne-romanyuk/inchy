@@ -6,6 +6,15 @@
   .auth-stage {
     animation: none;
   }
+
+  /* Keep a slow, gentle spin so the loader still reads as "working". */
+  .app-loader {
+    animation: none;
+  }
+
+  .app-loader__spinner {
+    animation-duration: 1.8s;
+  }
 }
 
 @media (max-height: 760px) and (min-width: 521px) {
@@ -205,6 +214,39 @@
 
   .task-modal__footer .task-add {
     width: auto;
+  }
+
+  .tasks-history-page {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .history-panel {
+    min-height: 70dvh;
+  }
+
+  .history-date-picker .goal-date-picker__trigger {
+    padding-inline: var(--space-3);
+    font-size: var(--text-body-size);
+  }
+
+  .history-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .history-task {
+    grid-template-columns: var(--space-9) minmax(0, 1fr) auto;
+    gap: var(--space-3);
+  }
+
+  .history-task__category {
+    grid-column: 2;
+  }
+
+  .history-task__focus {
+    grid-column: 3;
+    grid-row: 1 / 3;
   }
 }
 

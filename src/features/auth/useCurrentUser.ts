@@ -1,7 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PublicUser } from "../../../shared/schemas";
 import { queryKeys } from "../../shared/api/queryClient";
 import { ApiError } from "../../shared/api/client";
 import * as authApi from "./api";
+
+const CURRENT_USER_STORAGE_KEY = "planner-current-user";
+
+// Remember the last known user so a refresh can render the app instantly while
+// `/api/me` revalidates in the background — instead of flashing a blank screen.
+export function readPersistedUser(): PublicUser | undefined {
+  try {
+    const raw = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PublicUser) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function persistCurrentUser(user: PublicUser | null) {
+  try {
+    if (user) localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
+    else localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+  } catch {
+    // localStorage may be unavailable (private mode); fall back to a network check.
+  }
+}
 
 export function useCurrentUser() {
   return useQuery({
@@ -16,6 +39,10 @@ export function useCurrentUser() {
       }
     },
     staleTime: 60_000,
+    // Seed from the last session so there's no loading flash on refresh; mark it
+    // stale (updatedAt 0) so `/api/me` still re-checks the session in the background.
+    initialData: readPersistedUser,
+    initialDataUpdatedAt: 0,
   });
 }
 

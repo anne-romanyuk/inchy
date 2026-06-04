@@ -3,11 +3,14 @@ import type { EmojiClickData, Theme as EmojiPickerTheme } from "emoji-picker-rea
 import { motion } from "motion/react";
 import { useBlocker } from "react-router-dom";
 import type { Note } from "../../../shared/schemas";
-import { MAX_NOTE_TITLE_LENGTH } from "../../../shared/constants";
+import { MAX_CATEGORY_LENGTH, MAX_NOTE_TITLE_LENGTH } from "../../../shared/constants";
+import { categoryTone } from "../today/categoryColor";
 import { useNotes, useSaveNotes } from "./useNotes";
 
 const MAX_TITLE = MAX_NOTE_TITLE_LENGTH;
-const CATEGORY_OPTIONS = ["All categories", "Personal", "Work", "Ideas", "Health"] as const;
+const CATEGORY_FILTER_ALL = "All categories";
+const CATEGORY_FILTER_NONE = "__no_category__";
+const NO_CATEGORY_LABEL = "No category";
 const DATE_OPTIONS = ["Any time", "Last 30 days", "Pinned"] as const;
 const EmojiPicker = lazy(() => import("emoji-picker-react"));
 const NOTE_DATE_FORMAT = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -17,11 +20,6 @@ const NOTE_EDITOR_INDENT_HTML = `<div>${NOTE_EDITOR_EMPTY_CHAR}</div>`;
 const NOTE_ALLOWED_INLINE_TAGS = new Set(["b", "strong", "i", "em", "u", "s", "strike"]);
 const NOTE_ALLOWED_BLOCK_TAGS = new Set(["div", "p", "br", "ul", "ol", "li"]);
 
-type CategoryName = (typeof CATEGORY_OPTIONS)[number];
-type NoteCategoryName = Exclude<CategoryName, "All categories">;
-const NOTE_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
-  (option): option is NoteCategoryName => option !== "All categories",
-);
 type EditorFormat = "bold" | "italic" | "underline" | "unorderedList" | "orderedList";
 type PendingNotesAction =
   | { type: "select"; noteId: string }
@@ -188,30 +186,28 @@ function formatNoteTimestamp(date: Date): string {
   return `${NOTE_DATE_FORMAT.format(date)} • ${NOTE_TIME_FORMAT.format(date)}`;
 }
 
-function noteCategory(note: Note): NoteCategoryName {
-  if (NOTE_CATEGORY_OPTIONS.includes(note.category as NoteCategoryName)) {
-    return note.category as NoteCategoryName;
-  }
-
-  const text = `${note.title} ${note.body}`.toLowerCase();
-  if (/\b(work|project|planner|deliverable|meeting|quarter|client)\b/.test(text)) return "Work";
-  if (/\b(idea|feature|brainstorm|concept|inspiration)\b/.test(text)) return "Ideas";
-  if (/\b(health|meal|energy|yoga|stretch|mood|routine)\b/.test(text)) return "Health";
-  return "Personal";
+function noteCategory(note: Note): string {
+  return (note.category ?? "").trim();
 }
 
-function noteTone(category: string) {
-  if (category === "Work") return "info";
-  if (category === "Ideas") return "warning";
-  if (category === "Health") return "success";
-  return "danger";
+function noteCategoryLabel(category: string) {
+  return category.trim() || NO_CATEGORY_LABEL;
+}
+
+function noteCategoryBadgeClass(category: string) {
+  const value = category.trim();
+  return value
+    ? `task-category task-category--${categoryTone(value)} notes-category-badge`
+    : "task-category notes-category-badge notes-category-badge--empty";
 }
 
 function noteIcon(category: string) {
+  if (!category.trim()) return "Note";
   if (category === "Work") return "Briefcase";
   if (category === "Ideas") return "Lightbulb";
   if (category === "Health") return "Leaf";
-  return "Heart";
+  if (category === "Personal") return "Heart";
+  return "Tag";
 }
 
 function noteExcerpt(note: Note) {
@@ -354,6 +350,18 @@ function Icon({ name }: { name: string }) {
           <path d="M6 6l12 12M18 6 6 18" />
         </svg>
       );
+    case "Fullscreen":
+      return (
+        <svg {...common}>
+          <path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4" />
+        </svg>
+      );
+    case "Minimize":
+      return (
+        <svg {...common}>
+          <path d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5" />
+        </svg>
+      );
     case "Pin":
       return (
         <svg {...common}>
@@ -374,13 +382,15 @@ export function NotesPage() {
   const [working, setWorking] = useState<Note[] | null>(null);
   const [activeId, setActiveId] = useState<string>("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<CategoryName>("All categories");
+  const [category, setCategory] = useState<string>(CATEGORY_FILTER_ALL);
   const [dateRange, setDateRange] = useState<(typeof DATE_OPTIONS)[number]>("Any time");
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [categoryDraft, setCategoryDraft] = useState("");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [cardMenuId, setCardMenuId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingNotesAction>(null);
+  const [editorExpanded, setEditorExpanded] = useState(false);
   const [activeFormats, setActiveFormats] = useState<Record<EditorFormat, boolean>>({
     bold: false,
     italic: false,
@@ -390,6 +400,7 @@ export function NotesPage() {
   });
   const noteTitleRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const categoryInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const categoryPickerRef = useRef<HTMLDivElement>(null);
   const savedEditorRangeRef = useRef<Range | null>(null);
@@ -412,7 +423,7 @@ export function NotesPage() {
     () => (activeId ? notes.find((n) => n.id === activeId) : undefined),
     [notes, activeId],
   );
-  const activeCategory = activeNote ? noteCategory(activeNote) : "Personal";
+  const activeCategory = activeNote ? noteCategory(activeNote) : "";
 
   // A brand-new note the user just created but never edited: it isn't in the DB
   // yet and has an empty title and body. These shouldn't count as unsaved work —
@@ -442,12 +453,47 @@ export function NotesPage() {
   );
 
   const categoryCounts = useMemo(() => {
-    const counts = { Personal: 0, Work: 0, Ideas: 0, Health: 0 };
+    const counts = new Map<string, number>();
     notes.forEach((note) => {
-      counts[noteCategory(note)] += 1;
+      const key = noteCategory(note);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     });
     return counts;
   }, [notes]);
+
+  const noteCategoryOptions = useMemo(() => {
+    const options = new Set<string>();
+    notes.forEach((note) => {
+      const value = noteCategory(note);
+      if (value) options.add(value);
+    });
+    return Array.from(options).sort((a, b) => a.localeCompare(b));
+  }, [notes]);
+
+  const navCategoryOptions = useMemo(() => {
+    const options = [...noteCategoryOptions];
+    return (categoryCounts.get("") ?? 0) > 0 ? ["", ...options] : options;
+  }, [categoryCounts, noteCategoryOptions]);
+
+  const categoryDropdownOptions = useMemo(() => {
+    const query = categoryDraft.trim().toLowerCase();
+    if (!query) return noteCategoryOptions;
+    return noteCategoryOptions.filter((option) => option.toLowerCase().includes(query));
+  }, [categoryDraft, noteCategoryOptions]);
+
+  const categoryDraftValue = categoryDraft.trim();
+  const canCreateCategory =
+    categoryDraftValue.length > 0 &&
+    !noteCategoryOptions.some((option) => option.toLowerCase() === categoryDraftValue.toLowerCase());
+
+  useEffect(() => {
+    if (category === CATEGORY_FILTER_ALL) return;
+    if (category === CATEGORY_FILTER_NONE) {
+      if ((categoryCounts.get("") ?? 0) === 0) setCategory(CATEGORY_FILTER_ALL);
+      return;
+    }
+    if (!noteCategoryOptions.includes(category)) setCategory(CATEGORY_FILTER_ALL);
+  }, [category, categoryCounts, noteCategoryOptions]);
 
   const filteredNotes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -458,7 +504,9 @@ export function NotesPage() {
           query.length === 0 ||
           note.title.toLowerCase().includes(query) ||
           noteText.includes(query);
-        const matchesCategory = category === "All categories" || noteCategory(note) === category;
+        const matchesCategory =
+          category === CATEGORY_FILTER_ALL ||
+          (category === CATEGORY_FILTER_NONE ? noteCategory(note) === "" : noteCategory(note) === category);
         const matchesDate = dateRange !== "Pinned" || isPinned(note);
         return matchesSearch && matchesCategory && matchesDate;
       })
@@ -470,9 +518,19 @@ export function NotesPage() {
 
   useEffect(() => {
     setCategoryMenuOpen(false);
+    setCategoryDraft(activeNote ? noteCategory(activeNote) : "");
     setEmojiPickerOpen(false);
     setDeleteTargetId(null);
   }, [activeNote?.id]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+    window.setTimeout(() => categoryInputRef.current?.focus(), 0);
+  }, [categoryMenuOpen]);
+
+  useEffect(() => {
+    if (!activeNote) setEditorExpanded(false);
+  }, [activeNote]);
 
   // Close an open card kebab menu on any outside click.
   useEffect(() => {
@@ -506,6 +564,15 @@ export function NotesPage() {
         n.id === activeNote?.id ? { ...n, ...patch, updatedAt: new Date().toISOString() } : n,
       ),
     ), [activeNote?.id]);
+
+  const chooseActiveCategory = useCallback((value: string) => {
+    const normalized = value.trim().slice(0, MAX_CATEGORY_LENGTH);
+    const nextCategory =
+      noteCategoryOptions.find((option) => option.toLowerCase() === normalized.toLowerCase()) ?? normalized;
+    updateActive({ category: nextCategory });
+    setCategoryDraft(nextCategory);
+    setCategoryMenuOpen(false);
+  }, [noteCategoryOptions, updateActive]);
 
   const rememberEditorSelection = useCallback(() => {
     const editor = editorRef.current;
@@ -665,7 +732,7 @@ export function NotesPage() {
       id: makeId(),
       title: "",
       body: "",
-      category: category === "All categories" ? "Personal" : category,
+      category: "",
       pinned: false,
       createdAt: now,
       updatedAt: now,
@@ -686,7 +753,7 @@ export function NotesPage() {
           id: n.id,
           title: n.title,
           body: sanitizeNoteHtml(n.body),
-          category: n.category ?? noteCategory(n),
+          category: n.category?.trim() ?? "",
           pinned: n.pinned ?? false,
         })),
     );
@@ -839,7 +906,7 @@ export function NotesPage() {
 
   const saving = saveNotes.isPending;
   const hasActiveFilters =
-    search.trim().length > 0 || dateRange !== "Any time" || category !== "All categories";
+    search.trim().length > 0 || dateRange !== "Any time" || category !== CATEGORY_FILTER_ALL;
 
   return (
     <motion.section
@@ -871,8 +938,8 @@ export function NotesPage() {
           <nav className="notes-nav" aria-label="Notes sections">
             <button
               type="button"
-              className={`notes-nav__item ${category === "All categories" ? "is-active" : ""}`.trim()}
-              onClick={() => setCategory("All categories")}
+              className={`notes-nav__item ${category === CATEGORY_FILTER_ALL ? "is-active" : ""}`.trim()}
+              onClick={() => setCategory(CATEGORY_FILTER_ALL)}
             >
               <span className="notes-nav__icon notes-nav__icon--accent">
                 <Icon name="Note" />
@@ -881,20 +948,23 @@ export function NotesPage() {
               <strong>{notes.length}</strong>
             </button>
 
-            {(["Personal", "Work", "Ideas", "Health"] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={`notes-nav__item ${category === item ? "is-active" : ""}`.trim()}
-                onClick={() => setCategory(item)}
-              >
-                <span className={`notes-nav__icon notes-nav__icon--${noteTone(item)}`}>
-                  <Icon name={noteIcon(item)} />
-                </span>
-                <span>{item}</span>
-                <strong>{categoryCounts[item]}</strong>
-              </button>
-            ))}
+            {navCategoryOptions.map((item) => {
+              const filterValue = item ? item : CATEGORY_FILTER_NONE;
+              return (
+                <button
+                  key={item || CATEGORY_FILTER_NONE}
+                  type="button"
+                  className={`notes-nav__item ${category === filterValue ? "is-active" : ""}`.trim()}
+                  onClick={() => setCategory(filterValue)}
+                >
+                  <span className="notes-nav__icon notes-nav__icon--accent">
+                    <Icon name={noteIcon(item)} />
+                  </span>
+                  <span>{noteCategoryLabel(item)}</span>
+                  <strong>{categoryCounts.get(item) ?? 0}</strong>
+                </button>
+              );
+            })}
           </nav>
 
           <div className="notes-nav notes-nav--secondary" aria-label="Archived notes">
@@ -915,7 +985,7 @@ export function NotesPage() {
           </div>
         </aside>
 
-        <div className="notes-main">
+        <div className={`notes-main ${activeNote && editorExpanded ? "is-editor-expanded" : ""}`.trim()}>
           <div className="notes-tools" aria-label="Notes filters">
             <label className="ui-field notes-search">
               <span className="notes-control-icon">
@@ -938,12 +1008,12 @@ export function NotesPage() {
                 className="ui-field__control"
                 value={category}
                 aria-label="Filter by category"
-                onChange={(event) => setCategory(event.target.value as CategoryName)}
+                onChange={(event) => setCategory(event.target.value)}
               >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
+                <option value={CATEGORY_FILTER_ALL}>{CATEGORY_FILTER_ALL}</option>
+                {(categoryCounts.get("") ?? 0) > 0 && <option value={CATEGORY_FILTER_NONE}>{NO_CATEGORY_LABEL}</option>}
+                {noteCategoryOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
                 ))}
               </select>
             </label>
@@ -978,13 +1048,13 @@ export function NotesPage() {
                   {dateRange} x
                 </button>
               )}
-              {category !== "All categories" && (
+              {category !== CATEGORY_FILTER_ALL && (
                 <button
                   type="button"
                   className="ui-badge ui-badge--accent ui-badge--md"
-                  onClick={() => setCategory("All categories")}
+                  onClick={() => setCategory(CATEGORY_FILTER_ALL)}
                 >
-                  {category} x
+                  {category === CATEGORY_FILTER_NONE ? NO_CATEGORY_LABEL : category} x
                 </button>
               )}
               {!hasActiveFilters && <span className="notes-filter-strip__empty">None</span>}
@@ -996,7 +1066,7 @@ export function NotesPage() {
                   title="Clear all filters"
                   onClick={() => {
                     setSearch("");
-                    setCategory("All categories");
+                    setCategory(CATEGORY_FILTER_ALL);
                     setDateRange("Any time");
                   }}
                 >
@@ -1102,8 +1172,8 @@ export function NotesPage() {
                         return <span>{excerpt ? `${excerpt}...` : " "}</span>;
                       })()}
                       <span className="notes-list-card__meta">
-                        <span className={`ui-badge ui-badge--${noteTone(currentCategory)} ui-badge--md`}>
-                          <Icon name={noteIcon(currentCategory)} /> {currentCategory}
+                        <span className={noteCategoryBadgeClass(currentCategory)}>
+                          <Icon name={noteIcon(currentCategory)} /> {noteCategoryLabel(currentCategory)}
                         </span>
                         <small>{formatNoteDate(note)}</small>
                       </span>
@@ -1124,54 +1194,111 @@ export function NotesPage() {
                         <div className="notes-category-picker" ref={categoryPickerRef}>
                           <button
                             type="button"
-                            className={`ui-badge ui-badge--${noteTone(activeCategory)} ui-badge--md notes-category-picker__trigger`}
+                            className={`${noteCategoryBadgeClass(activeCategory)} notes-category-picker__trigger`}
                             aria-label="Change note category"
                             aria-haspopup="listbox"
                             aria-expanded={categoryMenuOpen}
-                            onClick={() => setCategoryMenuOpen((open) => !open)}
+                            onClick={() => {
+                              setCategoryDraft(activeCategory);
+                              setCategoryMenuOpen((open) => !open);
+                            }}
                           >
-                            <Icon name={noteIcon(activeCategory)} /> {activeCategory}
+                            <Icon name={noteIcon(activeCategory)} /> {noteCategoryLabel(activeCategory)}
                             <span className="task-modal__dropdown-caret" aria-hidden="true" />
                           </button>
                           <div
                             className="task-modal__dropdown-wrap notes-category-picker__dropdown"
                             data-open={categoryMenuOpen ? "true" : "false"}
                           >
+                            <input
+                              ref={categoryInputRef}
+                              className="notes-category-picker__input"
+                              type="text"
+                              maxLength={MAX_CATEGORY_LENGTH}
+                              value={categoryDraft}
+                              placeholder="Type category"
+                              aria-label="Type note category"
+                              onChange={(event) => setCategoryDraft(event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Escape") {
+                                  setCategoryMenuOpen(false);
+                                  return;
+                                }
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  chooseActiveCategory(categoryDraft);
+                                }
+                              }}
+                            />
                             <ul
                               className="task-modal__combobox-list task-modal__combobox-list--pills notes-category-picker__list app-scroll"
                               role="listbox"
                               aria-label="Note category"
                             >
-                              {NOTE_CATEGORY_OPTIONS.map((option) => (
+                              <li className="task-modal__dropdown-item">
+                                <button
+                                  type="button"
+                                  role="option"
+                                  aria-selected={activeCategory === ""}
+                                  className={noteCategoryBadgeClass("")}
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => chooseActiveCategory("")}
+                                >
+                                  <Icon name={noteIcon("")} /> {NO_CATEGORY_LABEL}
+                                </button>
+                              </li>
+                              {categoryDropdownOptions.map((option) => (
                                 <li key={option} className="task-modal__dropdown-item">
                                   <button
                                     type="button"
                                     role="option"
                                     aria-selected={activeCategory === option}
-                                    className={`task-modal__category-pill ui-badge ui-badge--${noteTone(option)} ui-badge--md notes-category-picker__option`}
+                                    className={noteCategoryBadgeClass(option)}
                                     onMouseDown={(event) => event.preventDefault()}
-                                    onClick={() => {
-                                      updateActive({ category: option });
-                                      setCategoryMenuOpen(false);
-                                    }}
+                                    onClick={() => chooseActiveCategory(option)}
                                   >
                                     <Icon name={noteIcon(option)} /> {option}
                                   </button>
                                 </li>
                               ))}
+                              {canCreateCategory && (
+                                <li className="task-modal__dropdown-item">
+                                  <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={false}
+                                    className={noteCategoryBadgeClass(categoryDraftValue)}
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() => chooseActiveCategory(categoryDraftValue)}
+                                  >
+                                    <Icon name="Tag" /> Create "{categoryDraftValue}"
+                                  </button>
+                                </li>
+                              )}
                             </ul>
                           </div>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="ui-icon-btn notes-entry-close"
-                        aria-label="Close note"
-                        title="Close note"
-                        onClick={requestCloseEditor}
-                      >
-                        <Icon name="Close" />
-                      </button>
+                      <div className="notes-entry-window-actions">
+                        <button
+                          type="button"
+                          className="ui-icon-btn notes-entry-expand"
+                          aria-label={editorExpanded ? "Collapse editor" : "Expand editor"}
+                          title={editorExpanded ? "Collapse editor" : "Expand editor"}
+                          onClick={() => setEditorExpanded((expanded) => !expanded)}
+                        >
+                          <Icon name={editorExpanded ? "Minimize" : "Fullscreen"} />
+                        </button>
+                        <button
+                          type="button"
+                          className="ui-icon-btn notes-entry-close"
+                          aria-label="Close note"
+                          title="Close note"
+                          onClick={requestCloseEditor}
+                        >
+                          <Icon name="Close" />
+                        </button>
+                      </div>
                     </header>
 
                     <div className="notes-entry-card__body">

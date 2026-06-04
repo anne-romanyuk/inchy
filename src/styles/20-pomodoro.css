@@ -496,15 +496,54 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-4);
   margin-top: 10px;
   flex-shrink: 0;
 }
 
-.pomodoro-settings__footer .task-modal__submit {
-  height: 38px;
-  padding: 0 18px;
+.pomodoro-settings__footer .pomodoro-btn--ghost-text,
+.pomodoro-settings__footer .task-add {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.pomodoro-settings__footer .pomodoro-btn--ghost-text {
   width: auto;
+  min-width: 84px;
+  height: 42px;
+  padding: 0 var(--space-5);
+}
+
+.pomodoro-settings__footer .task-add {
+  width: auto;
+  min-width: 120px;
+  height: 42px;
+  padding: 0 var(--space-7);
+  justify-content: center;
+}
+
+.pomodoro-panel .pomodoro-confirm__actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pomodoro-panel .pomodoro-confirm__actions .pomodoro-btn--ghost-text,
+.pomodoro-panel .pomodoro-confirm__actions .task-add {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.pomodoro-panel .pomodoro-confirm__actions .pomodoro-btn--ghost-text {
+  min-width: 84px;
+}
+
+.pomodoro-panel .pomodoro-confirm__actions .task-add {
+  min-width: 132px;
+  justify-content: center;
+}
+
+.pomodoro-panel .pomodoro-confirm__card--reset {
+  width: min(100%, 380px);
 }
 
 /* The flyer dot that animates from the focus button to the timer was pink. */
