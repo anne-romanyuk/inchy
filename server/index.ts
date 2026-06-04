@@ -1,3 +1,4 @@
+import "./env";
 import "./openapi/setup";
 
 import { swaggerUI } from "@hono/swagger-ui";

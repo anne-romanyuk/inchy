@@ -1496,6 +1496,7 @@
   height: 92px;
   display: grid;
   place-items: center;
+  place-content: center;
   transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
 }
 
@@ -1625,6 +1626,11 @@
   display: grid;
   place-items: center;
   aspect-ratio: 1;
+  /* Zero the inherited button padding so the icon (sized at 103% below) fills
+     the cell to the ring like every other icon-in-circle. min-height:0 keeps the
+     square aspect-ratio from being stretched by the (absolutely-placed) art. */
+  padding: 0;
+  min-height: 0;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.18);
@@ -1649,8 +1655,15 @@
 }
 
 .goal-icon-choice img {
-  width: 62px;
-  height: 54px;
+  /* Unified icon-in-circle scale: art = 103% of the (square) picker cell.
+     Absolutely centered so the oversized art neither shifts the icon off-centre
+     nor stretches the cell taller than wide (keeps every choice a true circle). */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 103%;
+  height: 103%;
   object-fit: contain;
   pointer-events: none;
 }
@@ -1690,6 +1703,10 @@
 .goal-task-editor__icon {
   display: grid;
   place-items: center;
+  /* Centre the oversized (103%) icon and drop the inherited button padding so
+     it sits dead-centre in the ring. */
+  place-content: center;
+  padding: 0;
   width: 42px;
   height: 38px;
   border: 0;
@@ -1837,8 +1854,9 @@
 :root[data-theme="forest"] .goal-journey-step__node .goal-task-icon,
 :root[data-theme="forest"] .goal-detail-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon,
 :root[data-theme="forest"] .goals-page .goal-journey-step.is-in-progress .goal-journey-step__node .goal-task-icon {
-  width: 100px;
-  height: 100px;
+  /* Unified icon-in-circle scale: art = 103% of the 92px node ring. */
+  width: 95px;
+  height: 95px;
   transform: none;
 }
 
@@ -1870,33 +1888,58 @@
 }
 
 :root[data-theme="forest"] .goal-list-card__icon .goal-task-icon {
-  width: 104px;
-  height: 104px;
+  /* Unified icon-in-circle scale: art = 103% of the 96px ring. */
+  width: 99px;
+  height: 99px;
 }
 
-:root[data-theme="forest"] .goal-detail-hero__image .goal-task-icon {
+/* The ring now lives on the wrapper so the art can sit at 103% and bleed
+   slightly past the border like every other icon-in-circle. */
+:root[data-theme="forest"] .goal-detail-hero__image {
   width: 160px;
   height: 160px;
-  padding: 0;
+  min-height: 0;
   border: 1px solid color-mix(in srgb, var(--c-accent) 42%, rgba(255, 255, 252, 0.92));
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 252, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: visible;
 }
 
-:root[data-theme="forest"] .goal-detail-task__main .goal-task-icon {
+:root[data-theme="forest"] .goal-detail-hero__image .goal-task-icon {
+  /* Unified icon-in-circle scale: art = 103% of the 160px ring. */
+  width: 165px;
+  height: 165px;
+  padding: 0;
+}
+
+/* Ring on the bubble wrapper so the art can sit at 103% and bleed past it. */
+:root[data-theme="forest"] .goal-detail-task__icon-bubble {
+  display: grid;
+  place-items: center;
+  place-content: center;
   box-sizing: border-box;
   width: 58px;
   height: 58px;
-  padding: 0;
   border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 252, 0.84);
+  overflow: visible;
+}
+
+:root[data-theme="forest"] .goal-detail-task__main .goal-task-icon {
+  /* Unified icon-in-circle scale: art = 103% of the 58px ring. */
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 :root[data-theme="forest"] .goal-task-editor__icon .goal-task-icon {
-  width: 46px;
-  height: 46px;
+  /* Unified icon-in-circle scale: art = 103% of the 42px ring. */
+  width: 43px;
+  height: 43px;
 }
 
 :root[data-theme="forest"] .goal-detail-editor__icon .goal-task-icon {
@@ -1911,13 +1954,13 @@
 }
 
 :root[data-theme="forest"] .goal-icon-choice img {
-  width: 61px;
-  height: 61px;
+  /* Unified icon-in-circle scale: art = 103% of the (square) picker cell. */
+  width: 103%;
+  height: 103%;
   object-fit: contain;
 }
 
-:root[data-theme="forest"] .goal-steps li > .goal-task-icon,
-:root[data-theme="forest"] .goal-journey__selector .goal-task-icon {
+:root[data-theme="forest"] .goal-steps li > .goal-task-icon {
   width: 42px;
   height: 42px;
   padding: var(--space-2);
@@ -1927,6 +1970,36 @@
   box-shadow:
     0 8px 16px -16px color-mix(in srgb, var(--c-success) 32%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Ring on the wrapper span so the art can sit at 103% and bleed past it. */
+:root[data-theme="forest"] .goal-journey__selector-icon {
+  display: grid;
+  place-items: center;
+  place-content: center;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  margin: 0 6px 0 -2px;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 252, 0.86);
+  box-shadow:
+    0 8px 16px -16px color-mix(in srgb, var(--c-success) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: visible;
+}
+
+:root[data-theme="forest"] .goal-journey__selector .goal-task-icon {
+  /* Unified icon-in-circle scale: art = 103% of the 42px ring. */
+  width: 43px;
+  height: 43px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
 /* Completed goal-task checkboxes used the pink brand gradient — make them sage. */
@@ -2067,6 +2140,7 @@
   height: 76px;
   display: grid;
   place-items: center;
+  place-content: center;
 }
 
 .goal-list-card__icon .goal-task-icon {
@@ -2248,6 +2322,7 @@
 .goal-detail-hero__image {
   display: grid;
   place-items: center;
+  place-content: center;
   min-height: 160px;
   border-radius: 26px;
   background: transparent;
@@ -2807,6 +2882,8 @@
 .goal-detail-task__icon-edit {
   display: grid;
   place-items: center;
+  place-content: center;
+  padding: 0;
   width: 58px;
   height: 58px;
   border: 0;
@@ -2853,8 +2930,8 @@
 }
 
 .goal-detail-task__icon-popover .goal-icon-choice img {
-  width: 52px;
-  height: 52px;
+  width: 103%;
+  height: 103%;
   object-fit: contain;
 }
 
@@ -2912,6 +2989,10 @@
 .goal-detail-editor__icon {
   display: grid;
   place-items: center;
+  /* Centre the oversized (103%) icon and drop the inherited button padding so
+     it sits dead-centre in the ring. */
+  place-content: center;
+  padding: 0;
   width: 84px;
   height: 76px;
   border: 0;
@@ -2976,8 +3057,9 @@
 }
 
 .goal-detail-editor__popover .goal-icon-choice img {
-  width: min(74px, 100%);
-  height: 74px;
+  width: 103%;
+  height: 103%;
+  object-fit: contain;
 }
 
 .goal-detail-editor__status {
@@ -3417,9 +3499,15 @@
   height: 122px;
 }
 
-:root[data-theme="forest"] .goal-detail-workspace.has-task-editor .goal-detail-hero__image .goal-task-icon {
+:root[data-theme="forest"] .goal-detail-workspace.has-task-editor .goal-detail-hero__image {
   width: 140px;
   height: 140px;
+}
+
+:root[data-theme="forest"] .goal-detail-workspace.has-task-editor .goal-detail-hero__image .goal-task-icon {
+  /* Unified icon-in-circle scale: art = 103% of the 140px ring. */
+  width: 144px;
+  height: 144px;
   padding: 0;
 }
 
@@ -3570,8 +3658,9 @@
 }
 
 :root[data-theme="forest"] .goal-detail-task__icon-popover .goal-icon-choice img {
-  width: 52px;
-  height: 52px;
+  /* Unified icon-in-circle scale: art = 103% of the 48px picker cell. */
+  width: 103%;
+  height: 103%;
 }
 
 :root[data-theme="forest"] .goals-empty,
@@ -3707,21 +3796,23 @@
   box-shadow: none;
 }
 
+/* Ring on the button so the art can sit at 103% and bleed past the border. */
 .goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__icon-edit {
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  box-shadow: none;
-}
-
-.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__icon-edit .goal-task-icon {
-  box-sizing: border-box;
-  width: 58px;
-  height: 58px;
-  padding: 0;
   border: 1px solid color-mix(in srgb, var(--c-accent) 38%, transparent);
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 252, 0.84);
+  box-shadow: none;
+  overflow: visible;
+}
+
+.goal-detail-tasks .goal-detail-task.is-editing .goal-detail-task__icon-edit .goal-task-icon {
+  /* Unified icon-in-circle scale: art = 103% of the 58px ring. */
+  box-sizing: border-box;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -3819,18 +3910,25 @@
   height: calc(var(--space-10) * 2);
 }
 
-.goal-modal.tasks-panel .goal-detail-editor__icon .goal-task-icon,
-.goal-modal.tasks-panel .goal-task-editor__icon .goal-task-icon,
-.goal-modal.tasks-panel .goal-icon-choice img {
-  width: calc(var(--space-10) * 2 + var(--space-2));
-  height: calc(var(--space-10) * 2 + var(--space-2));
+/* Unified icon-in-circle scale: art = 103% of each ring (80px goal icon,
+   42px task-row icon, fluid square picker cell). */
+.goal-modal.tasks-panel .goal-detail-editor__icon .goal-task-icon {
+  width: 82px;
+  height: 82px;
   object-fit: contain;
 }
 
 .goal-modal.tasks-panel .goal-task-editor__icon .goal-task-icon {
-  width: calc(var(--space-10) + var(--space-2));
-  height: calc(var(--space-10) + var(--space-2));
+  width: 43px;
+  height: 43px;
+  object-fit: contain;
   object-position: center;
+}
+
+.goal-modal.tasks-panel .goal-icon-choice img {
+  width: 103%;
+  height: 103%;
+  object-fit: contain;
 }
 
 .goal-modal.tasks-panel .goal-editor-section {

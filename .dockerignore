@@ -3,7 +3,7 @@ node_modules
 dist
 data
 server/data
-server/routes/.env
+.env
 .env.*
 .DS_Store
 .idea

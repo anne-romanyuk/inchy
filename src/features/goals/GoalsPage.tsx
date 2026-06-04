@@ -675,7 +675,9 @@ export function GoalJourney({
 
   const goalSelector = canSelectGoal ? (
     <label className="goal-journey__selector goal-journey__selector--select">
-      <GoalTaskIcon iconId={selectorIconId} />
+      <span className="goal-journey__selector-icon">
+        <GoalTaskIcon iconId={selectorIconId} />
+      </span>
       <span className="sr-only">Select goal</span>
       <select
         value={selectedGoalId ?? goal.id}
@@ -689,7 +691,9 @@ export function GoalJourney({
     </label>
   ) : (
     <span className="goal-journey__selector">
-      <GoalTaskIcon iconId={selectorIconId} />
+      <span className="goal-journey__selector-icon">
+        <GoalTaskIcon iconId={selectorIconId} />
+      </span>
       {goal.title}
     </span>
   );
@@ -1049,7 +1053,9 @@ function GoalDetailTaskRow({
           </div>
         ) : (
           <button type="button" className="goal-detail-task__main" onClick={onToggleExpand}>
-            <GoalTaskIcon iconId={task.iconId} />
+            <span className="goal-detail-task__icon-bubble">
+              <GoalTaskIcon iconId={task.iconId} />
+            </span>
             <span>
               <strong>{task.title}</strong>
               {subtaskCount > 0 ? (
