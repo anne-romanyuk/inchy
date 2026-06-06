@@ -685,7 +685,14 @@
 .goal-task-editor:has(.goal-date-picker__trigger[aria-expanded="true"]),
 .goal-task-add-row:has(.goal-date-picker__trigger[aria-expanded="true"]) {
   position: relative;
-  z-index: 100;
+  /* Each step row is a framer-motion Reorder.Item, which renders an inline
+     transform (own stacking context) AND an inline `z-index: unset`. That
+     inline value would override a normal stylesheet z-index, leaving the open
+     row behind the rows below it — so the date popover gets covered by their
+     "No due date" fields. `!important` lets this win over the inline style.
+     Only active while a picker is open (never during a drag), so it does not
+     fight motion's own drag z-index. */
+  z-index: 100 !important;
   overflow: visible;
 }
 
@@ -2045,10 +2052,11 @@
   overscroll-behavior: contain;
 }
 
-.goal-modal.tasks-panel:has(.goal-date-picker__trigger[aria-expanded="true"]),
-.goal-modal.tasks-panel--today:has(.goal-date-picker__trigger[aria-expanded="true"]) {
-  overflow: visible;
-}
+/* (Removed) The modal used to switch to `overflow: visible` while a date
+   picker was open so the inline popover could spill outside it — but that broke
+   the modal's scroll containment (footer/new-task row pushed off-screen). The
+   calendar now renders in a body portal, so the modal stays a clean scroll
+   container at all times and nothing needs to escape it. */
 
 .goal-journey__selector--select {
   position: relative;
@@ -2914,6 +2922,18 @@
   box-shadow:
     0 0 0 1px var(--c-border),
     inset -1px -1px 7px rgba(255, 255, 255, 0.26);
+}
+
+/* The row whose calendar is open must rise above ALL the others — including
+   the "New task" add row, which also carries .is-editing and so sits at the
+   same z-index: 60. Tied on z-index, that later-in-DOM add row would paint
+   over the open calendar's popover (the "bleed-through" you see at the
+   footer). A date picker can be opened on any row (editing or not), so this
+   targets the open picker directly rather than .is-editing. Higher specificity
+   than the z-60 rule, and !important to beat framer-motion's inline z-index. */
+.goal-detail-task:has(.goal-date-picker__trigger[aria-expanded="true"]) {
+  position: relative;
+  z-index: 100 !important;
 }
 
 .goal-detail-task.is-editing .goal-detail-task__head {

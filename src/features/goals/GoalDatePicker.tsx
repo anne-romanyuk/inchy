@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, {
@@ -112,6 +113,14 @@ export function GoalDatePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const pickerRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  // The calendar is rendered in a portal on <body> with fixed positioning, so
+  // it can never be clipped or covered by sibling rows / modal stacking
+  // contexts (every goal row is its own framer-motion stacking context, which
+  // makes z-index battles unwinnable). This style is computed from the
+  // trigger's position each time it opens. Hidden until measured to avoid a
+  // flash at the wrong spot.
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({ visibility: "hidden" });
   const today = todayIsoDate();
   const days = useMemo(() => getVisibleDays(viewMonth), [viewMonth]);
   const displayValue =
@@ -121,7 +130,10 @@ export function GoalDatePicker({
   useEffect(() => {
     if (!isOpen) return;
     const onPointerDown = (event: Event) => {
-      if (!pickerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // The popover lives in a body portal, so it's outside pickerRef — check
+      // both, otherwise clicking a calendar day would close before it registers.
+      if (!pickerRef.current?.contains(target) && !popoverRef.current?.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -134,6 +146,46 @@ export function GoalDatePicker({
       setViewMonth(startOfMonth(selectedDate ?? new Date()));
     }
   }, [isOpen, selectedDate?.getTime()]);
+
+  // Position the body-portaled popover relative to the trigger. Runs before
+  // paint (no flash) and re-runs on scroll/resize so it tracks the trigger.
+  // pickerRef now contains only the trigger (popover is portaled out), so its
+  // own rect is the trigger's. Flip upward only when it won't fit below AND
+  // there's more room above; right-align to the trigger, clamped to the viewport.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const place = () => {
+      const trigger = pickerRef.current?.getBoundingClientRect();
+      const popover = popoverRef.current;
+      if (!trigger || !popover) return;
+      const gap = 8;
+      const margin = 8;
+      const popH = popover.offsetHeight;
+      const popW = popover.offsetWidth;
+      const spaceBelow = window.innerHeight - trigger.bottom;
+      const openUp = spaceBelow < popH + gap && trigger.top > spaceBelow;
+      const left = Math.max(
+        margin,
+        Math.min(trigger.right - popW, window.innerWidth - popW - margin),
+      );
+      setPopoverStyle({
+        position: "fixed",
+        zIndex: 1000,
+        left,
+        right: "auto",
+        top: openUp ? "auto" : trigger.bottom + gap,
+        bottom: openUp ? window.innerHeight - trigger.top + gap : "auto",
+        visibility: "visible",
+      });
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [isOpen, viewMonth]);
 
   return (
     <div ref={pickerRef} className={`goal-date-picker ${className}`.trim()}>
@@ -178,8 +230,15 @@ export function GoalDatePicker({
         </button>
       )}
 
-      {isOpen ? (
-        <div className="goal-date-picker__popover" role="dialog" aria-label={`${ariaLabel} calendar`}>
+      {isOpen
+        ? createPortal(
+        <div
+          ref={popoverRef}
+          className="goal-date-picker__popover"
+          style={popoverStyle}
+          role="dialog"
+          aria-label={`${ariaLabel} calendar`}
+        >
           <div className="goal-date-picker__header">
             <button
               type="button"
@@ -272,8 +331,10 @@ export function GoalDatePicker({
               </button>
             ) : null}
           </div>
-        </div>
-      ) : null}
+        </div>,
+          document.body,
+        )
+        : null}
     </div>
   );
 }
