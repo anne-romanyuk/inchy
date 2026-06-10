@@ -5,6 +5,8 @@ import { SidebarIcon } from "../shared/ui/SidebarIcon";
 import { Character } from "../shared/ui/Avatar";
 import { useLogout } from "../features/auth/useCurrentUser";
 import { useTheme, type ThemeMode } from "../shared/hooks/useTheme";
+import { useIsMobile } from "../shared/hooks/useIsMobile";
+import { MobileShell } from "./MobileShell";
 
 // The mascot is no longer user-selectable — its colour follows the theme:
 // violet on Light, blue on Dream & Moon, green on Forest.
@@ -19,7 +21,11 @@ const LOADING_USER: PublicUser = {
   id: "loading",
   name: "",
   email: "",
+  birthDate: "",
+  country: "",
+  isGoogleAccount: false,
   avatarId: null,
+  avatarImage: null,
   needsAvatar: false,
 };
 
@@ -35,9 +41,19 @@ export function AppShell({ user }: { user: PublicUser }) {
   const navigate = useNavigate();
   const [theme] = useTheme();
   const logout = useLogout();
+  const isMobile = useIsMobile();
+
+  // Mobile gets a completely different chrome (bottom tab bar) — its screens
+  // are separate components that reuse the same data hooks. The desktop layout
+  // below is untouched. All hooks above run unconditionally so this early
+  // return never changes hook order.
+  if (isMobile) {
+    return <MobileShell />;
+  }
 
   const displayAvatarId = MASCOT_BY_THEME[theme] ?? "avatar-1";
   const displayName = firstName(user.name);
+  const avatarInitial = (displayName || user.email || "?").trim().slice(0, 1).toUpperCase();
 
   const handleLogout = async () => {
     await logout.mutateAsync();
@@ -55,11 +71,16 @@ export function AppShell({ user }: { user: PublicUser }) {
       <div className="home-content">
         <aside className="app-sidebar" aria-label="Sidebar">
           <div className="sidebar-brand">
+            <span className="sidebar-brand__avatar" aria-hidden="true">
+              {user.avatarImage ? (
+                <img className="sidebar-brand__photo" src={user.avatarImage} alt="" />
+              ) : (
+                <span className="sidebar-brand__initial">{avatarInitial}</span>
+              )}
+            </span>
             <span className="sidebar-brand__greeting">
-              <span className="sidebar-brand__hello">
-                Hello{displayName ? ", " : ""}{displayName && <strong>{displayName}</strong>}
-              </span>
-              <span className="sidebar-brand__tagline">New day, new progress</span>
+              <span className="sidebar-brand__hello">Hello,</span>
+              <strong className="sidebar-brand__name">{displayName || "friend"}</strong>
             </span>
           </div>
           <nav className="sidebar-nav" aria-label="Main menu">

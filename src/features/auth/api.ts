@@ -1,4 +1,4 @@
-import type { PublicUser } from "../../../shared/schemas";
+import type { PublicUser, UserProfileUpdateInput } from "../../../shared/schemas";
 import { apiFetch } from "../../shared/api/client";
 
 export type AuthErrors = Partial<Record<"name" | "email" | "password" | "confirmPassword", string>>;
@@ -28,4 +28,12 @@ export function fetchMe() {
 
 export function updateAvatar(avatarId: string) {
   return apiFetch<{ user: PublicUser }>("/api/me/avatar", { method: "PATCH", body: { avatarId } });
+}
+
+export function updateAvatarImage(avatarImage: string | null) {
+  return apiFetch<{ user: PublicUser }>("/api/me/avatar-image", { method: "PATCH", body: { avatarImage } });
+}
+
+export function updateProfile(input: UserProfileUpdateInput) {
+  return apiFetch<{ user: PublicUser }>("/api/me/profile", { method: "PATCH", body: input });
 }

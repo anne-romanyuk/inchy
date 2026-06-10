@@ -100,6 +100,20 @@ function ensureMigrationsTable() {
   `);
 }
 
+function splitMigrationStatements(sql: string) {
+  const withoutLineComments = sql.replace(/^\s*--.*$/gm, "");
+  return withoutLineComments
+    .split(";")
+    .map((statement) => statement.trim())
+    .filter(Boolean)
+    .map((statement) => `${statement};`);
+}
+
+function isDuplicateColumnError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("duplicate column name");
+}
+
 export function runMigrations() {
   ensureMigrationsTable();
 
@@ -116,7 +130,17 @@ export function runMigrations() {
 
     const sql = readFileSync(join(migrationsDir, file), "utf8");
     const apply = db.transaction(() => {
-      db.exec(sql);
+      for (const statement of splitMigrationStatements(sql)) {
+        try {
+          db.exec(statement);
+        } catch (error) {
+          if (isDuplicateColumnError(error)) {
+            console.warn(`[db] skipped duplicate-column statement in ${file}`);
+            continue;
+          }
+          throw error;
+        }
+      }
       db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
         file,
         new Date().toISOString(),
@@ -127,15 +151,6 @@ export function runMigrations() {
       apply();
       console.log(`[db] applied migration ${file}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("duplicate column name")) {
-        db.prepare("INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
-          file,
-          new Date().toISOString(),
-        );
-        console.warn(`[db] marked migration ${file} as applied because the column already exists`);
-        continue;
-      }
       throw error;
     }
   }

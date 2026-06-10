@@ -9,6 +9,7 @@ export type CreateOccurrenceInput =
       priority?: "low" | "medium" | "high" | null;
       category?: string;
       duration?: string;
+      time?: string;
       saveToDefault?: boolean;
     }
   | {
@@ -23,10 +24,12 @@ export type CreateOccurrenceInput =
     };
 
 export type UpdateOccurrenceInput = Partial<{
+  occurrenceDate: string;
   title: string;
   priority: "low" | "medium" | "high" | null;
   category: string;
   duration: string;
+  time: string;
   completed: boolean;
   completionScope: "today" | "whole";
 }>;

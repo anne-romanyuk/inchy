@@ -1,0 +1,2 @@
+ALTER TABLE task_occurrences ADD COLUMN time TEXT NOT NULL DEFAULT '';
+ALTER TABLE default_tasks ADD COLUMN time TEXT NOT NULL DEFAULT '';

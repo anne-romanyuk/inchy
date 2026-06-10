@@ -94,6 +94,7 @@ export function GoalDatePicker({
   emptyDisplayValue = "No due date",
   displayValueOverride,
   footerActions = [],
+  footerActionsAfterToday = [],
   leadingControl,
   trailingControl,
 }: {
@@ -106,6 +107,7 @@ export function GoalDatePicker({
   emptyDisplayValue?: string;
   displayValueOverride?: string;
   footerActions?: Array<{ label: string; onClick: () => void }>;
+  footerActionsAfterToday?: Array<{ label: string; onClick: () => void }>;
   leadingControl?: ReactNode;
   trailingControl?: ReactNode;
 }) {
@@ -223,10 +225,6 @@ export function GoalDatePicker({
             <CalendarIcon />
           </span>
           <span className="goal-date-picker__value">{displayValue}</span>
-          <span className="goal-date-picker__chevrons">
-            <ChevronIcon direction="up" />
-            <ChevronIcon direction="down" />
-          </span>
         </button>
       )}
 
@@ -318,6 +316,19 @@ export function GoalDatePicker({
             >
               Today
             </button>
+            {footerActionsAfterToday.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className="pomodoro-btn pomodoro-btn--ghost-text"
+                onClick={() => {
+                  action.onClick();
+                  setIsOpen(false);
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
             {allowClear ? (
               <button
                 type="button"

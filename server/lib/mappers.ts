@@ -10,6 +10,9 @@ import type {
   Occurrence,
   OccurrenceSourceKind,
 } from "../../shared/schemas";
+import { normalizeTaskDurationValue } from "../../shared/duration";
+import { normalizeTaskTimeValue } from "../../shared/time";
+import { isCategoryColor } from "../../shared/categoryPalette";
 
 export type NoteRow = {
   id: string;
@@ -18,6 +21,7 @@ export type NoteRow = {
   title: string;
   body: string;
   category: string;
+  category_color?: string | null;
   pinned: number;
   created_at: string;
   updated_at: string;
@@ -29,6 +33,7 @@ export function toNote(row: NoteRow): Note {
     title: row.title,
     body: row.body,
     category: row.category ?? "",
+    categoryColor: isCategoryColor(row.category_color) ? row.category_color : undefined,
     pinned: row.pinned === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -41,6 +46,9 @@ export type UserRow = {
   email: string;
   password_hash: string;
   avatar_id: string | null;
+  avatar_image?: string | null;
+  birth_date: string;
+  country?: string | null;
   google_id?: string | null;
   google_email_verified?: number;
   created_at: string;
@@ -51,8 +59,12 @@ export function toPublicUser(row: UserRow): PublicUser {
     id: row.id,
     name: row.name,
     email: row.email,
+    birthDate: row.birth_date ?? "",
+    country: row.country ?? "",
+    isGoogleAccount: Boolean(row.google_id),
     avatarId: row.avatar_id,
-    needsAvatar: !row.avatar_id,
+    avatarImage: row.avatar_image ?? null,
+    needsAvatar: !row.avatar_id && !row.avatar_image,
   };
 }
 
@@ -63,6 +75,7 @@ export type TaskRow = {
   priority: "low" | "medium" | "high" | null;
   category: string;
   duration: string;
+  time: string;
   focus_seconds?: number;
   completed: number;
   position: number;
@@ -75,7 +88,8 @@ export function toTask(row: TaskRow): Task {
     title: row.title,
     priority: row.priority,
     category: row.category,
-    duration: row.duration,
+    duration: normalizeTaskDurationValue(row.duration),
+    time: normalizeTaskTimeValue(row.time),
     focusSeconds: row.focus_seconds ?? 0,
     completed: Boolean(row.completed),
     createdAt: row.created_at,
@@ -89,6 +103,7 @@ export type DefaultTaskRow = {
   priority: "low" | "medium" | "high" | null;
   category: string;
   duration: string;
+  time: string;
   created_at: string;
 };
 
@@ -98,7 +113,8 @@ export function toDefaultTask(row: DefaultTaskRow): DefaultTask {
     title: row.title,
     priority: row.priority,
     category: row.category,
-    duration: row.duration,
+    duration: normalizeTaskDurationValue(row.duration),
+    time: normalizeTaskTimeValue(row.time),
     createdAt: row.created_at,
   };
 }
@@ -205,6 +221,7 @@ export type OccurrenceRow = {
   priority: "low" | "medium" | "high" | null;
   category: string;
   duration: string;
+  time: string;
   completed: number;
   position: number;
   created_at: string;
@@ -230,7 +247,8 @@ export function toOccurrence(row: OccurrenceRow): Occurrence {
     title: liveTitle,
     priority: row.priority,
     category: row.category,
-    duration: row.duration,
+    duration: normalizeTaskDurationValue(row.duration),
+    time: normalizeTaskTimeValue(row.time),
     completed: Boolean(row.completed),
     position: row.position,
     focusSeconds: row.focus_seconds ?? 0,

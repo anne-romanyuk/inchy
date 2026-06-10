@@ -423,7 +423,7 @@
   min-width: 0;
   min-height: calc(var(--space-9) + var(--space-2));
   display: grid;
-  grid-template-columns: calc(var(--space-7) + var(--space-1)) minmax(0, 1fr) calc(var(--space-7) + var(--space-1));
+  grid-template-columns: calc(var(--space-7) + var(--space-1)) minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
   border: 1px solid var(--c-border-soft);
@@ -465,16 +465,14 @@
   font-weight: var(--text-item-title-weight);
 }
 
-.goal-date-picker__icon,
-.goal-date-picker__chevrons {
+.goal-date-picker__icon {
   display: grid;
   place-items: center;
   color: var(--c-text-secondary);
 }
 
 .goal-date-picker__icon svg,
-.goal-date-picker__nav svg,
-.goal-date-picker__chevrons svg {
+.goal-date-picker__nav svg {
   display: block;
   width: var(--space-6);
   height: var(--space-6);
@@ -483,15 +481,6 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.goal-date-picker__chevrons {
-  gap: 0;
-}
-
-.goal-date-picker__chevrons svg {
-  width: var(--space-5);
-  height: var(--space-5);
 }
 
 .goal-date-picker__value {
@@ -2213,6 +2202,11 @@
   z-index: 6;
 }
 
+.goal-task-add-row__icon-label,
+.goal-task-add-row__icon-arrow {
+  display: none;
+}
+
 /* Icon is now the first column (the step-number column was removed), so the
    old -58px offset pushed the popover off the modal's left edge. Match the
    editor rows' -12px so it stays inside the modal. */
@@ -2538,18 +2532,18 @@
    The ::before dot uses currentColor, so it follows the status color. */
 .goal-health-alert--overdue {
   background: transparent;
-  border: 1px solid var(--c-danger);
-  color: var(--c-danger);
+  border: 1px solid var(--c-task-health-overdue);
+  color: var(--c-task-health-overdue);
 }
 .goal-health-alert--due-today {
   background: transparent;
-  border: 1px solid var(--c-warning);
-  color: var(--c-warning);
+  border: 1px solid var(--c-task-health-due-today);
+  color: var(--c-task-health-due-today);
 }
 .goal-health-alert--due-soon {
   background: transparent;
-  border: 1px solid var(--c-info);
-  color: var(--c-info);
+  border: 1px solid var(--c-task-health-due-soon);
+  color: var(--c-task-health-due-soon);
 }
 
 .goal-detail-section-header h2,
@@ -3441,7 +3435,7 @@
 }
 
 .goal-detail-task__deadline strong.is-overdue {
-  color: #ff5353;
+  color: var(--c-task-health-overdue);
 }
 
 .goal-detail-task__date-picker {
@@ -3484,10 +3478,6 @@
   height: 17px;
 }
 
-.goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__chevrons {
-  display: none;
-}
-
 .goal-detail-task__date-picker .goal-date-picker__popover {
   right: 0;
   left: auto;
@@ -3517,29 +3507,29 @@
    status color. (Goal-level pills stay filled.) */
 .goal-health-pill--overdue {
   background: transparent;
-  border: 1px solid #ff5353;
-  color: #ff5353;
+  border: 1px solid var(--c-task-health-overdue);
+  color: var(--c-task-health-overdue);
 }
 .goal-health-pill--overdue > span {
-  background: #ff5353;
+  background: var(--c-task-health-overdue);
 }
 
 .goal-health-pill--due-today {
   background: transparent;
-  border: 1px solid #ffa700;
-  color: #ffa700;
+  border: 1px solid var(--c-task-health-due-today);
+  color: var(--c-task-health-due-today);
 }
 .goal-health-pill--due-today > span {
-  background: #ffa700;
+  background: var(--c-task-health-due-today);
 }
 
 .goal-health-pill--due-soon {
   background: transparent;
-  border: 1px solid #3a9bdc;
-  color: #3a9bdc;
+  border: 1px solid var(--c-task-health-due-soon);
+  color: var(--c-task-health-due-soon);
 }
 .goal-health-pill--due-soon > span {
-  background: #3a9bdc;
+  background: var(--c-task-health-due-soon);
 }
 
 .goal-task-status {
@@ -4059,11 +4049,11 @@
   margin-block: var(--space-5) var(--space-6);
 }
 
-.goal-modal.tasks-panel .goal-editor-icon-block > div {
+.goal-modal.tasks-panel .goal-editor-icon-block__copy {
   min-width: 0;
 }
 
-.goal-modal.tasks-panel .goal-editor-icon-block > div span {
+.goal-modal.tasks-panel .goal-editor-icon-block__copy span {
   margin: 0;
   color: var(--c-text-secondary);
   font: var(--text-body-weight) var(--text-body-size) / 1.35 var(--font-base);
@@ -4081,6 +4071,15 @@
   background: var(--app-popup-bg);
   backdrop-filter: var(--app-popup-backdrop);
   -webkit-backdrop-filter: var(--app-popup-backdrop);
+  box-shadow: var(--app-popup-shadow);
+}
+
+.goal-editor-icon-block__popover {
+  width: min(440px, calc(100vw - 80px));
+  padding: var(--space-4);
+  border: var(--app-popup-border);
+  border-radius: var(--radius-xl);
+  background: var(--c-sidebar-surface-solid);
   box-shadow: var(--app-popup-shadow);
 }
 
@@ -4169,11 +4168,15 @@
 }
 
 .goal-modal.tasks-panel .goal-task-editor {
-  grid-template-columns: 24px 42px minmax(0, 1fr) clamp(190px, 17vw, 260px) 42px;
+  grid-template-columns: 24px 42px minmax(0, 1fr) clamp(150px, 14vw, 210px) 42px;
 }
 
 .goal-modal.tasks-panel .goal-task-add-row {
-  grid-template-columns: 42px minmax(0, 1fr) clamp(190px, 17vw, 260px) 42px;
+  grid-template-columns: 42px minmax(0, 1fr) clamp(150px, 14vw, 210px) minmax(154px, 168px);
+}
+
+.goal-modal.tasks-panel .goal-task-add-row__fields {
+  display: contents;
 }
 
 .goal-modal.tasks-panel .goal-task-editor::before,
@@ -4220,6 +4223,12 @@
   justify-self: end;
 }
 
+.goal-modal.tasks-panel .goal-task-add-row__add {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .goal-modal.tasks-panel .goal-error {
   margin-block: var(--space-4) 0;
 }
@@ -4245,7 +4254,80 @@
   max-width: 340px;
 }
 
+.goal-task-editor.is-icon-picker-open,
+.goal-task-add-row.is-icon-picker-open,
+.goal-detail-task.is-icon-picker-open,
+.goal-detail-editor__icon-wrap.is-icon-picker-open,
+.goal-task-editor:has(.goal-task-editor__popover),
+.goal-task-add-row:has(.goal-task-editor__popover),
+.goal-detail-task:has(.goal-detail-task__icon-popover),
+.goal-detail-editor__icon-wrap:has(.goal-detail-editor__popover) {
+  z-index: 240;
+}
+
+.goal-task-editor__icon-wrap.is-icon-picker-open,
+.goal-detail-task__icon-edit-wrap.is-icon-picker-open {
+  z-index: 250;
+}
+
+.goal-task-editor__popover,
+.goal-detail-task__icon-popover,
+.goal-detail-editor__popover,
+.goal-modal.tasks-panel .goal-editor-icon-block__popover {
+  z-index: 260;
+  border: var(--app-popup-border);
+  background: var(--c-sidebar-surface-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--app-popup-shadow);
+}
+
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-task-editor__popover,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-detail-task__icon-popover,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-detail-editor__popover,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-editor-icon-block__popover {
+  border: var(--app-popup-border);
+  background: var(--c-sidebar-surface-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--app-popup-shadow);
+}
+
+.goal-icon-picker-popover.goal-detail-task__icon-popover {
+  width: fit-content;
+  max-width: calc(100vw - 48px);
+}
+
+.goal-icon-picker-popover.goal-task-editor__popover {
+  width: fit-content;
+  max-width: calc(100vw - 80px);
+}
+
+.goal-icon-picker-popover.goal-task-editor__popover .goal-icon-picker {
+  grid-template-columns: repeat(5, 56px);
+}
+
+.goal-icon-picker-popover .goal-icon-choice {
+  border-radius: var(--radius-pill);
+}
+
+:root[data-theme="forest"] .goal-icon-picker-popover .goal-icon-choice,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-task-editor__popover .goal-icon-choice,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-detail-task__icon-popover .goal-icon-choice,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-detail-editor__popover .goal-icon-choice,
+:root[data-theme="forest"] .goal-icon-picker-popover.goal-editor-icon-block__popover .goal-icon-choice {
+  border-radius: var(--radius-pill);
+}
+
+.goal-icon-picker-popover.goal-detail-task__icon-popover .goal-icon-picker {
+  grid-template-columns: repeat(5, 48px);
+}
+
 .goal-modal.tasks-panel .goal-task-editor__date {
   width: 100%;
   max-width: 260px;
+}
+
+.goal-modal.tasks-panel .goal-task-add-row .goal-task-editor__date {
+  grid-column: auto;
 }

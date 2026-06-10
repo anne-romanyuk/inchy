@@ -20,11 +20,25 @@ export const PublicUserSchema = z
     id: z.string(),
     name: z.string(),
     email: z.string(),
+    birthDate: z.string(),
+    country: z.string(),
+    isGoogleAccount: z.boolean(),
     avatarId: z.string().nullable(),
+    avatarImage: z.string().nullable(),
     needsAvatar: z.boolean(),
   })
   .openapi("PublicUser");
 export type PublicUser = z.infer<typeof PublicUserSchema>;
+
+export const UserProfileUpdateInputSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required.").max(80, "Name must be 80 characters or less."),
+    email: z.string().trim().toLowerCase().min(1, "Email is required.").email("Enter a valid email address."),
+    birthDate: z.string().trim().regex(/^$|^\d{4}-\d{2}-\d{2}$/, "Birth date must be YYYY-MM-DD."),
+    country: z.string().trim().max(80, "Country must be 80 characters or less."),
+  })
+  .openapi("UserProfileUpdateInput");
+export type UserProfileUpdateInput = z.infer<typeof UserProfileUpdateInputSchema>;
 
 export const TaskSchema = z
   .object({
@@ -33,6 +47,7 @@ export const TaskSchema = z
     priority: PrioritySchema.nullable(),
     category: z.string(),
     duration: z.string(),
+    time: z.string(),
     focusSeconds: z.number().int().nonnegative(),
     completed: z.boolean(),
     createdAt: z.string(),
@@ -47,6 +62,7 @@ export const DefaultTaskSchema = z
     priority: PrioritySchema.nullable(),
     category: z.string(),
     duration: z.string(),
+    time: z.string(),
     createdAt: z.string(),
   })
   .openapi("DefaultTask");
@@ -76,6 +92,7 @@ import {
   MAX_CATEGORY_LENGTH,
   MAX_DURATION_LENGTH,
 } from "./constants";
+import { CATEGORY_COLORS } from "./categoryPalette";
 export { MAX_TITLE_LENGTH, MAX_NOTE_TITLE_LENGTH, MAX_CATEGORY_LENGTH, MAX_DURATION_LENGTH };
 
 // Single source of truth for any task-like title: standalone task, goal,
@@ -87,7 +104,35 @@ export const TitleSchema = z
   .max(MAX_TITLE_LENGTH, `Title must be ${MAX_TITLE_LENGTH} characters or less.`);
 
 export const CategorySchema = z.string().trim().max(MAX_CATEGORY_LENGTH);
+const ManagedCategoryNameSchema = CategorySchema.refine((value) => value.length > 0, "Category name is required.");
+export const CategoryColorSchema = z.enum(CATEGORY_COLORS).openapi("CategoryColor");
+export const CategoryInfoSchema = z
+  .object({
+    name: CategorySchema,
+    color: CategoryColorSchema,
+  })
+  .openapi("CategoryInfo");
+export type CategoryInfo = z.infer<typeof CategoryInfoSchema>;
+export const TaskCategoryUpdateInputSchema = z
+  .object({
+    name: ManagedCategoryNameSchema,
+    nextName: ManagedCategoryNameSchema,
+    color: CategoryColorSchema,
+  })
+  .openapi("TaskCategoryUpdateInput");
+export type TaskCategoryUpdateInput = z.infer<typeof TaskCategoryUpdateInputSchema>;
+export const TaskCategoryDeleteInputSchema = z
+  .object({
+    name: ManagedCategoryNameSchema,
+    mode: z.enum(["detach", "delete-tasks"]),
+  })
+  .openapi("TaskCategoryDeleteInput");
+export type TaskCategoryDeleteInput = z.infer<typeof TaskCategoryDeleteInputSchema>;
 export const DurationSchema = z.string().trim().max(MAX_DURATION_LENGTH);
+export const TaskTimeSchema = z
+  .string()
+  .trim()
+  .regex(/^$|^(?:[01]\d|2[0-3]):[0-5]\d$/, "Time must be HH:MM.");
 
 // 'YYYY-MM-DD'. Stored as the user's local date.
 export const OccurrenceDateSchema = z
@@ -132,12 +177,27 @@ export const AvatarInputSchema = z
   })
   .openapi("AvatarInput");
 
+export const UserAvatarImageInputSchema = z
+  .object({
+    avatarImage: z.union([
+      z
+        .string()
+        .trim()
+        .max(1_200_000, "Avatar photo is too large.")
+        .regex(/^data:image\/(?:jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/, "Avatar photo must be a JPEG, PNG, or WEBP image."),
+      z.null(),
+    ]),
+  })
+  .openapi("UserAvatarImageInput");
+export type UserAvatarImageInput = z.infer<typeof UserAvatarImageInputSchema>;
+
 export const TaskCreateInputSchema = z
   .object({
     title: TitleSchema,
     priority: PrioritySchema.nullable().optional().default(null),
     category: CategorySchema.optional().default(""),
     duration: DurationSchema.optional().default(""),
+    time: TaskTimeSchema.optional().default(""),
     saveToDefault: z.boolean().optional().default(false),
   })
   .openapi("TaskCreateInput");
@@ -154,6 +214,7 @@ export const TaskUpdateInputSchema = z
     priority: PrioritySchema.nullable().optional(),
     category: CategorySchema.optional(),
     duration: DurationSchema.optional(),
+    time: TaskTimeSchema.optional(),
     completed: z.boolean().optional(),
   })
   .openapi("TaskUpdateInput");
@@ -291,8 +352,17 @@ export const TasksEnvelopeSchema = z.object({ tasks: z.array(TaskSchema) }).open
 export const GoalsEnvelopeSchema = z.object({ goals: z.array(GoalSchema) }).openapi("GoalsEnvelope");
 export const GoalEnvelopeSchema = z.object({ goal: GoalSchema }).openapi("GoalEnvelope");
 export const TaskCategoriesEnvelopeSchema = z
-  .object({ categories: z.array(z.string()) })
+  .object({ categories: z.array(CategoryInfoSchema) })
   .openapi("TaskCategoriesEnvelope");
+export const TaskCategoryEnvelopeSchema = z
+  .object({ category: CategoryInfoSchema })
+  .openapi("TaskCategoryEnvelope");
+export const TaskCategoryDeleteEnvelopeSchema = z
+  .object({
+    ok: z.literal(true),
+    affectedTasks: z.number().int().nonnegative(),
+  })
+  .openapi("TaskCategoryDeleteEnvelope");
 export const TaskEnvelopeSchema = z
   .object({ task: TaskSchema, defaultTask: DefaultTaskSchema.nullable() })
   .openapi("TaskCreateEnvelope");
@@ -319,6 +389,7 @@ export const NoteSchema = z
     title: z.string(),
     body: z.string(),
     category: CategorySchema.optional().default(""),
+    categoryColor: CategoryColorSchema.optional(),
     pinned: z.boolean().optional().default(false),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
@@ -371,6 +442,7 @@ export const OccurrenceSchema = z
     priority: PrioritySchema.nullable(),
     category: z.string(),
     duration: z.string(),
+    time: z.string(),
     completed: z.boolean(),
     position: z.number().int(),
     focusSeconds: z.number().int().nonnegative(),
@@ -386,6 +458,7 @@ export const OccurrenceStandaloneCreateSchema = z.object({
   priority: PrioritySchema.nullable().optional().default(null),
   category: CategorySchema.optional().default(""),
   duration: DurationSchema.optional().default(""),
+  time: TaskTimeSchema.optional().default(""),
   saveToDefault: z.boolean().optional().default(false),
 });
 
@@ -411,11 +484,14 @@ export const OccurrenceCreateInputSchema = z
 
 export const OccurrenceUpdateInputSchema = z
   .object({
-    // Only meaningful for standalone — server ignores for goal-linked.
+    occurrenceDate: OccurrenceDateSchema.optional(),
+    // Title/priority are only meaningful for standalone — goal-linked titles
+    // resolve live from the parent goal task/subtask.
     title: TitleSchema.optional(),
     priority: PrioritySchema.nullable().optional(),
     category: CategorySchema.optional(),
     duration: DurationSchema.optional(),
+    time: TaskTimeSchema.optional(),
     // When true: server marks this occurrence done. If scope === 'whole' and
     // the occurrence is goal-linked, the parent goal_task/goal_subtask is also
     // marked done (and, for the last subtask of a task, the client should

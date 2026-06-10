@@ -58,6 +58,10 @@
   --c-info: #5f7fd8;
   --c-info-soft: rgba(95, 127, 216, 0.16);
 
+  --c-task-health-overdue: #ff5353;
+  --c-task-health-due-today: #ffa700;
+  --c-task-health-due-soon: #3a9bdc;
+
   --c-focus: #bf95e6;
   --c-focus-soft: rgba(191, 149, 230, 0.35);
 

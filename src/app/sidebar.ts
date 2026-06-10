@@ -1,15 +1,14 @@
-export type SidebarItemId = "today" | "goals" | "plan" | "history" | "focus" | "progress" | "notes" | "templates" | "settings";
+export type SidebarItemId = "today" | "goals" | "plan" | "focus" | "progress" | "notes" | "templates" | "settings";
 
 export const sidebarItems: Array<{ id: SidebarItemId; label: string; path: string; disabled?: boolean }> = [
   { id: "today", label: "Today", path: "/today" },
   { id: "goals", label: "Goals", path: "/goals" },
-  { id: "plan", label: "Plan", path: "/plan", disabled: true },
-  { id: "history", label: "Tasks History", path: "/tasks-history" },
+  { id: "plan", label: "Plan", path: "/plan" },
   { id: "focus", label: "Focus", path: "/focus" },
   { id: "progress", label: "Progress", path: "/progress", disabled: true },
   { id: "notes", label: "Notes", path: "/notes" },
   { id: "templates", label: "Templates", path: "/templates", disabled: true },
-  { id: "settings", label: "Settings", path: "/settings", disabled: true },
+  { id: "settings", label: "Settings", path: "/settings" },
 ];
 
 // NOTE: intentionally NO `filter` here. Motion keeps animated values as

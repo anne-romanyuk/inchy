@@ -218,6 +218,228 @@ textarea.ui-field__control { min-height: 88px; resize: vertical; }
 .ui-field.is-invalid .ui-field__control { border-color: var(--c-danger); box-shadow: 0 0 0 3px var(--c-danger-soft); }
 
 /* ----------------------------------------------------------------------------
+   CATEGORY PICKER
+   Shared category dropdown used by tasks, notes, and plan filters.
+   The field stays a neutral soft pill; selected categories render as the same
+   colored `.task-category` label used in task rows and calendar cards.
+   -------------------------------------------------------------------------- */
+.category-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.category-picker__trigger,
+.category-picker__input,
+.task-edit-field input.category-picker__input,
+.task-modal__draft-row--inline .task-modal__combobox input.category-picker__input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-surface-elevated) 82%, var(--c-text-on-accent));
+  color: var(--c-text-secondary);
+  box-shadow:
+    inset 2px 2px 7px color-mix(in srgb, var(--c-text-primary) 8%, transparent),
+    inset -2px -2px 8px color-mix(in srgb, var(--c-surface-elevated) 70%, transparent);
+}
+
+.category-picker__trigger {
+  position: relative;
+  appearance: none;
+  min-height: var(--space-10);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-9) var(--space-1) var(--space-3);
+  cursor: pointer;
+  font: 600 var(--text-body-small-size) / 1.2 var(--planner-font);
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.category-picker__input {
+  height: var(--space-10);
+  padding: 0 var(--space-9) 0 var(--space-4);
+  font: 600 var(--text-body-small-size) / 1 var(--planner-font);
+}
+
+.category-picker__input--selected {
+  color: var(--c-text-secondary);
+}
+
+.category-picker__input-label {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  padding-right: var(--space-9);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.category-picker__trigger .task-modal__dropdown-caret {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  flex: 0 0 auto;
+  margin-left: 0;
+  z-index: 2;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.category-picker__trigger[aria-expanded="true"] .task-modal__dropdown-caret {
+  transform: translateY(-50%) rotate(225deg);
+}
+
+.category-picker--select .task-modal__dropdown-caret--input {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  z-index: 2;
+  opacity: 0.58;
+  color: var(--c-text-secondary);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.category-picker--select.category-picker--has-value .task-modal__dropdown-caret--input {
+  color: color-mix(in srgb, var(--category-color) 88%, var(--c-text-primary));
+  opacity: 0.72;
+}
+
+.category-picker--select:has(input[aria-expanded="true"]) .task-modal__dropdown-caret--input {
+  opacity: 0.72;
+  transform: translateY(-50%) rotate(225deg);
+}
+
+.category-picker__trigger:focus-visible,
+.category-picker__input:focus-visible,
+.category-picker__input[aria-expanded="true"] {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.category-picker__trigger .category-picker__neutral-label,
+.category-picker__trigger .category-picker__selected-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-picker__trigger .category-picker__selected-label {
+  flex: 1 1 auto;
+}
+
+.category-picker__selected-label.task-category {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-block: 0;
+}
+
+.category-picker__trigger .category-picker__selected-label.task-category,
+.category-picker__input-label.task-category {
+  border-radius: var(--radius-sm);
+}
+
+.category-picker__trigger--selected {
+  --category-color: var(--c-success);
+  padding: 0 var(--space-9) 0 var(--space-5);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--category-color) 34%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--category-color) 88%, var(--c-text-primary));
+  box-shadow:
+    inset var(--space-1) 0 0 var(--category-color),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 30%, transparent),
+    inset 0 1px 0 var(--c-surface-elevated);
+  overflow: hidden;
+}
+
+.category-picker__trigger--selected .category-picker__selected-label.task-category {
+  align-self: stretch;
+  padding: 0;
+  line-height: 1;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+.category-picker__option--empty,
+.task-modal__combobox-list--pills .task-modal__category-pill--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-4);
+  background: color-mix(in srgb, var(--c-surface-elevated) 92%, var(--c-text-on-accent));
+  color: var(--c-text-secondary);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c-border) 64%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-surface-elevated) 78%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-picker__trigger .category-picker__neutral-label {
+  flex: 1 1 auto;
+  padding: 0 var(--space-1);
+  background: transparent;
+  color: var(--c-text-secondary);
+  box-shadow: none;
+}
+
+.category-picker__list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.category-picker__option,
+.task-modal__combobox-list--pills .category-picker__option {
+  width: 100%;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  font: 600 var(--text-body-small-size) / 1.2 var(--planner-font);
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.category-picker__option.task-category {
+  display: inline-flex;
+}
+
+.category-picker__option:hover,
+.category-picker__option:focus-visible,
+.category-picker__option[aria-selected="true"] {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, currentColor 64%, transparent),
+    0 5px 12px -10px color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.category-picker__option--create span {
+  flex: 0 0 auto;
+}
+
+/* ----------------------------------------------------------------------------
    BADGE / PILL / STATUS
    <span class="ui-badge ui-badge--warning ui-badge--sm">Due soon</span>
    tones: neutral | accent | success | warning | danger | info | muted

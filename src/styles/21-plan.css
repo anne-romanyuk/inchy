@@ -4,49 +4,95 @@
 .plan-workspace {
   --plan-gap: var(--today-gap, var(--space-5));
   --plan-page-pad: var(--today-page-pad, var(--space-4));
-  --plan-header-h: clamp(58px, 7.2vh, 72px);
   --plan-widget-radius: var(--today-widget-radius, var(--radius-2xl));
   --plan-widget-bg: var(--app-widget-bg);
   --plan-widget-backdrop: var(--app-widget-backdrop);
   --plan-widget-border: var(--app-widget-border);
   --plan-widget-shadow: var(--app-widget-shadow);
   display: grid;
-  grid-template-rows: var(--plan-header-h) minmax(0, 1fr);
-  gap: var(--plan-gap);
+  grid-template-rows: minmax(0, 1fr);
   height: 100dvh;
   max-height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  padding: 0 0 var(--plan-page-pad);
+  padding: var(--space-7) 0 var(--plan-page-pad);
   color: var(--c-text-primary);
 }
 
-.plan-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-6);
-  min-width: 0;
-  min-height: 0;
-  height: var(--plan-header-h);
-}
-
-.plan-header .tasks-title {
-  font-size: clamp(30px, 3.25vh, 36px);
-}
-
-.plan-view-toggle {
-  width: min(360px, 100%);
+.plan-calendar__left .plan-view-toggle {
+  width: calc(var(--space-10) * 5);
+  min-width: calc(var(--space-10) * 5);
   flex: 0 0 auto;
+  margin: 0;
+}
+
+.plan-calendar__left .plan-view-toggle .category-toggle__inner {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-columns: unset;
+}
+
+.plan-calendar__left .plan-view-toggle .category-toggle__option {
+  padding-inline: var(--space-3);
+}
+
+.plan-history-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  min-width: var(--space-10);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--c-surface-soft);
+  color: var(--c-text-secondary);
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft);
+}
+
+.plan-history-toggle:hover,
+.plan-history-toggle:focus-visible {
+  color: var(--c-text-primary);
+  background: var(--c-accent-soft);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.plan-history-toggle:active {
+  transform: translateY(0);
+}
+
+.plan-history-toggle.is-active {
+  border-color: transparent;
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 14px 28px -14px color-mix(in srgb, var(--c-accent) 56%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-surface-elevated) 22%, transparent);
+}
+
+.plan-history-toggle__icon {
+  width: var(--space-6);
+  height: var(--space-6);
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .plan-calendar {
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-4);
-  padding: clamp(18px, 2.2vh, 24px);
+  padding: clamp(var(--space-7), 2.2vh, var(--space-8));
   border-radius: var(--plan-widget-radius);
   border: var(--plan-widget-border);
   background: var(--plan-widget-bg);
@@ -56,17 +102,49 @@
   overflow: hidden;
 }
 
+.plan-calendar:has(.history-task.is-row-editing),
+.plan-calendar:has(.task-modal__time-popover),
+.plan-calendar:has(.history-task .category-picker__input[aria-expanded="true"]) {
+  overflow: visible;
+}
+
 .plan-calendar__toolbar {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-width: 0;
+}
+
+.plan-calendar__left,
+.plan-calendar__actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.plan-calendar__left {
+  justify-self: start;
+}
+
+.plan-calendar__actions {
+  justify-self: end;
+  justify-content: flex-end;
+}
+
+.plan-calendar__title {
+  margin: 0;
+  min-width: 0;
+  flex: 0 0 auto;
+  font: var(--text-page-title-weight) var(--text-page-title-size) / 1.1 var(--font-base);
+  letter-spacing: var(--text-page-title-tracking);
 }
 
 .plan-calendar__nav {
   display: flex;
   align-items: center;
+  justify-self: center;
   gap: var(--space-2);
   min-width: 0;
 }
@@ -77,47 +155,60 @@
   padding-inline: var(--space-4);
 }
 
-.plan-calendar__toolbar h2 {
+.plan-calendar__range {
   margin: 0;
   min-width: 0;
+  padding-inline: var(--space-2);
+  white-space: nowrap;
   font: var(--text-section-title-weight) var(--text-section-title-size) / 1.2 var(--font-base);
   letter-spacing: var(--text-section-title-tracking);
 }
 
-.plan-calendar__legend {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-4);
+.plan-calendar__actions .plan-category-filter {
+  width: min(calc(var(--space-10) * 5 + var(--space-4)), 30vw);
+  flex: 0 1 auto;
+}
+
+.plan-calendar__actions .category-picker__trigger {
+  height: var(--space-10);
+  min-height: var(--space-10);
+  padding-inline: var(--space-3);
+}
+
+.plan-calendar__actions .category-picker__trigger .task-modal__dropdown-caret {
+  margin-left: auto;
+}
+
+.plan-calendar__actions .category-picker__dropdown {
+  z-index: 20;
+}
+
+.plan-calendar__actions .category-picker__option {
   min-width: 0;
-  color: var(--c-text-muted);
-  font-size: var(--text-caption-size);
-  white-space: nowrap;
 }
 
-.plan-calendar__legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+.plan-add-task {
+  height: var(--space-10);
+  min-height: var(--space-10);
+  flex: 0 0 auto;
 }
 
-.plan-legend-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--radius-pill);
-  background: var(--c-accent);
+.task-modal-backdrop--plan {
+  place-items: start center;
+  padding-top: clamp(var(--space-8), 7dvh, calc(var(--space-10) * 2));
 }
 
-.plan-legend-dot--deadline {
-  background: var(--c-info);
+.task-modal-backdrop--plan .task-modal-overlay--dialog {
+  min-height: min(calc(var(--space-10) * 11), calc(100dvh - calc(var(--space-10) * 3)));
+  max-height: calc(100dvh - clamp(calc(var(--space-10) * 2), 14dvh, calc(var(--space-10) * 3)));
 }
 
-.plan-legend-dot--due {
-  background: var(--c-warning);
+.task-modal-backdrop--plan .task-modal-overlay--dialog:has(.category-picker__input[aria-expanded="true"]) {
+  overflow: visible;
 }
 
-.plan-legend-dot--overdue {
-  background: var(--c-danger);
+.task-modal-overlay--plan .task-modal__content--compact:has(.category-picker__input[aria-expanded="true"]) {
+  overflow: visible;
 }
 
 .plan-calendar__status {
@@ -126,221 +217,328 @@
   font: var(--text-body-weight) var(--text-body-small-size) / var(--text-body-line) var(--font-base);
 }
 
-.plan-calendar__grid {
+.plan-calendar__body {
   min-width: 0;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.plan-history-content {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: auto;
-  grid-auto-rows: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--c-border-soft);
   border-radius: var(--radius-xl);
+  background: var(--c-surface-elevated);
   overflow: hidden;
 }
 
-.plan-calendar__grid[data-view="today"] {
-  grid-template-columns: minmax(0, 1fr);
+.plan-history-content:has(.history-task.is-row-editing),
+.plan-history-content:has(.task-modal__time-popover),
+.plan-history-content:has(.history-task .category-picker__input[aria-expanded="true"]) {
+  overflow: visible;
 }
 
-.plan-calendar__weekday {
+.plan-history-content:has(.history-status) {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.plan-history-content .history-list-shell {
+  min-height: 0;
+}
+
+/* --- Time grid: hour ruler on the left + one timed column per day --------- */
+
+.plan-timegrid {
+  --plan-gutter: calc(var(--space-10) + var(--space-7));
+  --plan-days: 7;
+  --plan-hour-h: calc(var(--space-10) + var(--space-9));
+  --plan-head-h: calc(var(--space-10) + var(--space-3));
+  --plan-head-bg: var(--c-surface-elevated);
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
-  padding: var(--space-3) var(--space-4);
-  border-right: 1px solid var(--c-border-soft);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: var(--plan-gutter) repeat(var(--plan-days), minmax(0, 1fr));
+  grid-auto-rows: auto;
+  align-content: start;
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--c-surface-elevated);
+}
+
+.plan-timegrid[data-view="today"] {
+  --plan-hour-h: calc(var(--space-10) + var(--space-10) + var(--space-1));
+}
+
+/* Header row — sticks to the top while the hours scroll underneath. */
+.plan-timegrid__corner,
+.plan-timegrid__dayhead {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: var(--plan-head-h);
+  background: var(--plan-head-bg);
+  backdrop-filter: blur(var(--space-3));
+  -webkit-backdrop-filter: blur(var(--space-3));
   border-bottom: 1px solid var(--c-border-soft);
-  color: var(--c-text-secondary);
-  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
+}
+
+.plan-timegrid__corner {
+  border-right: 1px solid var(--c-border-soft);
+}
+
+.plan-timegrid__dayhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-right: 1px solid var(--c-border-soft);
   text-align: center;
 }
 
-.plan-calendar__weekday:nth-child(7) {
+.plan-timegrid__dayhead:last-child {
   border-right: 0;
 }
 
-.plan-calendar__grid[data-view="today"] .plan-calendar__weekday {
-  border-right: 0;
-}
-
-.plan-day {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-right: 1px solid var(--c-border-soft);
-  border-bottom: 1px solid var(--c-border-soft);
-  overflow: hidden;
-}
-
-.plan-calendar__grid[data-view="month"] .plan-day:nth-child(7n + 14),
-.plan-calendar__grid[data-view="week"] .plan-day:nth-child(14) {
-  border-right: 0;
-}
-
-.plan-calendar__grid[data-view="today"] .plan-day {
-  border-right: 0;
-}
-
-.plan-day__number {
-  display: flex;
-  align-items: center;
-  min-width: 0;
+.plan-timegrid__weekday {
   color: var(--c-text-secondary);
-  font: var(--text-item-title-weight) var(--text-body-small-size) / 1 var(--font-base);
+  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
 }
 
-.plan-day__number span {
+.plan-timegrid__daynum {
   display: inline-grid;
   place-items: center;
   min-width: var(--space-7);
   height: var(--space-7);
   border-radius: var(--radius-pill);
+  color: var(--c-text-primary);
+  font: var(--text-item-title-weight) var(--text-body-small-size) / 1 var(--font-base);
 }
 
-.plan-day.is-today .plan-day__number span {
+.plan-timegrid__dayhead.is-today .plan-timegrid__daynum {
   background: var(--c-accent);
   color: var(--c-text-inverse);
   box-shadow: var(--shadow-soft);
 }
 
-.plan-day.is-muted .plan-day__number {
-  color: var(--c-text-faint);
+/* "Anytime" row — untimed tasks, pinned just below the day header so it stays
+   visible while the hours scroll. (The "Anytime" caption is intentionally
+   omitted — the row sits above hour 0 and reads as the all-day strip.) */
+.plan-timegrid__anytime-label,
+.plan-timegrid__anytime-cell {
+  position: sticky;
+  top: var(--plan-head-h);
+  z-index: 5;
+  background: var(--plan-head-bg);
+  backdrop-filter: blur(var(--space-3));
+  -webkit-backdrop-filter: blur(var(--space-3));
+  border-right: 1px solid var(--c-border-soft);
+  border-bottom: 1px solid var(--c-border-soft);
 }
 
-.plan-day__events {
+.plan-timegrid__anytime-cell {
   min-width: 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding-right: var(--space-1);
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.plan-timegrid__anytime-cell:last-child {
+  border-right: 0;
+}
+
+.plan-timegrid__anytime-empty {
+  color: var(--c-border-soft);
+  font-size: var(--text-caption-size);
+}
+
+/* Hour gutter — 24 stacked labels, aligned to the day-column grid lines. */
+.plan-timegrid__hours {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--c-border-soft);
+}
+
+.plan-timegrid__hour {
+  position: relative;
+  height: var(--plan-hour-h);
+  padding-right: var(--space-2);
+  text-align: right;
+}
+
+.plan-timegrid__hour span {
+  position: absolute;
+  top: calc(0px - var(--space-2));
+  right: var(--space-2);
+  color: var(--c-text-muted);
+  font: var(--text-badge-weight) var(--text-label-size) / 1 var(--font-base);
+  white-space: nowrap;
+}
+
+.plan-timegrid__hour:first-child span {
+  top: var(--space-1);
+}
+
+/* Day column — repeating hour lines as a background, events positioned over it. */
+.plan-timegrid__col {
+  position: relative;
+  min-width: 0;
+  height: calc(var(--plan-hour-h) * 24);
+  border-right: 1px solid var(--c-border-soft);
+  background-image: linear-gradient(
+    to bottom,
+    var(--c-border-soft) 0,
+    var(--c-border-soft) 1px,
+    transparent 1px
+  );
+  background-size: 100% calc(100% / 24);
+}
+
+.plan-timegrid__col:last-child {
+  border-right: 0;
+}
+
+.plan-timegrid__col.is-today {
+  background-color: color-mix(in srgb, var(--c-accent) 5%, transparent);
+}
+
+/* Current-time line — only drawn in today's column. */
+.plan-timegrid__now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: 0;
+  border-top: 2px solid var(--c-accent);
+  pointer-events: none;
+}
+
+.plan-timegrid__now-dot {
+  position: absolute;
+  top: calc(0px - var(--space-1));
+  left: calc(0px - var(--space-1));
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--c-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent);
 }
 
 .plan-event {
-  --plan-event-bg: var(--c-accent-soft);
+  --category-color: var(--c-success);
+  --plan-event-bg: color-mix(in srgb, var(--category-color) 34%, var(--c-surface-elevated));
   --plan-event-text: var(--c-text-primary);
-  --plan-event-ring: var(--c-accent);
+  --plan-event-ring: var(--category-color);
   min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--plan-event-ring) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--plan-event-ring) 38%, transparent);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   background:
-    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--plan-event-ring) 18%, transparent), transparent 58%),
-    color-mix(in srgb, var(--plan-event-bg) 78%, rgba(255, 255, 255, 0.58));
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--plan-event-ring) 30%, transparent), transparent 58%),
+    color-mix(in srgb, var(--plan-event-bg) 88%, var(--c-surface-elevated));
   color: var(--plan-event-text);
   box-shadow:
+    inset var(--space-1) 0 0 var(--plan-event-ring),
     0 10px 18px -18px color-mix(in srgb, var(--plan-event-ring) 42%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-
-.plan-event--occurrence {
-  border-style: dashed;
+    inset 0 1px 0 var(--c-surface-elevated);
 }
 
 .plan-event.is-completed {
   opacity: 0.72;
 }
 
-.plan-event--peach {
-  --plan-event-bg: var(--c-danger-soft);
-  --plan-event-ring: var(--c-danger);
+/* Standalone task events can be opened (edit / delete) — give them affordance. */
+.plan-event--editable {
+  cursor: pointer;
 }
 
-.plan-event--sky {
-  --plan-event-bg: var(--c-info-soft);
-  --plan-event-ring: var(--c-info);
-}
-
-.plan-event--lemon {
-  --plan-event-bg: var(--c-warning-soft);
-  --plan-event-ring: var(--c-warning);
-}
-
-.plan-event--teal {
-  --plan-event-bg: var(--c-success-soft);
-  --plan-event-ring: var(--c-success);
-}
-
-.plan-event--amber {
-  --plan-event-bg: var(--c-warning-soft);
-  --plan-event-ring: var(--c-warning);
-}
-
-.plan-event--indigo {
-  --plan-event-bg: var(--c-accent-soft);
-  --plan-event-ring: var(--c-accent);
-}
-
-.plan-event--slate {
-  --plan-event-bg: var(--c-surface-glass);
-  --plan-event-ring: var(--c-text-muted);
-}
-
-.plan-event__topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  min-width: 0;
-  margin-bottom: var(--space-2);
-}
-
-.plan-event__topline .task-category {
-  max-width: 58%;
-  min-width: 0;
-  height: 22px;
-  padding-inline: var(--space-3);
-  font-size: var(--text-caption-size);
-}
-
-.plan-event__label {
-  flex: 0 0 auto;
-  max-width: 42%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--c-text-muted);
-  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
-}
-
-.plan-event__label--completed {
-  color: var(--c-success);
-}
-
-.plan-event__label--overdue {
-  color: var(--c-danger);
-}
-
-.plan-event__label--due-today {
-  color: var(--c-warning);
-}
-
-.plan-event__label--due-soon {
-  color: var(--c-info);
+.plan-event--editable:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--c-surface-elevated),
+    0 0 0 4px color-mix(in srgb, var(--c-accent) 45%, transparent);
 }
 
 .plan-event strong {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  color: var(--c-text-primary);
-  font: var(--text-item-title-weight) var(--text-body-small-size) / 1.25 var(--font-base);
-}
-
-.plan-event p {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  margin: var(--space-1) 0 0;
-  color: var(--c-text-secondary);
-  font: var(--text-body-weight) var(--text-caption-size) / 1.35 var(--font-base);
-}
-
-.plan-workspace--today .plan-event strong,
-.plan-workspace--week .plan-event strong {
   -webkit-line-clamp: 3;
+  color: var(--c-text-primary);
+  font: var(--text-item-title-weight) var(--text-caption-size) / 1.25 var(--font-base);
+}
+
+/* Timed event block, positioned absolutely inside a day column. Height is set
+   inline, exactly proportional to the task's duration. Title only — the card
+   colour carries the category. */
+.plan-event--grid {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: var(--space-8);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* No-duration task: a single compact line instead of a sized block. */
+.plan-event--grid-line {
+  padding-block: var(--space-1);
+}
+
+.plan-event--grid-line strong {
+  display: block;
+  -webkit-line-clamp: unset;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Untimed event chip in the "Anytime" row — title only, category colour. */
+.plan-event--chip {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.plan-event--chip strong {
+  -webkit-line-clamp: 2;
+}
+
+/* Goal tasks with a deadline alert: outlined in the alert colour with matching
+   text — the same colours as the goal-health pill labels (Overdue / Due today /
+   Due soon). Placed after the base/variant rules so it wins on source order. */
+.plan-event--alert {
+  --plan-alert: var(--c-text-secondary);
+  border-color: var(--plan-alert);
+  background: color-mix(in srgb, var(--plan-alert) 12%, var(--c-surface-elevated));
+  box-shadow: none;
+  color: var(--plan-alert);
+}
+
+.plan-event--alert strong {
+  color: var(--plan-alert);
+}
+
+.plan-event--alert-overdue {
+  --plan-alert: var(--c-task-health-overdue);
+}
+
+.plan-event--alert-due-today {
+  --plan-alert: var(--c-task-health-due-today);
+}
+
+.plan-event--alert-due-soon {
+  --plan-alert: var(--c-task-health-due-soon);
 }

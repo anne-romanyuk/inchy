@@ -20,15 +20,18 @@ magical, adult, non-corporate** — do not redesign it into something "new".
      default; on hover the text brightens to `--c-text-primary` with a soft
      `--c-surface-soft` pill — this hover lives on the primitive itself in
      `src/styles.css`, driven by tokens, so reuse the class as-is and
-     do NOT re-style hover per screen). Used by every Cancel / dismiss button:
+     do NOT re-style hover per screen. Footer/action Cancel buttons should match
+     timer settings sizing: 42px tall, 84px minimum width, `var(--space-5)`
+     inline padding, and no wrapping). Used by every Cancel / dismiss button:
      goal task inline edit (`.goal-detail-task__cancel`), goal modal & goal
      date-picker (Today/Clear) in `GoalsPage.tsx` / `GoalDatePicker.tsx`,
      `today/AddTaskModal.tsx`, `today/CompletionScopeModal.tsx` ("Just for
      today" + `.scope-confirm__cancel`), `today/ParentTaskCompletionModal.tsx`
-     ("Keep it open"), `focus/Pomodoro.tsx`, `plan/PlanPage.tsx` (range nav) and
+     ("Keep it open"), `focus/Pomodoro.tsx`, `plan/PlanPage.tsx` (range nav),
+     `settings/SettingsPage.tsx` category management, and
      the `notes/NotesPage.tsx` editor toolbar (its `.is-active` toggles keep
      their accent on hover via a scoped guard);
-   destructive → `.goal-ghost-button .goal-ghost-button--danger`;
+   destructive/delete → use `DeleteActionButton` (`.goal-ghost-button .goal-ghost-button--danger .delete-action-button`) so delete actions share the trash icon, transparent default background, danger text/icon, and danger-soft hover. Per-screen CSS may only set layout/size for a delete button; do NOT restyle its color, background, hover, icon, or shadow locally. Disabled danger-zone delete actions should stay visually destructive instead of becoming generic gray disabled buttons;
    round "+" add icon → `.add-icon-btn` (one shared circle, `<span>+</span>` inside — reuse everywhere).
    For other primitives use `.ui-card`, `.ui-modal`, `.ui-badge`, `.ui-field`, `.ui-progress`,
    `.ui-section-header`, `.ui-page-header`, `.ui-empty`.

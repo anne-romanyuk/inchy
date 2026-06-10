@@ -142,13 +142,6 @@
   width: 100%;
 }
 
-.tasks-shell:has(.tasks-history-page) {
-  width: 100%;
-  max-width: none;
-  padding-bottom: 0;
-  overflow: hidden;
-}
-
 .tasks-header {
   display: flex;
   align-items: end;
@@ -481,12 +474,12 @@
   display: grid;
   grid-template-columns:
     var(--task-col-drag) var(--task-col-check) minmax(0, 1fr)
-    var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
+    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
   align-items: center;
   gap: var(--task-col-gap);
-  padding: 0 8px 2px 6px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid rgba(57, 57, 92, 0.12);
+  padding: 0 var(--space-3) var(--space-1) var(--space-2);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid var(--c-border);
 }
 
 .tasks-table-header__cell {
@@ -501,6 +494,11 @@
 }
 
 .tasks-table-header__cell--category {
+  grid-column: 5;
+  justify-content: flex-start;
+}
+
+.tasks-table-header__cell--time {
   grid-column: 4;
   justify-content: flex-start;
 }
@@ -564,7 +562,7 @@
   display: grid;
   grid-template-columns:
     var(--task-col-drag) var(--task-col-check) minmax(0, 1fr)
-    var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
+    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
   align-items: center;
   gap: var(--task-col-gap);
   min-height: var(--task-row-height, 44px);
@@ -645,6 +643,21 @@
 
 .task-checkbox {
   --size: 22px;
+  /* Component-level "thin ring" look: a bigger inner disc (0.78 of size) and a
+     softer drop shadow. Lives on the component class — not a container scope —
+     so the checkbox looks identical everywhere it's reused (Today, History,
+     mobile). Only --size is allowed to vary per context. */
+  --shadow: calc(var(--size) * 0.045) calc(var(--size) * 0.08);
+}
+
+.task-checkbox label:before {
+  width: calc(var(--size) * 0.78);
+  height: calc(var(--size) * 0.78);
+}
+
+.task-checkbox label:hover:before {
+  width: calc(var(--size) * 0.66);
+  height: calc(var(--size) * 0.66);
 }
 
 .task-title {
@@ -674,6 +687,31 @@
   letter-spacing: 0.08em;
 }
 
+.task-time {
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  background: color-mix(in srgb, var(--c-surface-soft) 58%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--c-border) 52%, transparent),
+    inset 0 1px 0 var(--c-surface-elevated);
+  font: var(--planner-label-weight) var(--text-caption-size)/1 var(--planner-font);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-time--empty {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .task-category {
   /* `<span>` defaults to inline, which ignores width/max-width — so
      `overflow: hidden` + `text-overflow: ellipsis` had nothing to truncate
@@ -687,14 +725,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   justify-self: start;
-  border-radius: 999px;
-  padding: 4px 10px;
-  /* Soft neutral purple pill — same look for both standalone categories
-     and goal names. Sentence-case (no transform), regular tracking, left
-     aligned so longer goal titles read naturally. */
-  background: rgba(132, 99, 188, 0.12);
-  color: rgba(81, 67, 112, 0.92);
-  font: 500 12px/1.2 var(--planner-font);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-5);
+  --category-color: var(--c-success);
+  background: color-mix(in srgb, var(--category-color) 34%, var(--c-surface-elevated));
+  color: color-mix(in srgb, var(--category-color) 88%, var(--c-text-primary));
+  box-shadow:
+    inset var(--space-1) 0 0 var(--category-color),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 30%, transparent),
+    inset 0 1px 0 var(--c-surface-elevated);
+  font: 500 var(--text-caption-size)/1.2 var(--planner-font);
   letter-spacing: 0;
   text-transform: none;
   text-align: left;
@@ -704,18 +744,6 @@
   background: transparent;
   padding: 0;
 }
-
-/* Goal-linked occurrences reuse the base `.task-category` pill verbatim —
-   same background, font, tracking and centering as standalone categories,
-   so the goal name reads as just another category chip in the column. */
-
-.task-category--peach  { background: rgba(250, 216, 200, 0.7);  color: rgb(140, 80, 60); }
-.task-category--sky    { background: rgba(196, 220, 240, 0.72); color: rgb(60, 95, 130); }
-.task-category--lemon  { background: rgba(240, 230, 190, 0.72); color: rgb(120, 100, 50); }
-.task-category--teal   { background: rgba(190, 224, 220, 0.72); color: rgb(48, 102, 102); }
-.task-category--amber  { background: rgba(246, 206, 156, 0.72); color: rgb(140, 92, 30); }
-.task-category--indigo { background: rgba(196, 200, 235, 0.72); color: rgb(70, 78, 140); }
-.task-category--slate  { background: rgba(206, 212, 224, 0.72); color: rgb(78, 92, 116); }
 
 .task-item.is-completed .task-title {
   color: rgba(71, 71, 71, 0.46);
@@ -798,10 +826,10 @@
   cursor: pointer;
 }
 
-.task-edit-field input:hover,
+.task-edit-field input:not(.category-picker__input):hover,
 .task-edit-field select:hover,
 .task-edit-field .task-modal__dropdown-trigger:hover,
-.task-edit-field input:focus,
+.task-edit-field input:not(.category-picker__input):focus,
 .task-edit-field select:focus,
 .task-edit-field .task-modal__dropdown-trigger:focus-visible {
   background: rgba(232, 232, 232, 0.68);
@@ -811,7 +839,7 @@
     0 0 0 2px var(--c-focus-soft);
 }
 
-.task-edit-field--category input,
+.task-edit-field--category input:not(.category-picker__input),
 .task-edit-field--priority select {
   font: var(--planner-label-weight) 12px/1 var(--planner-font);
   letter-spacing: 0.05em;
@@ -1093,6 +1121,32 @@
     inset 0 -22px 44px rgba(255, 255, 255, 0.04);
 }
 
+.task-modal-backdrop {
+  position: fixed;
+  z-index: 7;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(var(--space-5), 3vh, var(--space-8));
+  background: rgba(42, 38, 66, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.task-modal-backdrop .task-modal-overlay--dialog {
+  position: relative;
+  inset: auto;
+  width: min(calc(var(--space-10) * 19), calc(100vw - var(--space-8) - var(--space-8)));
+  max-height: calc(100dvh - clamp(var(--space-8), 6vh, calc(var(--space-10) + var(--space-6))));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.task-modal-backdrop .task-modal-overlay--dialog:has(.task-modal__time-popover) {
+  overflow: visible;
+}
+
 .task-modal__header {
   display: flex;
   align-items: center;
@@ -1143,13 +1197,17 @@
   gap: var(--space-5);
 }
 
+.task-modal__content--compact:has(.task-modal__time-popover) {
+  overflow: visible;
+}
+
 .task-modal__main {
   display: grid;
   align-content: start;
   gap: 14px;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   padding: 2px 6px;
 }
 
@@ -1166,29 +1224,59 @@
 }
 
 .task-modal__draft-row--inline {
-  grid-template-columns: minmax(180px, 1fr) minmax(130px, 0.55fr) minmax(84px, 116px) 34px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
+.task-modal__draft-line {
+  display: grid;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.task-modal__draft-line--primary {
+  grid-template-columns: minmax(260px, 1fr) minmax(148px, 180px);
+}
+
+.task-modal__draft-line--secondary {
+  grid-template-columns: minmax(138px, 170px) minmax(108px, 128px) minmax(72px, 92px) minmax(0, 1fr) 34px;
+}
+
+.task-modal__draft-row--edit .task-modal__draft-line--primary {
+  grid-template-columns: minmax(260px, 1fr) minmax(148px, 180px);
+}
+
+.task-modal__draft-row--edit .task-modal__draft-line--secondary {
+  /* Date · time · duration share one row in edit mode. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.task-modal__draft-line--secondary > .add-icon-btn {
+  grid-column: 5;
+  justify-self: end;
+}
+
 .task-modal__title-input,
-.task-modal__draft-row--inline .task-modal__combobox input,
+.task-modal__date-picker .goal-date-picker__trigger,
+.task-modal__time-trigger,
+.task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input),
 .task-modal__duration-input,
 .task-modal__meta-row input,
 .task-modal__meta-row select,
 .task-modal__dropdown-trigger {
   width: 100%;
   height: 42px;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 14px;
-  background: rgba(255, 255, 255, 0.18);
-  color: rgb(57, 57, 92);
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  color: var(--c-text-primary);
   outline: none;
   font: 600 15px/1 var(--planner-font);
   letter-spacing: 0.01em;
-  box-shadow:
-    inset 2px 2px 7px rgba(80, 75, 104, 0.08),
-    inset -2px -2px 7px rgba(255, 255, 255, 0.28);
+  box-shadow: none;
 }
 
 .task-modal__title-input {
@@ -1196,8 +1284,232 @@
   letter-spacing: var(--planner-display-tracking);
 }
 
+.task-modal__date-picker .goal-date-picker__trigger {
+  min-height: 42px;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  color: var(--c-text-primary);
+}
+
+.task-modal__date-picker .goal-date-picker__value {
+  color: var(--c-text-primary);
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.task-modal__date-picker .goal-date-picker__icon {
+  color: var(--c-text-secondary);
+}
+
+.task-modal__time-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.task-modal__time-trigger {
+  cursor: pointer;
+  text-align: left;
+  padding-right: var(--space-9);
+}
+
+.task-modal__time-trigger.is-empty {
+  color: rgba(57, 57, 92, 0.38);
+}
+
+.task-modal__time-caret {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  z-index: 2;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.task-modal__time-trigger[aria-expanded="true"] + .task-modal__time-caret {
+  opacity: 0.72;
+  transform: translateY(-50%) rotate(225deg);
+}
+
+.task-modal__time-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-2));
+  bottom: auto;
+  right: 0;
+  width: min(calc(var(--space-10) + var(--space-10) + var(--space-10) + var(--space-10) + var(--space-10)), calc(100vw - var(--space-10)));
+  max-height: min(calc(var(--space-10) + var(--space-10) + var(--space-10) + var(--space-10) + var(--space-10) + var(--space-10)), calc(100vh - var(--space-10) - var(--space-10) - var(--space-10) - var(--space-10)));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  background: var(--app-popup-bg);
+  box-shadow: var(--app-popup-shadow);
+  backdrop-filter: var(--app-popup-backdrop);
+  -webkit-backdrop-filter: var(--app-popup-backdrop);
+}
+
+.task-modal__time-popover h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) 14px/1.1 var(--planner-font);
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.task-modal__time-wheels {
+  display: grid;
+  grid-template-columns: var(--space-10) var(--space-6) var(--space-10) calc(var(--space-10) + var(--space-2));
+  align-items: center;
+  column-gap: 0;
+  min-height: 0;
+}
+
+.task-modal__time-column-frame {
+  position: relative;
+  min-width: 0;
+}
+
+.task-modal__time-column-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: var(--space-1);
+  right: var(--space-1);
+  height: var(--space-6);
+  transform: translateY(-50%);
+  border: 1px solid color-mix(in srgb, var(--c-border) 72%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  pointer-events: none;
+}
+
+.task-modal__time-column {
+  display: grid;
+  gap: var(--space-1);
+  height: calc(var(--space-10) + var(--space-10) + var(--space-10));
+  overflow-y: auto;
+  padding: calc(var(--space-10) + var(--space-5)) var(--space-1);
+  position: relative;
+  z-index: 1;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.task-modal__time-column::-webkit-scrollbar {
+  display: none;
+}
+
+.task-modal__time-column {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 var(--space-5),
+    #000 calc(100% - var(--space-5)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 var(--space-5),
+    #000 calc(100% - var(--space-5)),
+    transparent
+  );
+}
+
+.task-modal__time-column button {
+  height: var(--space-6);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  position: relative;
+  z-index: 1;
+  scroll-snap-align: center;
+}
+
+.task-modal__time-column button:hover,
+.task-modal__time-column button:focus-visible {
+  border-color: color-mix(in srgb, var(--c-border) 70%, transparent);
+  color: var(--c-text-secondary);
+  outline: none;
+}
+
+.task-modal__time-column button.is-selected {
+  border-color: transparent;
+  background: transparent;
+  color: var(--c-text-primary);
+}
+
+.task-modal__time-separator {
+  justify-self: stretch;
+  color: var(--c-text-muted);
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  text-align: center;
+}
+
+.task-modal__time-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.task-modal__time-actions .pomodoro-btn--ghost-text {
+  min-width: 0;
+  height: var(--space-8);
+  padding: 0 var(--space-3);
+  font-size: var(--text-caption-size);
+}
+
+.task-modal__time-save {
+  border: 1px solid color-mix(in srgb, var(--c-border) 76%, transparent);
+}
+
+.task-modal__duration-unit {
+  color: var(--c-text-primary);
+  font: inherit;
+  letter-spacing: inherit;
+  user-select: none;
+}
+
+.task-modal__duration-input--masked {
+  font-variant-numeric: tabular-nums;
+}
+
+.task-modal__title-input:hover,
+.task-modal__date-picker .goal-date-picker__trigger:hover,
+.task-modal__time-trigger:hover,
+.task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input):hover,
+.task-modal__duration-input:hover,
+.task-modal__meta-row input:hover,
+.task-modal__meta-row select:hover,
+.task-modal__dropdown-trigger:hover {
+  border-color: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+}
+
+.task-modal__title-input:focus-visible,
+.task-modal__date-picker .goal-date-picker__trigger:focus-visible,
+.task-modal__date-picker .goal-date-picker__trigger[aria-expanded="true"],
+.task-modal__time-trigger:focus-visible,
+.task-modal__time-trigger[aria-expanded="true"],
+.task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input):focus-visible,
+.task-modal__duration-input:focus-visible,
+.task-modal__meta-row input:focus-visible,
+.task-modal__meta-row select:focus-visible,
+.task-modal__dropdown-trigger:focus-visible,
+.task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input)[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+  box-shadow: var(--shadow-focus-ring);
+}
+
 .task-modal__title-input::placeholder,
-.task-modal__draft-row--inline .task-modal__combobox input::placeholder,
+.task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input)::placeholder,
 .task-modal__duration-input::placeholder,
 .task-modal__meta-row input::placeholder {
   color: rgba(57, 57, 92, 0.38);
@@ -1230,48 +1542,6 @@
 .task-modal__combobox input {
   width: 100%;
   padding-right: 32px;
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--selected {
-  box-shadow:
-    inset 2px 2px 7px color-mix(in srgb, currentColor 10%, transparent),
-    inset -2px -2px 7px color-mix(in srgb, var(--c-surface-elevated) 62%, transparent),
-    0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--peach {
-  background: color-mix(in srgb, var(--c-warning-soft) 70%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-warning) 78%, var(--c-text-primary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--sky {
-  background: color-mix(in srgb, var(--c-info-soft) 68%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-info) 72%, var(--c-text-primary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--lemon {
-  background: color-mix(in srgb, var(--c-warning-soft) 52%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-warning) 64%, var(--c-text-secondary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--teal {
-  background: color-mix(in srgb, var(--c-success-soft) 56%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-success) 72%, var(--c-text-primary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--amber {
-  background: color-mix(in srgb, var(--c-warning-soft) 74%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-warning) 82%, var(--c-text-primary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--indigo {
-  background: color-mix(in srgb, var(--c-accent-soft) 68%, var(--c-surface-elevated));
-  color: color-mix(in srgb, var(--c-accent) 76%, var(--c-text-primary));
-}
-
-.task-modal__draft-row--inline .task-modal__combobox input.task-modal__category-input--slate {
-  background: color-mix(in srgb, var(--c-border-soft) 62%, var(--c-surface-elevated));
-  color: var(--c-text-secondary);
 }
 
 .task-modal__dropdown-trigger {
@@ -1474,6 +1744,25 @@
   transform: scale(0.98);
 }
 
+/* The rule above flattens the option pill (box-shadow: none); restore the
+   coloured left arc so these options match the .task-category labels in the
+   Today widget (and the option pills in Plan / Notes). */
+.task-modal__combobox-list--pills .task-modal__category-pill.task-category {
+  box-shadow:
+    inset var(--space-1) 0 0 var(--category-color),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 30%, transparent),
+    inset 0 1px 0 var(--c-surface-elevated);
+}
+
+.task-modal__combobox-list--pills .task-modal__category-pill.task-category:hover,
+.task-modal__combobox-list--pills .task-modal__category-pill.task-category:focus-visible,
+.task-modal__combobox-list--pills .task-modal__category-pill.task-category[aria-selected="true"] {
+  box-shadow:
+    inset var(--space-1) 0 0 var(--category-color),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 52%, transparent),
+    inset 0 1px 0 var(--c-surface-elevated);
+}
+
 .default-task-pool__pending {
   opacity: 0.78;
   outline: 1px dashed rgba(129, 129, 190, 0.5);
@@ -1526,6 +1815,38 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.task-modal__queue-groups {
+  display: grid;
+  gap: var(--space-7);
+}
+
+.task-modal__queue-group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.task-modal__queue-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--c-text-primary);
+  font: var(--text-badge-weight) var(--text-item-title-size) / 1 var(--font-base);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.task-modal__queue-heading small {
+  min-width: var(--space-6);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-2);
+  background: var(--c-surface-soft);
+  color: var(--c-text-secondary);
+  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .task-modal__queue-item {
@@ -1763,6 +2084,57 @@
   padding: 0 16px;
 }
 
+/* Edit mode: destructive "Delete task" sits on the left; Cancel / Save stay
+   on the right (footer is justify-content: flex-end). */
+.task-modal__footer .task-modal__delete {
+  margin-right: auto;
+  min-height: 38px;
+  height: 38px;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.delete-action-button {
+  background: transparent;
+  color: var(--c-danger);
+  box-shadow: none;
+  transition:
+    background var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+/* DeleteActionButton must keep the canonical delete look everywhere: no filled
+   background by default, danger text/icon, danger-soft fill only on hover. */
+.delete-action-button.goal-ghost-button--danger,
+:root[data-theme="forest"] .delete-action-button.goal-ghost-button--danger,
+.task-modal__footer .task-modal__delete.goal-ghost-button--danger {
+  background: transparent;
+  color: var(--c-danger);
+  box-shadow: none;
+}
+
+.delete-action-button.goal-ghost-button--danger:hover,
+.delete-action-button.goal-ghost-button--danger:focus-visible,
+:root[data-theme="forest"] .delete-action-button.goal-ghost-button--danger:hover,
+:root[data-theme="forest"] .delete-action-button.goal-ghost-button--danger:focus-visible,
+.task-modal__footer .task-modal__delete.goal-ghost-button--danger:hover,
+.task-modal__footer .task-modal__delete.goal-ghost-button--danger:focus-visible {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+
+.task-modal__delete-icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 :root[data-theme="forest"] .tasks-shell,
 :root[data-theme="forest"] .dashboard-title,
 :root[data-theme="forest"] .tasks-title,
@@ -1818,7 +2190,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
-:root[data-theme="forest"] .task-category,
 :root[data-theme="forest"] .task-priority,
 :root[data-theme="forest"] .task-duration-pill,
 :root[data-theme="forest"] .avatar-preview,
@@ -1862,40 +2233,30 @@
   color: var(--c-text-on-accent);
 }
 
-:root[data-theme="forest"] .task-category--peach  { background: color-mix(in srgb, var(--c-warning-soft) 70%, rgba(252, 248, 241, 0.78)); color: color-mix(in srgb, var(--c-warning) 78%, var(--c-text-primary)); }
-:root[data-theme="forest"] .task-category--sky    { background: color-mix(in srgb, var(--c-info-soft) 68%, rgba(252, 248, 241, 0.82)); color: color-mix(in srgb, var(--c-info) 72%, var(--c-text-primary)); }
-:root[data-theme="forest"] .task-category--lemon  { background: color-mix(in srgb, var(--c-warning-soft) 52%, rgba(252, 248, 241, 0.82)); color: color-mix(in srgb, var(--c-warning) 64%, var(--c-text-secondary)); }
-:root[data-theme="forest"] .task-category--teal   { background: color-mix(in srgb, var(--c-success-soft) 56%, rgba(252, 248, 241, 0.82)); color: color-mix(in srgb, var(--c-success) 72%, var(--c-text-primary)); }
-:root[data-theme="forest"] .task-category--amber  { background: color-mix(in srgb, var(--c-warning-soft) 74%, rgba(252, 248, 241, 0.78)); color: color-mix(in srgb, var(--c-warning) 82%, var(--c-text-primary)); }
-:root[data-theme="forest"] .task-category--indigo { background: color-mix(in srgb, var(--c-accent-soft) 68%, rgba(252, 248, 241, 0.82)); color: color-mix(in srgb, var(--c-accent) 76%, var(--c-text-primary)); }
-:root[data-theme="forest"] .task-category--slate  { background: color-mix(in srgb, var(--c-border-soft) 62%, rgba(252, 248, 241, 0.84)); color: var(--c-text-secondary); }
-
-:root[data-theme="forest"] .task-focus {
-  background:
-    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.54), transparent 36%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent-grad-start) 66%, transparent), color-mix(in srgb, var(--accent-grad-mid) 56%, transparent) 52%, color-mix(in srgb, var(--accent-grad-end) 48%, transparent));
+/* The focus icon ships WITHOUT a fill — quiet, transparent, thin border ring,
+   accent on hover/active. This is component-level (was previously scoped to
+   .today-dashboard .tasks-panel--today, which left every other context — incl.
+   mobile — falling back to a green-gradient default). One source of truth now. */
+:root[data-theme="forest"] .task-focus,
+:root[data-theme="forest"] .task-focus.is-active {
+  background: transparent;
   color: var(--c-text-primary);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.54),
-    0 6px 14px -10px color-mix(in srgb, var(--c-success) 34%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    0 0 0 1px color-mix(in srgb, var(--c-border) 76%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
-:root[data-theme="forest"] .task-focus__ping {
-  background: color-mix(in srgb, var(--c-accent) 24%, transparent);
-}
-
+:root[data-theme="forest"] .task-focus__ping,
 :root[data-theme="forest"] .task-focus__glow,
 :root[data-theme="forest"] .task-focus::after {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-grad-start) 38%, transparent), color-mix(in srgb, var(--accent-grad-mid) 34%, transparent) 54%, color-mix(in srgb, var(--accent-grad-end) 26%, transparent));
+  background: transparent;
 }
 
-:root[data-theme="forest"] .task-focus.is-active {
-  background: var(--c-accent-gradient);
-  color: var(--c-text-on-accent);
+:root[data-theme="forest"] .task-focus:hover,
+:root[data-theme="forest"] .task-focus.is-active:hover {
+  color: var(--c-accent);
   box-shadow:
-    0 8px 18px -10px color-mix(in srgb, var(--c-success) 38%, transparent),
-    0 0 18px color-mix(in srgb, var(--c-accent) 22%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--c-accent) 34%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
@@ -2037,18 +2398,18 @@
 /* Task-count health pills — outlined (they show task status, not goal status). */
 .needs-attention__count--overdue {
   background: transparent;
-  border: 1px solid #ff5353;
-  color: #ff5353;
+  border: 1px solid var(--c-task-health-overdue);
+  color: var(--c-task-health-overdue);
 }
 .needs-attention__count--due-today {
   background: transparent;
-  border: 1px solid #ffa700;
-  color: #ffa700;
+  border: 1px solid var(--c-task-health-due-today);
+  color: var(--c-task-health-due-today);
 }
 .needs-attention__count--due-soon {
   background: transparent;
-  border: 1px solid #3a9bdc;
-  color: #3a9bdc;
+  border: 1px solid var(--c-task-health-due-soon);
+  color: var(--c-task-health-due-soon);
 }
 
 .needs-attention__groups {
@@ -2072,13 +2433,13 @@
   letter-spacing: 0.01em;
 }
 .needs-attention__group-label--overdue {
-  color: #ff5353;
+  color: var(--c-task-health-overdue);
 }
 .needs-attention__group-label--due-today {
-  color: #ffa700;
+  color: var(--c-task-health-due-today);
 }
 .needs-attention__group-label--due-soon {
-  color: #3a9bdc;
+  color: var(--c-task-health-due-soon);
 }
 
 .needs-attention__list {
@@ -2112,13 +2473,13 @@
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
 }
 .needs-attention__dot--overdue {
-  background: #ff5353;
+  background: var(--c-task-health-overdue);
 }
 .needs-attention__dot--due-today {
-  background: #ffa700;
+  background: var(--c-task-health-due-today);
 }
 .needs-attention__dot--due-soon {
-  background: #3a9bdc;
+  background: var(--c-task-health-due-soon);
 }
 
 .needs-attention__item-main {
@@ -2481,7 +2842,7 @@
   /* Left column (Today + Goal) is the focus — it absorbs most of the extra
      width on large screens. The right column (Pomodoro + Needs attention)
      grows a little but stays compact. Narrow screens stack (≤1100px below). */
-  grid-template-columns: minmax(0, 1fr) minmax(420px, clamp(420px, 23vw, 460px));
+  grid-template-columns: minmax(0, 1fr) minmax(340px, clamp(340px, 22vw, 400px));
   gap: var(--today-gap);
   align-items: stretch;
   max-width: 100%;
@@ -2554,6 +2915,16 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
+}
+
+.today-dashboard .today-col > .tasks-panel--today,
+.today-dashboard .today-col > .pomodoro-panel,
+.today-dashboard .today-col > .today-goal-widget,
+.today-dashboard .today-col > .today-side-widget,
+.today-dashboard .today-col > .needs-attention {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Left column: the tasks panel grows to fill the height. Right column: the
@@ -2861,19 +3232,9 @@
   pointer-events: none;
 }
 
+/* Only the size is context-specific now; the ring look is component-level above. */
 .today-dashboard .tasks-panel--today .task-checkbox {
   --size: 21px;
-  --shadow: calc(var(--size) * 0.045) calc(var(--size) * 0.08);
-}
-
-.today-dashboard .tasks-panel--today .task-checkbox label:before {
-  width: calc(var(--size) * 0.78);
-  height: calc(var(--size) * 0.78);
-}
-
-.today-dashboard .tasks-panel--today .task-checkbox label:hover:before {
-  width: calc(var(--size) * 0.66);
-  height: calc(var(--size) * 0.66);
 }
 
 :root[data-theme="forest"] .task-modal__combobox-list {
@@ -2898,25 +3259,5 @@
   color: rgba(57, 57, 92, 0.68);
 }
 
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus,
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus.is-active {
-  background: transparent;
-  color: var(--c-text-primary);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--c-border) 76%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.58);
-}
-
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus__ping,
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus__glow,
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus::after {
-  background: transparent;
-}
-
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus:hover,
-:root[data-theme="forest"] .today-dashboard .tasks-panel--today .task-focus.is-active:hover {
-  color: var(--c-accent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--c-accent) 34%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
-}
+/* (Focus icon styling moved to the component-level `.task-focus` rules above,
+   so it applies in every context — desktop Today and the mobile screen alike.) */

@@ -67,3 +67,23 @@ export function useUpdateAvatar() {
     },
   });
 }
+
+export function useUpdateAvatarImage() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (avatarImage: string | null) => authApi.updateAvatarImage(avatarImage),
+    onSuccess: (data) => {
+      client.setQueryData(queryKeys.currentUser, data.user);
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: (data) => {
+      client.setQueryData(queryKeys.currentUser, data.user);
+    },
+  });
+}

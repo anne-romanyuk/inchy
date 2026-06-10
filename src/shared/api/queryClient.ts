@@ -7,7 +7,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 2 * 60_000,
       gcTime: 10 * 60_000,
-      placeholderData: (previousData) => previousData,
+      placeholderData: (previousData: unknown) => previousData,
     },
   },
 });
@@ -20,5 +20,6 @@ export const queryKeys = {
   activeFocusSession: ["activeFocusSession"] as const,
   goals: ["goals"] as const,
   notes: ["notes"] as const,
+  occurrencesRoot: ["occurrences"] as const,
   occurrences: (date: string) => ["occurrences", date] as const,
 };

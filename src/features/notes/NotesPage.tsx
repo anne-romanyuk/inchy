@@ -4,9 +4,11 @@ import { motion } from "motion/react";
 import { useBlocker } from "react-router-dom";
 import type { Note } from "../../../shared/schemas";
 import { MAX_CATEGORY_LENGTH, MAX_NOTE_TITLE_LENGTH } from "../../../shared/constants";
+import { fallbackCategoryColor } from "../../../shared/categoryPalette";
 import { GoalDatePicker } from "../goals/GoalDatePicker";
-import { categoryTone } from "../today/categoryColor";
+import { categoryStyle } from "../today/categoryColor";
 import { useNotes, useSaveNotes } from "./useNotes";
+import { NoteCategoryPicker } from "./NoteCategoryPicker";
 
 const MAX_TITLE = MAX_NOTE_TITLE_LENGTH;
 const CATEGORY_FILTER_ALL = "All categories";
@@ -228,7 +230,7 @@ function noteCategoryLabel(category: string) {
 function noteCategoryBadgeClass(category: string) {
   const value = category.trim();
   return value
-    ? `task-category task-category--${categoryTone(value)} notes-category-badge`
+    ? "task-category notes-category-badge"
     : "task-category notes-category-badge notes-category-badge--empty";
 }
 
@@ -415,9 +417,6 @@ export function NotesPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>(CATEGORY_FILTER_ALL);
   const [dateFilter, setDateFilter] = useState<NotesDateFilter>({ mode: "any" });
-  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
-  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
-  const [categoryDraft, setCategoryDraft] = useState("");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [cardMenuId, setCardMenuId] = useState<string | null>(null);
@@ -432,10 +431,7 @@ export function NotesPage() {
   });
   const noteTitleRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const categoryFilterRef = useRef<HTMLDivElement>(null);
-  const categoryInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const categoryPickerRef = useRef<HTMLDivElement>(null);
   const savedEditorRangeRef = useRef<Range | null>(null);
   const lastEditorBodyRef = useRef("");
   const dirtyRef = useRef(false);
@@ -452,6 +448,22 @@ export function NotesPage() {
   }, [serverNotes, working]);
 
   const notes = working ?? [];
+  const noteCategoryColorByName = useMemo(() => {
+    const map = new Map<string, string>();
+    notes.forEach((note) => {
+      const value = noteCategory(note);
+      if (value && note.categoryColor) map.set(value.toLowerCase(), note.categoryColor);
+    });
+    return map;
+  }, [notes]);
+  const noteCategoryStyle = useCallback(
+    (value: string) => {
+      const normalized = value.trim();
+      if (!normalized) return undefined;
+      return categoryStyle(noteCategoryColorByName.get(normalized.toLowerCase()) ?? fallbackCategoryColor(normalized));
+    },
+    [noteCategoryColorByName],
+  );
   const activeNote = useMemo(
     () => (activeId ? notes.find((n) => n.id === activeId) : undefined),
     [notes, activeId],
@@ -508,22 +520,6 @@ export function NotesPage() {
     return (categoryCounts.get("") ?? 0) > 0 ? ["", ...options] : options;
   }, [categoryCounts, noteCategoryOptions]);
 
-  const categoryFilterOptions = useMemo(
-    () => [CATEGORY_FILTER_ALL, ...navCategoryOptions],
-    [navCategoryOptions],
-  );
-
-  const categoryDropdownOptions = useMemo(() => {
-    const query = categoryDraft.trim().toLowerCase();
-    if (!query) return noteCategoryOptions;
-    return noteCategoryOptions.filter((option) => option.toLowerCase().includes(query));
-  }, [categoryDraft, noteCategoryOptions]);
-
-  const categoryDraftValue = categoryDraft.trim();
-  const canCreateCategory =
-    categoryDraftValue.length > 0 &&
-    !noteCategoryOptions.some((option) => option.toLowerCase() === categoryDraftValue.toLowerCase());
-
   useEffect(() => {
     if (category === CATEGORY_FILTER_ALL) return;
     if (category === CATEGORY_FILTER_NONE) {
@@ -563,16 +559,9 @@ export function NotesPage() {
   }, [category, dateFilter, notes, search]);
 
   useEffect(() => {
-    setCategoryMenuOpen(false);
-    setCategoryDraft("");
     setEmojiPickerOpen(false);
     setDeleteTargetId(null);
   }, [activeNote?.id]);
-
-  useEffect(() => {
-    if (!categoryMenuOpen) return;
-    window.setTimeout(() => categoryInputRef.current?.focus(), 0);
-  }, [categoryMenuOpen]);
 
   useEffect(() => {
     if (!activeNote) setEditorExpanded(false);
@@ -591,21 +580,15 @@ export function NotesPage() {
   }, [cardMenuId]);
 
   useEffect(() => {
-    if (!categoryFilterOpen && !categoryMenuOpen && !emojiPickerOpen) return;
+    if (!emojiPickerOpen) return;
     const onClickOut = (event: MouseEvent) => {
-      if (categoryFilterRef.current && !categoryFilterRef.current.contains(event.target as Node)) {
-        setCategoryFilterOpen(false);
-      }
-      if (categoryPickerRef.current && !categoryPickerRef.current.contains(event.target as Node)) {
-        setCategoryMenuOpen(false);
-      }
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
         setEmojiPickerOpen(false);
       }
     };
     document.addEventListener("mousedown", onClickOut);
     return () => document.removeEventListener("mousedown", onClickOut);
-  }, [categoryFilterOpen, categoryMenuOpen, emojiPickerOpen]);
+  }, [emojiPickerOpen]);
 
   const updateActive = useCallback((patch: Partial<Note>) =>
     setWorking((current) =>
@@ -614,14 +597,6 @@ export function NotesPage() {
       ),
     ), [activeNote?.id]);
 
-  const chooseActiveCategory = useCallback((value: string) => {
-    const normalized = value.trim().slice(0, MAX_CATEGORY_LENGTH);
-    const nextCategory =
-      noteCategoryOptions.find((option) => option.toLowerCase() === normalized.toLowerCase()) ?? normalized;
-    updateActive({ category: nextCategory });
-    setCategoryDraft("");
-    setCategoryMenuOpen(false);
-  }, [noteCategoryOptions, updateActive]);
 
   const rememberEditorSelection = useCallback(() => {
     const editor = editorRef.current;
@@ -1051,65 +1026,21 @@ export function NotesPage() {
               />
             </label>
 
-            <div className="notes-category-filter" ref={categoryFilterRef}>
-              <button
-                type="button"
-                className={`notes-category-filter__trigger ${
-                  category === CATEGORY_FILTER_ALL
-                    ? "notes-category-filter__trigger--all"
-                    : noteCategoryBadgeClass(category === CATEGORY_FILTER_NONE ? "" : category)
-                }`.trim()}
-                aria-label="Filter by category"
-                aria-haspopup="listbox"
-                aria-expanded={categoryFilterOpen}
-                onClick={() => setCategoryFilterOpen((open) => !open)}
-              >
-                <Icon name={category === CATEGORY_FILTER_ALL ? "Tag" : noteIcon(category === CATEGORY_FILTER_NONE ? "" : category)} />
-                {category === CATEGORY_FILTER_ALL
-                  ? CATEGORY_FILTER_ALL
-                  : noteCategoryLabel(category === CATEGORY_FILTER_NONE ? "" : category)}
-                <span className="task-modal__dropdown-caret" aria-hidden="true" />
-              </button>
-              <div
-                className="task-modal__dropdown-wrap notes-category-filter__dropdown"
-                data-open={categoryFilterOpen ? "true" : "false"}
-              >
-                <ul
-                  className="task-modal__combobox-list task-modal__combobox-list--pills notes-category-filter__list app-scroll"
-                  role="listbox"
-                  aria-label="Filter by category"
-                >
-                  {categoryFilterOptions.map((option) => {
-                    const filterValue =
-                      option === CATEGORY_FILTER_ALL ? CATEGORY_FILTER_ALL : option ? option : CATEGORY_FILTER_NONE;
-                    const isAll = filterValue === CATEGORY_FILTER_ALL;
-                    const categoryValue = filterValue === CATEGORY_FILTER_NONE ? "" : filterValue;
-                    return (
-                      <li key={filterValue} className="task-modal__dropdown-item">
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={category === filterValue}
-                          className={
-                            isAll
-                              ? "notes-category-filter__option notes-category-filter__option--all"
-                              : `${noteCategoryBadgeClass(categoryValue)} notes-category-filter__option`
-                          }
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            setCategory(filterValue);
-                            setCategoryFilterOpen(false);
-                          }}
-                        >
-                          <Icon name={isAll ? "Tag" : noteIcon(categoryValue)} />
-                          {isAll ? CATEGORY_FILTER_ALL : noteCategoryLabel(categoryValue)}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
+            <NoteCategoryPicker
+              mode="filter"
+              className="notes-category-filter"
+              ariaLabel="Filter by category"
+              notes={notes}
+              value={category}
+              onChange={setCategory}
+              allValue={CATEGORY_FILTER_ALL}
+              allLabel={CATEGORY_FILTER_ALL}
+              uncategorized={
+                (categoryCounts.get("") ?? 0) > 0
+                  ? { value: CATEGORY_FILTER_NONE, label: NO_CATEGORY_LABEL }
+                  : undefined
+              }
+            />
 
             <GoalDatePicker
               className="notes-date-picker"
@@ -1266,7 +1197,7 @@ export function NotesPage() {
                         return <span>{excerpt ? `${excerpt}...` : " "}</span>;
                       })()}
                       <span className="notes-list-card__meta">
-                        <span className={noteCategoryBadgeClass(currentCategory)}>
+                        <span className={noteCategoryBadgeClass(currentCategory)} style={noteCategoryStyle(currentCategory)}>
                           <Icon name={noteIcon(currentCategory)} /> {noteCategoryLabel(currentCategory)}
                         </span>
                         <small>{formatNoteDate(note)}</small>
@@ -1285,93 +1216,22 @@ export function NotesPage() {
                         <span className="notes-entry-card__timestamp">
                           <Icon name="Calendar" /> {formatNoteTimestamp(new Date(noteActivityTime(activeNote)))}
                         </span>
-                        <div className="notes-category-picker" ref={categoryPickerRef}>
-                          <button
-                            type="button"
-                            className={`${noteCategoryBadgeClass(activeCategory)} notes-category-picker__trigger`}
-                            aria-label="Change note category"
-                            aria-haspopup="listbox"
-                            aria-expanded={categoryMenuOpen}
-                            onClick={() => {
-                              setCategoryDraft("");
-                              setCategoryMenuOpen((open) => !open);
-                            }}
-                          >
-                            <Icon name={noteIcon(activeCategory)} /> {noteCategoryLabel(activeCategory)}
-                            <span className="task-modal__dropdown-caret" aria-hidden="true" />
-                          </button>
-                          <div
-                            className="task-modal__dropdown-wrap notes-category-picker__dropdown"
-                            data-open={categoryMenuOpen ? "true" : "false"}
-                          >
-                            <input
-                              ref={categoryInputRef}
-                              className="notes-category-picker__input"
-                              type="text"
-                              maxLength={MAX_CATEGORY_LENGTH}
-                              value={categoryDraft}
-                              placeholder="Type category"
-                              aria-label="Type note category"
-                              onChange={(event) => setCategoryDraft(event.target.value)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Escape") {
-                                  setCategoryMenuOpen(false);
-                                  return;
-                                }
-                                if (event.key === "Enter") {
-                                  event.preventDefault();
-                                  chooseActiveCategory(categoryDraft);
-                                }
-                              }}
-                            />
-                            <ul
-                              className="task-modal__combobox-list task-modal__combobox-list--pills notes-category-picker__list app-scroll"
-                              role="listbox"
-                              aria-label="Note category"
-                            >
-                              <li className="task-modal__dropdown-item">
-                                <button
-                                  type="button"
-                                  role="option"
-                                  aria-selected={activeCategory === ""}
-                                  className={noteCategoryBadgeClass("")}
-                                  onMouseDown={(event) => event.preventDefault()}
-                                  onClick={() => chooseActiveCategory("")}
-                                >
-                                  <Icon name={noteIcon("")} /> {NO_CATEGORY_LABEL}
-                                </button>
-                              </li>
-                              {categoryDropdownOptions.map((option) => (
-                                <li key={option} className="task-modal__dropdown-item">
-                                  <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={activeCategory === option}
-                                    className={noteCategoryBadgeClass(option)}
-                                    onMouseDown={(event) => event.preventDefault()}
-                                    onClick={() => chooseActiveCategory(option)}
-                                  >
-                                    <Icon name={noteIcon(option)} /> {option}
-                                  </button>
-                                </li>
-                              ))}
-                              {canCreateCategory && (
-                                <li className="task-modal__dropdown-item">
-                                  <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={false}
-                                    className={noteCategoryBadgeClass(categoryDraftValue)}
-                                    onMouseDown={(event) => event.preventDefault()}
-                                    onClick={() => chooseActiveCategory(categoryDraftValue)}
-                                  >
-                                    <Icon name="Tag" /> Create "{categoryDraftValue}"
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        </div>
+                        <NoteCategoryPicker
+                          mode="select"
+                          className="notes-category-picker"
+                          ariaLabel="Note category"
+                          placeholder="Category"
+                          value={activeCategory}
+                          notes={notes}
+                          allowCreate
+                          onChange={(value) => {
+                            const normalized = value.trim().slice(0, MAX_CATEGORY_LENGTH);
+                            const next =
+                              noteCategoryOptions.find((option) => option.toLowerCase() === normalized.toLowerCase()) ??
+                              normalized;
+                            updateActive({ category: next, categoryColor: undefined });
+                          }}
+                        />
                       </div>
                       <div className="notes-entry-window-actions">
                         <button

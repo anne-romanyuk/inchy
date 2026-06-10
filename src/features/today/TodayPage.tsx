@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
-import type { Occurrence } from "../../../shared/schemas";
+import type { CategoryInfo, Occurrence } from "../../../shared/schemas";
+import { compareTaskTimeForDisplay, formatTaskTimeDisplay } from "../../../shared/time";
 // After the storage unification, the Today widget renders task_occurrences.
 // We alias them as `Task` locally so the existing renderer code paths
 // (variables called `task`, `Task[]`) stay readable without a mass rename.
 type Task = Occurrence;
 import { useOverflowFade } from "../../shared/hooks/useOverflowFade";
-import { categoryTone } from "./categoryColor";
+import { categoryStyleForName, normalizeCategoryInfos } from "./categoryColor";
+import { TaskCategoryPicker } from "./TaskCategoryPicker";
 import {
   useDefaultTasks,
   useDeleteTask,
@@ -18,8 +20,9 @@ import {
 } from "./useTasks";
 import { CompletionScopeModal } from "./CompletionScopeModal";
 import { ParentTaskCompletionModal } from "./ParentTaskCompletionModal";
-import { AddTaskModal } from "./AddTaskModal";
+import { AddTaskModal, TimePickerDropdown } from "./AddTaskModal";
 import { NeedsAttentionWidget } from "./NeedsAttentionWidget";
+import { ActionIcon, FocusIcon } from "./taskIcons";
 import PomodoroPanel from "../focus/Pomodoro";
 import { GoalJourney } from "../goals/GoalsPage";
 import { useGoals, useUpdateGoal } from "../goals/useGoals";
@@ -30,120 +33,6 @@ function formatFocusDuration(seconds: number): string {
   const minutes = totalMinutes % 60;
   if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   return `${minutes}m`;
-}
-
-function FocusIcon({
-  onClick,
-  isActive = false,
-  isRunning = false,
-  className = "",
-  size = "sm",
-  label = "Start pomodoro focus timer",
-}: {
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  isActive?: boolean;
-  isRunning?: boolean;
-  className?: string;
-  size?: "sm" | "md" | "lg";
-  label?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`task-focus task-focus--${size} ${isActive ? "is-active" : ""} ${isRunning ? "is-running" : ""} ${className}`.trim()}
-      aria-label={label}
-      aria-pressed={isActive}
-      title="Start pomodoro focus"
-    >
-      {isRunning ? <span className="task-focus__ping" aria-hidden="true" /> : null}
-      <span className="task-focus__glow" aria-hidden="true" />
-
-      <svg viewBox="0 0 24 24" fill="none" className="task-focus__icon" aria-hidden="true" focusable="false">
-        <circle
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeDasharray="4 2"
-          className="task-focus__breath-circle"
-        />
-        <circle
-          cx="12"
-          cy="12"
-          r="7"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="task-focus__timer-circle"
-        />
-        <path
-          d="M12 6C12 6 14 9 14 11C14 12.5 13 13.5 12 14C11 13.5 10 12.5 10 11C10 9 12 6 12 6Z"
-          fill="currentColor"
-          className="task-focus__petal task-focus__petal--center"
-        />
-        <path
-          d="M8 10C8 10 10 10.5 11 12C11.5 13 11.5 14.5 11 15.5C10 14.8 9 13.5 8.5 12C8 10.5 8 10 8 10Z"
-          fill="currentColor"
-          className="task-focus__petal task-focus__petal--side"
-        />
-        <path
-          d="M16 10C16 10 14 10.5 13 12C12.5 13 12.5 14.5 13 15.5C14 14.8 15 13.5 15.5 12C16 10.5 16 10 16 10Z"
-          fill="currentColor"
-          className="task-focus__petal task-focus__petal--side"
-        />
-        <ellipse cx="12" cy="16" rx="3" ry="1" fill="currentColor" className="task-focus__base" />
-      </svg>
-    </button>
-  );
-}
-
-function ActionIcon({
-  type,
-  label,
-  onClick,
-  className = "",
-}: {
-  type: "edit" | "save" | "cancel" | "delete";
-  label: string;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      className={`task-action task-action--${type} ${className}`.trim()}
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-    >
-      {type === "edit" ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M5 17.5L4.5 20L7 19.5L17.8 8.7L15.8 6.7L5 17.5Z" />
-          <path d="M14.8 7.7L16.9 5.6C17.5 5 18.4 5 19 5.6L19.4 6C20 6.6 20 7.5 19.4 8.1L17.3 10.2" />
-        </svg>
-      ) : null}
-      {type === "save" ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M5 12.4L9.2 16.5L19 7" />
-        </svg>
-      ) : null}
-      {type === "cancel" ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M7 7L17 17M17 7L7 17" />
-        </svg>
-      ) : null}
-      {type === "delete" ? (
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M8 8.5H16" />
-          <path d="M10 8.5V6.8C10 6.2 10.5 5.7 11.1 5.7H12.9C13.5 5.7 14 6.2 14 6.8V8.5" />
-          <path d="M9 10.5L9.5 18.2C9.6 19 10.2 19.5 11 19.5H13C13.8 19.5 14.4 19 14.5 18.2L15 10.5" />
-          <path d="M11.2 12.3L11.4 17M12.8 12.3L12.6 17" />
-        </svg>
-      ) : null}
-    </button>
-  );
 }
 
 type FilterOption = { value: string; label: string };
@@ -251,21 +140,6 @@ function CategoryToggle({
   );
 }
 
-function SortArrows({ direction }: { direction: "asc" | "desc" | null }) {
-  return (
-    <span className="tasks-sort-arrows" aria-hidden="true">
-      <svg
-        viewBox="0 0 10 12"
-        className={`tasks-sort-arrows__svg ${direction ? `is-${direction}` : ""}`.trim()}
-        focusable="false"
-      >
-        <path d="M5 1.5L8 5H2L5 1.5Z" className="tasks-sort-arrows__up" />
-        <path d="M5 10.5L2 7H8L5 10.5Z" className="tasks-sort-arrows__down" />
-      </svg>
-    </span>
-  );
-}
-
 function TaskListItem({
   task,
   categories,
@@ -284,18 +158,18 @@ function TaskListItem({
   onDelete,
 }: {
   task: Task;
-  categories: string[];
+  categories: CategoryInfo[];
   /** Pre-resolved goal title for goal-linked occurrences. Empty for standalone. */
   goalLabel: string;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   isFocusActive: boolean;
   isFocusRunning: boolean;
   isEditing: boolean;
-  editDraft: { title: string; category: string };
+  editDraft: { title: string; category: string; time: string };
   onToggleCompleted: (completed: boolean) => void;
   onToggleFocus: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onStartEdit: () => void;
-  onChangeDraft: (draft: { title: string; category: string }) => void;
+  onChangeDraft: (draft: { title: string; category: string; time: string }) => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onDelete: () => void;
@@ -303,33 +177,7 @@ function TaskListItem({
   const controls = useDragControls();
   const autoScrollDir = useRef(0);
   const autoScrollFrame = useRef<number | null>(null);
-  const categoryRef = useRef<HTMLDivElement>(null);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const filteredCategoryOptions = useMemo(() => {
-    const query = editDraft.category.trim().toLowerCase();
-    const unique = Array.from(new Set(categories)).sort((a, b) => a.localeCompare(b));
-    if (!query) return unique;
-    return unique.filter((category) => category.toLowerCase().includes(query));
-  }, [categories, editDraft.category]);
-  const categoryDropdownOptions = useMemo(
-    () => ["", ...filteredCategoryOptions],
-    [filteredCategoryOptions],
-  );
-
-  useEffect(() => {
-    if (!isEditing) {
-      setCategoryOpen(false);
-      return;
-    }
-    if (!categoryOpen) return;
-    const onClickOut = (event: MouseEvent) => {
-      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
-        setCategoryOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onClickOut);
-    return () => document.removeEventListener("mousedown", onClickOut);
-  }, [categoryOpen, isEditing]);
+  const normalizedCategories = useMemo(() => normalizeCategoryInfos(categories), [categories]);
 
   const stopAutoScroll = () => {
     if (autoScrollFrame.current !== null) {
@@ -432,44 +280,16 @@ function TaskListItem({
               autoFocus
             />
           </label>
-          <div className="task-edit-field task-edit-field--category task-modal__combobox" ref={categoryRef}>
-            <span className="sr-only">Category</span>
-            <input
-              value={editDraft.category}
-              maxLength={15}
-              placeholder="Category"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={categoryOpen}
-              onChange={(event) => onChangeDraft({ ...editDraft, category: event.target.value })}
-              onFocus={() => setCategoryOpen(true)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") setCategoryOpen(false);
-                if (event.key === "Enter") onSaveEdit();
-              }}
-            />
-            <span className="task-modal__dropdown-caret task-modal__dropdown-caret--input" aria-hidden="true" />
-            <div className="task-modal__dropdown-wrap" data-open={categoryOpen ? "true" : "false"}>
-              <ul className="task-modal__combobox-list" role="listbox">
-                {categoryDropdownOptions.map((category) => (
-                  <li key={category || "__empty__"} className="task-modal__dropdown-item">
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={editDraft.category === category}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          onChangeDraft({ ...editDraft, category });
-                          setCategoryOpen(false);
-                        }}
-                      >
-                        {category || "-"}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-          </div>
+          <TimePickerDropdown value={editDraft.time} onChange={(time) => onChangeDraft({ ...editDraft, time })} />
+          <TaskCategoryPicker
+            mode="select"
+            className="task-edit-field task-edit-field--category"
+            ariaLabel="Category"
+            placeholder="Category"
+            value={editDraft.category}
+            onChange={(category) => onChangeDraft({ ...editDraft, category })}
+            allowCreate
+          />
           <ActionIcon type="cancel" label={`Cancel editing ${task.title}`} onClick={onCancelEdit} />
           <ActionIcon type="save" label={`Save ${task.title}`} onClick={onSaveEdit} />
           <ActionIcon type="delete" label={`Delete ${task.title}`} onClick={onDelete} />
@@ -483,20 +303,25 @@ function TaskListItem({
               <span className="task-title__chip">{formatFocusDuration(task.focusSeconds)} focus</span>
             ) : null}
           </span>
+          <span className={`task-time ${task.time ? "" : "task-time--empty"}`.trim()} title={task.time ? formatTaskTimeDisplay(task.time) : ""}>
+            {task.time ? formatTaskTimeDisplay(task.time) : ""}
+          </span>
           {/* Category column: for standalone we show the user-typed
-              category (with its tone); for goal-linked we show the goal
-              name (no tone), which may visually clip if long — that's
+              category (with its saved palette color); for goal-linked we show the goal
+              name, which may visually clip if long — that's
               acceptable per design. */}
           {task.sourceKind === "standalone" ? (
             <span
-              className={`task-category${task.category ? ` task-category--${categoryTone(task.category)}` : ""}`}
+              className="task-category"
+              style={categoryStyleForName(task.category, normalizedCategories)}
               title={task.category || ""}
             >
               {task.category || ""}
             </span>
           ) : (
             <span
-              className={`task-category task-category--goal${goalLabel ? ` task-category--${categoryTone(goalLabel)}` : ""}`}
+              className="task-category task-category--goal"
+              style={categoryStyleForName(goalLabel, normalizedCategories)}
               title={goalLabel}
             >
               {goalLabel}
@@ -619,9 +444,6 @@ export function TodayPage() {
 
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
-  // Only "category" sort remains after the priority column was removed.
-  const [sortKey, setSortKey] = useState<"category" | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [flyer, setFlyer] = useState<{
     key: number;
     fromX: number;
@@ -634,14 +456,15 @@ export function TodayPage() {
   const [runningFocusTaskId, setRunningFocusTaskId] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<{ title: string; category: string }>({
+  const [editDraft, setEditDraft] = useState<{ title: string; category: string; time: string }>({
     title: "",
     category: "",
+    time: "",
   });
   const completionTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const tasksScrollRef = useRef<HTMLDivElement>(null);
 
-  const taskCategories = useMemo(() => savedCategories, [savedCategories]);
+  const taskCategories = useMemo(() => normalizeCategoryInfos(savedCategories), [savedCategories]);
 
   // Three fixed filter buckets:
   //   "All"   — everything on today's list,
@@ -683,41 +506,13 @@ export function TodayPage() {
   }, [tasks, categoryFilter]);
 
   const sortedTasks = useMemo(() => {
-    if (!sortKey) return filteredTasks;
-    const dirMul = sortDir === "asc" ? 1 : -1;
-    // What we visually show in the "Category" column is what we sort by:
-    // the user-typed category for standalone tasks, the goal title for
-    // goal-linked occurrences. Items with neither sink to the bottom.
-    const sortLabel = (t: Task) =>
-      t.sourceKind === "standalone"
-        ? t.category
-        : (t.goalId ? goalTitleById.get(t.goalId) ?? "" : "");
-    return [...filteredTasks].sort((a, b) => {
-      const aLabel = sortLabel(a);
-      const bLabel = sortLabel(b);
-      const aHas = aLabel ? 1 : 0;
-      const bHas = bLabel ? 1 : 0;
-      if (aHas !== bHas) return bHas - aHas;
-      return aLabel.localeCompare(bLabel) * dirMul;
-    });
-  }, [filteredTasks, sortKey, sortDir, goalTitleById]);
-
-  const handleSort = (key: "category") => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir("asc");
-      return;
-    }
-    if (sortDir === "asc") {
-      setSortDir("desc");
-      return;
-    }
-    setSortKey(null);
-    setSortDir("asc");
-  };
+    return filteredTasks
+      .map((task, index) => ({ task, index }))
+      .sort((first, second) => compareTaskTimeForDisplay(first.task.time, second.task.time) || first.index - second.index)
+      .map(({ task }) => task);
+  }, [filteredTasks]);
 
   const commitReorder = (nextVisible: Task[]) => {
-    if (sortKey) setSortKey(null);
     const visibleIds = new Set(filteredTasks.map((task) => task.id));
     const queue = [...nextVisible];
     const merged: Task[] = [];
@@ -781,12 +576,13 @@ export function TodayPage() {
     setEditDraft({
       title: task.title,
       category: task.category,
+      time: task.time,
     });
   };
 
   const cancelEditing = () => {
     setEditingTaskId(null);
-    setEditDraft({ title: "", category: "" });
+    setEditDraft({ title: "", category: "", time: "" });
   };
 
   const saveEditing = (task: Task) => {
@@ -797,6 +593,7 @@ export function TodayPage() {
       updates: {
         title,
         category: editDraft.category.trim(),
+        time: editDraft.time,
       },
     });
     cancelEditing();
@@ -894,16 +691,11 @@ export function TodayPage() {
             <span className="tasks-table-header__cell tasks-table-header__cell--task">
               <span className="tasks-table-header__label">Task</span>
             </span>
+            <span className="tasks-table-header__cell tasks-table-header__cell--time">
+              <span className="tasks-table-header__label">Time</span>
+            </span>
             <span className="tasks-table-header__cell tasks-table-header__cell--category">
-              <button
-                type="button"
-                className={`tasks-table-header__sort ${sortKey === "category" ? "is-active" : ""}`.trim()}
-                onClick={() => handleSort("category")}
-                aria-label={`Sort by category${sortKey === "category" ? ` (${sortDir})` : ""}`}
-              >
-                <span className="tasks-table-header__label">Category</span>
-                <SortArrows direction={sortKey === "category" ? sortDir : null} />
-              </button>
+              <span className="tasks-table-header__label">Category</span>
             </span>
           </div>
 
@@ -936,6 +728,7 @@ export function TodayPage() {
                         editDraft={editingTaskId === task.id ? editDraft : {
                           title: task.title,
                           category: task.category,
+                          time: task.time,
                         }}
                         onToggleCompleted={(completed) => toggleCompleted(task, completed)}
                         onToggleFocus={(event) => {

@@ -62,8 +62,8 @@ Light / Dream / Moon (and the `dark` alias) are **deprecated** — do not build,
 ### Button — reuse the existing timer-settings components (the gold standard)
 There is **no `.ui-btn`**. The canonical button components already exist and are reused everywhere:
 - **Primary / save / add** → `.task-add` (the "Add goal" / "Add task" action) — compact 34px login-style rounded rectangle (`--radius-md`), hover "jump" (`translateY(-1px) scale(1.02)`), press `scale(0.94)`. Add a leading `<span aria-hidden>+</span>` only for *add* actions; omit it for *save/confirm*. Scale to context (it stretches full-width inside stacked footers; stays compact elsewhere).
-- **Cancel / ghost** → `.pomodoro-btn .pomodoro-btn--ghost-text` — transparent text, darkens on hover.
-- **Destructive** → `.goal-ghost-button .goal-ghost-button--danger`.
+- **Cancel / ghost** → `.pomodoro-btn .pomodoro-btn--ghost-text` — transparent text, darkens on hover. In footer/action contexts, match the timer settings Cancel sizing: `height: 42px`, `min-width: 84px`, `padding-inline: var(--space-5)`, `white-space: nowrap`.
+- **Destructive / delete** → use `DeleteActionButton` (`.goal-ghost-button .goal-ghost-button--danger .delete-action-button`) for delete actions with the shared trash icon, transparent default background, danger text/icon, and danger-soft hover. Per-screen CSS may only set layout/size; never restyle delete color, background, hover, icon, or shadow locally. Disabled danger-zone actions still keep the delete visual language; do not restyle them as generic gray disabled buttons.
 
 (`.task-modal__submit` is the older, chunkier 42px twin — same gradient; prefer `.task-add`.)
 - **Round "+" add icon** → `.add-icon-btn` — the single shared 34px gradient circle with a centered `+`. Markup: `<button class="add-icon-btn"><span aria-hidden>+</span></button>`. Used for the Add-task modal queue and the goal "add task" row; fix it once here and it applies everywhere.
@@ -84,6 +84,9 @@ Structure is fixed: `__header` (`__title` + `__description`) → `__body` → `_
 
 ### Field — `.ui-field`
 `__label` + `__control` (input/textarea/select) + `__helper` / `__error`. Shared height, border, radius, focus ring, placeholder color, disabled & `.is-invalid` states.
+
+### CategoryPicker — `CategoryPicker` + `.category-picker`
+Use the shared React component for every category selector or filter in tasks, notes, and plan. The field is always a neutral soft pill. Selected categories render inside the field as the same colored `.task-category` label used in task rows and calendar cards. Neutral values such as "No category" and "All categories" stay white/soft. Do not recreate category dropdowns per feature.
 
 ### Badge / Pill — `.ui-badge`
 `.ui-badge--{neutral|muted|accent|success|warning|danger|info}` × `--{sm|md}`, optional `--dot`. Use for statuses, priorities, categories, deadlines (due today/overdue/due soon), completed/in-progress/on-track/at-risk. **Same meaning → same badge.** No per-page custom pills.

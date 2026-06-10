@@ -6,7 +6,13 @@
 // doesn't have to thread a different type signature everywhere.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DefaultTask, Occurrence } from "../../../shared/schemas";
+import type {
+  CategoryInfo,
+  DefaultTask,
+  Occurrence,
+  TaskCategoryDeleteInput,
+  TaskCategoryUpdateInput,
+} from "../../../shared/schemas";
 import { queryKeys } from "../../shared/api/queryClient";
 import { apiFetch } from "../../shared/api/client";
 import {
@@ -18,6 +24,7 @@ import {
   useUpdateOccurrence,
 } from "./useOccurrences";
 import type { UpdateOccurrenceInput } from "./occurrencesApi";
+import { normalizeCategoryInfos, type CategoryLike } from "./categoryColor";
 
 // ---------------------------------------------------------------------------
 // Task / category / default-task queries
@@ -31,7 +38,36 @@ export function useTaskCategories() {
   return useQuery({
     queryKey: queryKeys.taskCategories,
     queryFn: async () =>
-      (await apiFetch<{ categories: string[] }>("/api/tasks/categories")).categories,
+      normalizeCategoryInfos((await apiFetch<{ categories: CategoryLike[] }>("/api/tasks/categories")).categories),
+  });
+}
+
+function invalidateTaskCategoryDependents(client: ReturnType<typeof useQueryClient>) {
+  client.invalidateQueries({ queryKey: queryKeys.taskCategories });
+  client.invalidateQueries({ queryKey: queryKeys.defaultTasks });
+  client.invalidateQueries({ queryKey: queryKeys.tasks });
+  client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
+}
+
+export function useUpdateTaskCategory() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TaskCategoryUpdateInput) =>
+      apiFetch<{ category: CategoryInfo }>("/api/tasks/categories", { method: "PATCH", body: input }),
+    onSuccess: () => {
+      invalidateTaskCategoryDependents(client);
+    },
+  });
+}
+
+export function useDeleteTaskCategory() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TaskCategoryDeleteInput) =>
+      apiFetch<{ ok: true; affectedTasks: number }>("/api/tasks/categories", { method: "DELETE", body: input }),
+    onSuccess: () => {
+      invalidateTaskCategoryDependents(client);
+    },
   });
 }
 
@@ -50,9 +86,11 @@ export function useDefaultTasks() {
 
 export type CreateStandaloneInput = {
   title: string;
+  occurrenceDate?: string;
   priority?: "low" | "medium" | "high" | "" | null;
   category?: string;
   duration?: string;
+  time?: string;
   saveToDefault?: boolean;
 };
 
@@ -63,24 +101,23 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (input: CreateStandaloneInput) => {
       const priority = input.priority === "" || input.priority == null ? null : input.priority;
+      const occurrenceDate = input.occurrenceDate ?? today;
       const { occurrence } = await create.mutateAsync({
         sourceKind: "standalone",
-        occurrenceDate: today,
+        occurrenceDate,
         title: input.title,
         priority,
         category: input.category ?? "",
         duration: input.duration ?? "",
+        time: input.time ?? "",
         saveToDefault: input.saveToDefault ?? false,
       });
       return { task: occurrence };
     },
     onSuccess: ({ task }) => {
       if (task.category) {
-        client.setQueryData<string[]>(queryKeys.taskCategories, (current = []) =>
-          current.includes(task.category)
-            ? current
-            : [...current, task.category].sort((a, b) => a.localeCompare(b)),
-        );
+        client.setQueryData<CategoryInfo[]>(queryKeys.taskCategories, (current = []) => normalizeCategoryInfos(current));
+        client.invalidateQueries({ queryKey: queryKeys.taskCategories });
       }
       // The default-tasks query won't auto-update without a refetch; invalidate.
       client.invalidateQueries({ queryKey: queryKeys.defaultTasks });
@@ -97,11 +134,8 @@ export function useUpdateTask() {
       update.mutateAsync({ id, occurrenceDate: today, updates }),
     onSuccess: ({ occurrence }) => {
       if (occurrence.category) {
-        client.setQueryData<string[]>(queryKeys.taskCategories, (current = []) =>
-          current.includes(occurrence.category)
-            ? current
-            : [...current, occurrence.category].sort((a, b) => a.localeCompare(b)),
-        );
+        client.setQueryData<CategoryInfo[]>(queryKeys.taskCategories, (current = []) => normalizeCategoryInfos(current));
+        client.invalidateQueries({ queryKey: queryKeys.taskCategories });
       }
     },
   });

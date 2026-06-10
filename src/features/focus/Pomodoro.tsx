@@ -620,12 +620,9 @@ export default function PomodoroPanel({
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
             >
-              <input
-                value={focusTaskName}
-                placeholder="What are you working on?"
-                readOnly
-                maxLength={60}
-              />
+              <span className="pomodoro-ring__focus-text" title={focusTaskName}>
+                {focusTaskName}
+              </span>
             </motion.div>
           ) : null}
         </AnimatePresence>

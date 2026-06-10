@@ -22,6 +22,8 @@ import {
   NullableUserEnvelopeSchema,
   OkResponseSchema,
   RegisterInputSchema,
+  UserAvatarImageInputSchema,
+  UserProfileUpdateInputSchema,
   UserEnvelopeSchema,
 } from "../../shared/schemas";
 
@@ -127,6 +129,7 @@ function findOrCreateGoogleUser(profile: GoogleProfile): UserRow {
     email,
     password_hash: makeOAuthPasswordHash("google", profile.sub),
     avatar_id: null,
+    birth_date: "",
     created_at: now,
   };
 
@@ -224,6 +227,7 @@ authRoutes.openapi(registerRoute, async (c) => {
     email,
     password_hash: await hashPassword(password),
     avatar_id: null,
+    birth_date: "",
     created_at: new Date().toISOString(),
   };
 
@@ -303,6 +307,55 @@ authRoutes.openapi(logoutRoute, (c) => {
   return c.json({ ok: true as const }, 200);
 });
 
+const profileRoute = createRoute({
+  method: "patch",
+  path: "/me/profile",
+  tags: ["Auth"],
+  summary: "Update the current user's profile details",
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: UserProfileUpdateInputSchema } },
+    },
+  },
+  responses: {
+    200: { description: "Profile saved", content: { "application/json": { schema: UserEnvelopeSchema } } },
+    401: { description: "Not authenticated", content: { "application/json": { schema: ErrorResponseSchema } } },
+    409: { description: "Email already exists", content: { "application/json": { schema: ErrorResponseSchema } } },
+    422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
+  },
+});
+
+authRoutes.openapi(profileRoute, (c) => {
+  const token = getSessionToken(c);
+  const userId = token ? readSessionUserId(token) : null;
+  if (!userId) return c.json({ message: "Authentication required." }, 401);
+
+  const { name, email, birthDate, country } = c.req.valid("json");
+  const currentUser = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as UserRow | undefined;
+  if (!currentUser) return c.json({ message: "Authentication required." }, 401);
+
+  const nextEmail = currentUser.google_id ? currentUser.email : email;
+  if (!currentUser.google_id && nextEmail !== currentUser.email) {
+    const existing = db.prepare("SELECT id FROM users WHERE lower(email) = ? AND id != ?").get(nextEmail, userId) as
+      | { id: string }
+      | undefined;
+    if (existing) {
+      return c.json({ errors: { email: "Account with this email already exists." } }, 409);
+    }
+  }
+
+  db.prepare("UPDATE users SET name = ?, email = ?, birth_date = ?, country = ? WHERE id = ?").run(
+    name,
+    nextEmail,
+    birthDate,
+    country,
+    userId,
+  );
+  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as UserRow;
+  return c.json({ user: toPublicUser(user) }, 200);
+});
+
 const avatarRoute = createRoute({
   method: "patch",
   path: "/me/avatar",
@@ -328,6 +381,35 @@ authRoutes.openapi(avatarRoute, async (c) => {
 
   const { avatarId } = c.req.valid("json");
   db.prepare("UPDATE users SET avatar_id = ? WHERE id = ?").run(avatarId, userId);
+  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as UserRow;
+  return c.json({ user: toPublicUser(user) }, 200);
+});
+
+const avatarImageRoute = createRoute({
+  method: "patch",
+  path: "/me/avatar-image",
+  tags: ["Auth"],
+  summary: "Set the current user's uploaded avatar photo",
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: UserAvatarImageInputSchema } },
+    },
+  },
+  responses: {
+    200: { description: "Avatar photo saved", content: { "application/json": { schema: UserEnvelopeSchema } } },
+    401: { description: "Not authenticated", content: { "application/json": { schema: ErrorResponseSchema } } },
+    422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
+  },
+});
+
+authRoutes.openapi(avatarImageRoute, async (c) => {
+  const token = getSessionToken(c);
+  const userId = token ? readSessionUserId(token) : null;
+  if (!userId) return c.json({ message: "Authentication required." }, 401);
+
+  const { avatarImage } = c.req.valid("json");
+  db.prepare("UPDATE users SET avatar_image = ?, avatar_id = NULL WHERE id = ?").run(avatarImage, userId);
   const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as UserRow;
   return c.json({ user: toPublicUser(user) }, 200);
 });

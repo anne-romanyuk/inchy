@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   AnimatePresence,
+  animate,
   motion,
   Reorder,
   useDragControls,
+  useMotionValue,
+  useTransform,
 } from "motion/react";
 import type { Goal, GoalTask, GoalSubtask } from "../../../shared/schemas";
 import {
@@ -23,6 +27,14 @@ import {
 import { defaultGoalIcon, forestGoalIcons, getForestGoalIconId, getGoalIconSrc } from "./goalIcons";
 import { AddToTodayButton } from "./AddToTodayButton";
 import { GoalDatePicker } from "./GoalDatePicker";
+import { useIsMobile } from "../../shared/hooks/useIsMobile";
+
+const MOBILE_SWIPE_TRIGGER = 112;
+const MOBILE_SWIPE_LIMIT = 128;
+
+function createDraftId() {
+  return globalThis.crypto?.randomUUID?.() ?? `draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 type DraftTask = {
   id: string;
@@ -48,7 +60,7 @@ const emptyDraft = (): DraftGoal => ({
 
 function newDraftTask(): DraftTask {
   return {
-    id: crypto.randomUUID(),
+    id: createDraftId(),
     title: "",
     deadline: "",
     completed: false,
@@ -189,6 +201,62 @@ function IconPicker({ value, onChange }: { value: string | null; onChange: (icon
   );
 }
 
+function IconPickerPopover({
+  anchorRef,
+  className,
+  value,
+  onChange,
+}: {
+  anchorRef: RefObject<HTMLElement | null>;
+  className: string;
+  value: string | null;
+  onChange: (iconId: string | null) => void;
+}) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({ visibility: "hidden" });
+
+  useLayoutEffect(() => {
+    const place = () => {
+      const anchor = anchorRef.current?.getBoundingClientRect();
+      const popover = popoverRef.current;
+      if (!anchor || !popover) return;
+
+      const gap = 8;
+      const margin = 8;
+      const popW = popover.offsetWidth;
+      const popH = popover.offsetHeight;
+      const spaceBelow = window.innerHeight - anchor.bottom;
+      const openUp = spaceBelow < popH + gap && anchor.top > spaceBelow;
+      const left = Math.max(margin, Math.min(anchor.left - 12, window.innerWidth - popW - margin));
+
+      setPopoverStyle({
+        position: "fixed",
+        zIndex: 1200,
+        left,
+        right: "auto",
+        top: openUp ? "auto" : anchor.bottom + gap,
+        bottom: openUp ? window.innerHeight - anchor.top + gap : "auto",
+        visibility: "visible",
+      });
+    };
+
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [anchorRef]);
+
+  return createPortal(
+    <div ref={popoverRef} className={`${className} goal-icon-picker-popover`.trim()} style={popoverStyle}>
+      <IconPicker value={value} onChange={onChange} />
+    </div>,
+    document.body,
+  );
+}
+
 function GoalActionIcon({
   type,
   label,
@@ -250,20 +318,142 @@ function GoalTaskEditor({
   onChange,
   onRemove,
   disableRemove,
+  mobileCreateMode = false,
 }: {
   task: DraftTask;
   onChange: (updates: Partial<DraftTask>) => void;
   onRemove: () => void;
   disableRemove: boolean;
+  mobileCreateMode?: boolean;
 }) {
   const dragControls = useDragControls();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isEditingMobile, setIsEditingMobile] = useState(false);
+  const iconButtonRef = useRef<HTMLButtonElement | null>(null);
+  const x = useMotionValue(0);
+  const editWidth = useTransform(x, (value) => Math.min(MOBILE_SWIPE_LIMIT, Math.max(0, value)));
+  const deleteWidth = useTransform(x, (value) => Math.min(MOBILE_SWIPE_LIMIT, Math.max(0, -value)));
+  const editVisibility = useTransform(x, (value) => (value > 1 ? "visible" : "hidden"));
+  const deleteVisibility = useTransform(x, (value) => (value < -1 ? "visible" : "hidden"));
+
+  if (mobileCreateMode) {
+    return (
+      <Reorder.Item
+        value={task}
+        dragListener={false}
+        dragControls={dragControls}
+        className={`goal-task-editor goal-task-editor--mobile-swipe ${isEditingMobile ? "is-editing" : ""} ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98 }}
+      >
+        <motion.span
+          className="goal-task-swipe-action goal-task-swipe-action--edit"
+          style={{ width: editWidth, visibility: editVisibility }}
+          aria-hidden="true"
+        >
+          <GoalMobileEditIcon />
+          <span>EDIT</span>
+        </motion.span>
+        <motion.span
+          className="goal-task-swipe-action goal-task-swipe-action--delete"
+          style={{ width: deleteWidth, visibility: deleteVisibility }}
+          aria-hidden="true"
+        >
+          <GoalMobileTrashIcon />
+          <span>DELETE</span>
+        </motion.span>
+
+        <motion.div
+          className="goal-task-editor__swipe-surface"
+          drag="x"
+          style={{ x }}
+          dragConstraints={{ left: -MOBILE_SWIPE_LIMIT, right: MOBILE_SWIPE_LIMIT }}
+          dragElastic={0.08}
+          onDragEnd={() => {
+            const swipe = x.get();
+            animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
+            if (swipe >= MOBILE_SWIPE_TRIGGER) {
+              setIsEditingMobile(true);
+              return;
+            }
+            if (swipe <= -MOBILE_SWIPE_TRIGGER && !disableRemove) {
+              onRemove();
+            }
+          }}
+        >
+          {isEditingMobile ? (
+            <>
+              <div className={`goal-task-editor__icon-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
+                <button
+                  ref={iconButtonRef}
+                  type="button"
+                  className="goal-task-editor__icon"
+                  onClick={() => setPickerOpen((current) => !current)}
+                  aria-label="Choose task icon"
+                >
+                  <GoalTaskIcon iconId={task.iconId} />
+                </button>
+                {pickerOpen ? (
+                  <IconPickerPopover
+                    anchorRef={iconButtonRef}
+                    className="goal-task-editor__popover"
+                    value={task.iconId}
+                    onChange={(iconId) => {
+                      onChange({ iconId });
+                      setPickerOpen(false);
+                    }}
+                  />
+                ) : null}
+              </div>
+              <div className="goal-task-editor__field-stack">
+                <input
+                  value={task.title}
+                  onChange={(event) => onChange({ title: event.target.value })}
+                  placeholder="Task name"
+                  maxLength={MAX_TITLE_LENGTH}
+                  className="goal-input goal-task-editor__title"
+                />
+                <GoalDatePicker
+                  value={task.deadline}
+                  onChange={(deadline) => onChange({ deadline })}
+                  className="goal-task-editor__date"
+                  ariaLabel="Task deadline"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="goal-task-editor__mobile-drag-icon"
+                aria-label="Drag task to reorder"
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  dragControls.start(event);
+                }}
+              >
+                <GoalTaskIcon iconId={task.iconId} />
+              </button>
+              <div className="goal-task-editor__readonly-fields" aria-label={task.title}>
+                <span className="goal-task-editor__readonly-title">{task.title}</span>
+                <span className="goal-task-editor__readonly-date">
+                  {task.deadline ? formatDate(task.deadline) : "No due date"}
+                </span>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </Reorder.Item>
+    );
+  }
+
   return (
     <Reorder.Item
       value={task}
       dragListener={false}
       dragControls={dragControls}
-      className="goal-task-editor"
+      className={`goal-task-editor ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
@@ -278,8 +468,9 @@ function GoalTaskEditor({
         <span />
         <span />
       </button>
-      <div className="goal-task-editor__icon-wrap">
+      <div className={`goal-task-editor__icon-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
         <button
+          ref={iconButtonRef}
           type="button"
           className="goal-task-editor__icon"
           onClick={() => setPickerOpen((current) => !current)}
@@ -288,15 +479,15 @@ function GoalTaskEditor({
           <GoalTaskIcon iconId={task.iconId} />
         </button>
         {pickerOpen ? (
-          <div className="goal-task-editor__popover">
-            <IconPicker
-              value={task.iconId}
-              onChange={(iconId) => {
-                onChange({ iconId });
-                setPickerOpen(false);
-              }}
-            />
-          </div>
+          <IconPickerPopover
+            anchorRef={iconButtonRef}
+            className="goal-task-editor__popover"
+            value={task.iconId}
+            onChange={(iconId) => {
+              onChange({ iconId });
+              setPickerOpen(false);
+            }}
+          />
         ) : null}
       </div>
       <input
@@ -335,12 +526,19 @@ function GoalEditorModal({
   );
   const [newTask, setNewTask] = useState<DraftTask>(() => newDraftTask());
   const [newTaskPickerOpen, setNewTaskPickerOpen] = useState(false);
+  const newTaskIconButtonRef = useRef<HTMLButtonElement | null>(null);
   const [goalIconPickerOpen, setGoalIconPickerOpen] = useState(false);
+  const goalIconButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [mobileCreateStep, setMobileCreateStep] = useState(0);
   const [error, setError] = useState("");
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
+  const isMobile = useIsMobile();
   const isEditing = Boolean(goal);
   const isSaving = createGoal.isPending || updateGoal.isPending;
+  const isMobileCreate = isMobile && !isEditing;
+  const mobileCreateStepCount = 3;
+  const mobileCreateProgress = `${((mobileCreateStep + 1) / mobileCreateStepCount) * 100}%`;
 
   const updateTask = (id: string, updates: Partial<DraftTask>) => {
     setDraft((current) => ({
@@ -360,7 +558,7 @@ function GoalEditorModal({
     setError("");
     setDraft((current) => ({
       ...current,
-      tasks: [...current.tasks, { ...newTask, id: crypto.randomUUID(), title }],
+      tasks: [...current.tasks, { ...newTask, id: createDraftId(), title }],
     }));
     setNewTask(newDraftTask());
   };
@@ -405,6 +603,38 @@ function GoalEditorModal({
     }
   };
 
+  const goToNextMobileCreateStep = () => {
+    if (mobileCreateStep === 0 && !draft.title.trim()) {
+      setError("Goal needs a name — even a tiny heroic one.");
+      return;
+    }
+    setError("");
+    setMobileCreateStep((current) =>
+      Math.min(current + 1, mobileCreateStepCount - 1),
+    );
+  };
+
+  const goToPreviousMobileCreateStep = () => {
+    setError("");
+    setMobileCreateStep((current) => Math.max(current - 1, 0));
+  };
+
+  const handleFooterSecondary = () => {
+    if (isMobileCreate && mobileCreateStep > 0) {
+      goToPreviousMobileCreateStep();
+      return;
+    }
+    onClose();
+  };
+
+  const handleFooterPrimary = () => {
+    if (isMobileCreate && mobileCreateStep < mobileCreateStepCount - 1) {
+      goToNextMobileCreateStep();
+      return;
+    }
+    void save();
+  };
+
   return (
     <motion.div
       className="goal-modal-backdrop"
@@ -413,198 +643,276 @@ function GoalEditorModal({
       exit={{ opacity: 0 }}
     >
       <motion.section
-        className="goal-modal tasks-panel tasks-panel--today app-scroll"
-        initial={{ opacity: 0, x: -32 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -28 }}
+        className={`goal-modal tasks-panel tasks-panel--today app-scroll ${isMobile ? "goal-modal--mobile" : ""}`.trim()}
+        initial={isMobile ? { opacity: 0, y: 18 } : { opacity: 0, x: -32 }}
+        animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
+        exit={isMobile ? { opacity: 0, y: 14 } : { opacity: 0, x: -28 }}
         role="dialog"
         aria-modal="true"
         aria-label={isEditing ? "Edit goal" : "Create goal"}
       >
         <header className="goal-modal__header">
           <div>
-            <p className="goal-kicker">
-              {isEditing ? "Edit goal" : "New goal"}
-            </p>
+            {isMobile && !isEditing ? null : (
+              <p className="goal-kicker">
+                {isEditing ? "Edit goal" : "New goal"}
+              </p>
+            )}
             <h2>{isEditing ? "Tune the route" : "Create a goal"}</h2>
           </div>
-          <button
-            type="button"
-            className="goal-icon-button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            ×
-          </button>
+          {isMobile && !isEditing ? null : (
+            <button
+              type="button"
+              className="goal-icon-button"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          )}
         </header>
 
-        <div className="goal-form-grid">
-          <label className="goal-field goal-field--wide">
-            <span>Goal name</span>
-            <input
-              className="goal-input goal-input--large"
-              value={draft.title}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              maxLength={MAX_TITLE_LENGTH}
-              placeholder="e.g. Apply for residence permit"
-              autoFocus
-            />
-          </label>
-          <label className="goal-field">
-            <span>Deadline · optional</span>
-            <GoalDatePicker
-              value={draft.deadline}
-              onChange={(deadline) =>
-                setDraft((current) => ({
-                  ...current,
-                  deadline,
-                }))
-              }
-              className="goal-date-picker--large"
-              ariaLabel="Goal deadline"
-            />
-          </label>
-        </div>
-
-        <div className="goal-editor-icon-block">
-          <button
-            type="button"
-            className="goal-detail-editor__icon"
-            onClick={() => setGoalIconPickerOpen((current) => !current)}
-            aria-label="Choose goal icon"
+        {isMobileCreate ? (
+          <div
+            className="goal-create-progress"
+            style={{ "--goal-create-progress": mobileCreateProgress } as CSSProperties}
           >
-            <GoalTaskIcon iconId={draft.iconId} />
-          </button>
-          <div>
-            <span>Pick the icon for this goal summary.</span>
+            <div className="goal-create-progress__meta">
+              <span>Step {mobileCreateStep + 1} of {mobileCreateStepCount}</span>
+            </div>
+            <div className="goal-create-progress__track" aria-hidden="true">
+              <span />
+            </div>
           </div>
-          {goalIconPickerOpen ? (
-            <div className="goal-editor-icon-block__popover">
-              <IconPicker
-                value={draft.iconId}
-                onChange={(iconId) => {
-                  setDraft((current) => ({ ...current, iconId }));
-                  setGoalIconPickerOpen(false);
-                }}
-              />
+        ) : null}
+
+        <div className="goal-create-step">
+          {(!isMobileCreate || mobileCreateStep === 0) ? (
+            <div className="goal-form-grid">
+              <div className="goal-mobile-section-title">Goal name</div>
+              <label className="goal-field goal-field--wide">
+                <span>Goal name</span>
+                <input
+                  className="goal-input goal-input--large"
+                  value={draft.title}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
+                  maxLength={MAX_TITLE_LENGTH}
+                  placeholder="e.g. Apply for residence permit"
+                  autoFocus
+                />
+              </label>
+              <label className="goal-field">
+                <span>Deadline · optional</span>
+                <GoalDatePicker
+                  value={draft.deadline}
+                  onChange={(deadline) =>
+                    setDraft((current) => ({
+                      ...current,
+                      deadline,
+                    }))
+                  }
+                  className="goal-date-picker--large"
+                  ariaLabel="Goal deadline"
+                />
+              </label>
             </div>
           ) : null}
-        </div>
 
-        {!isEditing ? (
-        <div className="goal-editor-section">
-          <div className="goal-editor-section__head">
-            <div>
-              <h3>Break it into steps</h3>
-            </div>
-          </div>
-
-          <Reorder.Group
-            axis="y"
-            values={draft.tasks}
-            onReorder={(tasks) =>
-              setDraft((current) => ({ ...current, tasks }))
-            }
-            className="goal-task-editor-list"
-          >
-            <AnimatePresence initial={false}>
-              {draft.tasks.map((task) => (
-                <GoalTaskEditor
-                  key={task.id}
-                  task={task}
-                  onChange={(updates) => updateTask(task.id, updates)}
-                  onRemove={() => removeTask(task.id)}
-                  disableRemove={false}
-                />
-              ))}
-            </AnimatePresence>
-          </Reorder.Group>
-
-          <div className="goal-task-add-row" aria-label="Add task to goal">
-            <div className="goal-task-editor__icon-wrap goal-task-add-row__icon-wrap">
-              <button
-                type="button"
-                className="goal-task-editor__icon goal-task-add-row__icon"
-                onClick={() => setNewTaskPickerOpen((current) => !current)}
-                aria-label="Choose new task icon"
-                title="Choose icon"
-              >
-                <GoalTaskIcon iconId={newTask.iconId} />
-              </button>
-              {newTaskPickerOpen ? (
-                <div className="goal-task-editor__popover">
+          {(!isMobileCreate || mobileCreateStep === 1) ? (
+            <div className={`goal-editor-icon-block ${isMobileCreate ? "goal-editor-icon-block--mobile-picker" : ""}`.trim()}>
+              <div className="goal-mobile-section-title">Icon</div>
+              {isMobileCreate ? (
+                <div className="goal-detail-editor__icon goal-detail-editor__icon--preview" aria-hidden="true">
+                  <GoalTaskIcon iconId={draft.iconId} />
+                </div>
+              ) : (
+                <button
+                  ref={goalIconButtonRef}
+                  type="button"
+                  className="goal-detail-editor__icon"
+                  onClick={() => setGoalIconPickerOpen((current) => !current)}
+                  aria-label="Choose goal icon"
+                >
+                  <GoalTaskIcon iconId={draft.iconId} />
+                </button>
+              )}
+              <div className="goal-editor-icon-block__copy">
+                <span>Pick the icon for this goal summary.</span>
+              </div>
+              {isMobileCreate ? (
+                <div className="goal-editor-icon-block__picker">
                   <IconPicker
-                    value={newTask.iconId}
+                    value={draft.iconId}
                     onChange={(iconId) => {
-                      setNewTask((current) => ({ ...current, iconId }));
-                      setNewTaskPickerOpen(false);
+                      setDraft((current) => ({ ...current, iconId }));
                     }}
                   />
                 </div>
+              ) : goalIconPickerOpen ? (
+                <IconPickerPopover
+                  anchorRef={goalIconButtonRef}
+                  className="goal-editor-icon-block__popover"
+                  value={draft.iconId}
+                  onChange={(iconId) => {
+                    setDraft((current) => ({ ...current, iconId }));
+                    setGoalIconPickerOpen(false);
+                  }}
+                />
               ) : null}
             </div>
-            <input
-              value={newTask.title}
-              onChange={(event) =>
-                setNewTask((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addTask();
+          ) : null}
+
+          {(!isEditing && (!isMobileCreate || mobileCreateStep === 2)) ? (
+            <div className="goal-editor-section">
+              <div className="goal-editor-section__head">
+                <div>
+                  <h3>Break it into steps</h3>
+                </div>
+                <span className="goal-editor-section__count">
+                  {draft.tasks.length} step{draft.tasks.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              <Reorder.Group
+                axis="y"
+                values={draft.tasks}
+                onReorder={(tasks) =>
+                  setDraft((current) => ({ ...current, tasks }))
                 }
-              }}
-              placeholder="New task"
-              maxLength={MAX_TITLE_LENGTH}
-              className="goal-input goal-task-editor__title"
-            />
-            <GoalDatePicker
-              value={newTask.deadline}
-              onChange={(deadline) =>
-                setNewTask((current) => ({
-                  ...current,
-                  deadline,
-                }))
-              }
-              className="goal-task-editor__date"
-              ariaLabel="New task deadline"
-            />
-            <button
-              type="button"
-              className="add-icon-btn"
-              onClick={addTask}
-              aria-label="Add task"
-            >
-              <span aria-hidden="true">+</span>
-            </button>
-          </div>
+                className="goal-task-editor-list"
+              >
+                <AnimatePresence initial={false}>
+                  {draft.tasks.map((task) => (
+                    <GoalTaskEditor
+                      key={task.id}
+                      task={task}
+                      onChange={(updates) => updateTask(task.id, updates)}
+                      onRemove={() => removeTask(task.id)}
+                      disableRemove={false}
+                      mobileCreateMode={isMobileCreate}
+                    />
+                  ))}
+                </AnimatePresence>
+              </Reorder.Group>
+
+              <div className={`goal-task-add-row ${newTaskPickerOpen ? "is-icon-picker-open" : ""}`.trim()} aria-label="Add task to goal">
+                <span className="goal-task-add-row__label">Add a new step</span>
+                <div className={`goal-task-editor__icon-wrap goal-task-add-row__icon-wrap ${newTaskPickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
+                  <button
+                    ref={newTaskIconButtonRef}
+                    type="button"
+                    className="goal-task-editor__icon goal-task-add-row__icon"
+                    onClick={() => setNewTaskPickerOpen((current) => !current)}
+                    aria-expanded={newTaskPickerOpen}
+                    aria-label="Choose new task icon"
+                    title="Choose icon"
+                  >
+                    <span className="goal-task-add-row__icon-preview" aria-hidden="true">
+                      <GoalTaskIcon iconId={newTask.iconId} />
+                    </span>
+                    <span className="goal-task-add-row__icon-label">Pick an icon</span>
+                    <svg className="goal-task-add-row__icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+                  {newTaskPickerOpen ? (
+                    <IconPickerPopover
+                      anchorRef={newTaskIconButtonRef}
+                      className="goal-task-editor__popover goal-task-add-row__icon-picker"
+                      value={newTask.iconId}
+                      onChange={(iconId) => {
+                        setNewTask((current) => ({ ...current, iconId }));
+                        setNewTaskPickerOpen(false);
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="goal-task-add-row__fields">
+                  <input
+                    value={newTask.title}
+                    onChange={(event) =>
+                      setNewTask((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addTask();
+                      }
+                    }}
+                    placeholder="Task name"
+                    maxLength={MAX_TITLE_LENGTH}
+                    className="goal-input goal-task-editor__title"
+                  />
+                  <GoalDatePicker
+                    value={newTask.deadline}
+                    onChange={(deadline) =>
+                      setNewTask((current) => ({
+                        ...current,
+                        deadline,
+                      }))
+                    }
+                    className="goal-task-editor__date"
+                    ariaLabel="New task deadline"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="task-add goal-task-add-row__add"
+                  onClick={addTask}
+                  aria-label="Add task"
+                >
+                  <span aria-hidden="true">+</span>
+                  Add step
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
-        ) : null}
 
         <p className="goal-error" aria-live="polite">
           {error}
         </p>
 
-        <footer className="goal-modal__footer">
-          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onClose}>
-            Cancel
+        <footer className={`goal-modal__footer ${isMobileCreate ? "goal-modal__footer--create-steps" : ""}`.trim()}>
+          <button
+            type="button"
+            className={`pomodoro-btn pomodoro-btn--ghost-text ${isMobileCreate && mobileCreateStep > 0 ? "goal-create-footer__back" : ""}`.trim()}
+            onClick={handleFooterSecondary}
+          >
+            {isMobileCreate && mobileCreateStep > 0 ? (
+              <span className="goal-create-footer__content">
+                <svg className="goal-create-footer__arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M15 6l-6 6 6 6" />
+                </svg>
+                Back
+              </span>
+            ) : (
+              "Cancel"
+            )}
           </button>
           <button
             type="button"
-            className="task-add"
-            onClick={save}
+            className={`task-add ${isMobileCreate && mobileCreateStep < mobileCreateStepCount - 1 ? "goal-create-footer__continue" : ""}`.trim()}
+            onClick={handleFooterPrimary}
             disabled={isSaving}
           >
-            {isSaving
-              ? "Saving..."
+            {isSaving ? "Saving..." : isMobileCreate && mobileCreateStep < mobileCreateStepCount - 1
+              ? (
+                <span className="goal-create-footer__content">
+                  Continue
+                  <svg className="goal-create-footer__arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
+                </span>
+              )
               : isEditing
                 ? "Save changes"
                 : "Create Goal"}
@@ -907,6 +1215,162 @@ function GoalSummaryCard({ goal }: { goal: Goal }) {
   );
 }
 
+function GoalMobileEditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M5 17.5 4.5 20 7 19.5 17.8 8.7 15.8 6.7 5 17.5Z" />
+      <path d="M14.8 7.7 16.9 5.6c.6-.6 1.5-.6 2.1 0l.4.4c.6.6.6 1.5 0 2.1l-2.1 2.1" />
+    </svg>
+  );
+}
+
+function GoalMobileTrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M8 8.5h8" />
+      <path d="M10 8.5V6.8c0-.6.5-1.1 1.1-1.1h1.8c.6 0 1.1.5 1.1 1.1v1.7" />
+      <path d="m9 10.5.5 7.7c.1.8.7 1.3 1.5 1.3h2c.8 0 1.4-.5 1.5-1.3l.5-7.7" />
+      <path d="m11.2 12.3.2 4.7M12.8 12.3l-.2 4.7" />
+    </svg>
+  );
+}
+
+function GoalMobileRow({ goal, onDelete }: { goal: Goal; onDelete: () => void }) {
+  const navigate = useNavigate();
+  const x = useMotionValue(0);
+  const deleteWidth = useTransform(x, (value) => Math.min(MOBILE_SWIPE_LIMIT, Math.max(0, -value)));
+  const deleteVisibility = useTransform(x, (value) => (value < -1 ? "visible" : "hidden"));
+  const [didSwipe, setDidSwipe] = useState(false);
+  const progress = getProgress(goal.tasks);
+  const doneTasks = goal.tasks.filter((task) => task.completed).length;
+  const nextTask =
+    goal.tasks.find((task) => !task.completed) ??
+    goal.tasks[goal.tasks.length - 1];
+
+  return (
+    <motion.li
+      className="gm-swipe-item"
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+    >
+      <motion.span
+        className="gm-swipe-action gm-swipe-action--delete"
+        style={{ width: deleteWidth, visibility: deleteVisibility }}
+        aria-hidden="true"
+      >
+        <GoalMobileTrashIcon />
+        <span>DELETE</span>
+      </motion.span>
+
+      <motion.button
+        type="button"
+        className="gm-goal-row"
+        drag="x"
+        style={{ x }}
+        dragConstraints={{ left: -MOBILE_SWIPE_LIMIT, right: 0 }}
+        dragElastic={0.08}
+        onDragStart={() => setDidSwipe(true)}
+        onDragEnd={() => {
+          const swipe = x.get();
+          animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
+          if (swipe <= -MOBILE_SWIPE_TRIGGER) onDelete();
+          window.setTimeout(() => setDidSwipe(false), 0);
+        }}
+        onClick={() => {
+          if (didSwipe) return;
+          navigate(`/goals/${goal.id}`);
+        }}
+        aria-label={`Open ${goal.title}`}
+      >
+        <div className="gm-goal-row__icon" aria-hidden="true">
+          <GoalTaskIcon iconId={goal.iconId ?? nextTask?.iconId} />
+        </div>
+        <div className="gm-goal-row__body">
+          <div className="gm-goal-row__topline">
+            <span className={getStatusClassName(goal)}>{getStatusLabel(goal)}</span>
+            {goal.deadline ? <span className="goal-deadline">Due {formatDate(goal.deadline)}</span> : null}
+          </div>
+          <strong className="gm-goal-row__title">{goal.title}</strong>
+          <span className="gm-goal-row__next">
+            {nextTask ? `Next: ${nextTask.title}` : "No tasks yet"}
+          </span>
+          <div className="gm-goal-row__progress">
+            <div className="goal-progress" aria-label={`${progress}% completed`}>
+              <span style={{ width: `${progress}%` }} />
+            </div>
+            <span>{progress}%</span>
+          </div>
+          <span className="gm-goal-row__meta">
+            {doneTasks}/{goal.tasks.length} tasks done
+          </span>
+        </div>
+      </motion.button>
+    </motion.li>
+  );
+}
+
+function GoalsMobileList({
+  goals,
+  isLoading,
+  stats,
+  onAddGoal,
+  onDeleteGoal,
+}: {
+  goals: Goal[];
+  isLoading: boolean;
+  stats: { totalTasks: number; doneTasks: number };
+  onAddGoal: () => void;
+  onDeleteGoal: (goal: Goal) => void;
+}) {
+  return (
+    <motion.section
+      className="goals-mobile"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <header className="goals-mobile__header">
+        <div>
+          <h1 className="goals-mobile__title">Goals</h1>
+          <p className="goals-mobile__counter">
+            {goals.length} goal{goals.length === 1 ? "" : "s"} ·{" "}
+            {stats.totalTasks > 0 ? `${stats.doneTasks}/${stats.totalTasks} tasks` : "0 tasks"}
+          </p>
+        </div>
+      </header>
+
+      <div className="goals-mobile__list-wrap app-scroll">
+        {isLoading ? <div className="goals-mobile__empty">Loading goals...</div> : null}
+        {!isLoading && goals.length === 0 ? (
+          <div className="goals-mobile__empty">
+            <strong>No goals yet</strong>
+            <span>Add your first goal and break it into tiny steps.</span>
+          </div>
+        ) : null}
+        {goals.length > 0 ? (
+          <ul className="goals-mobile__list" aria-label="Goals list">
+            <AnimatePresence initial={false}>
+              {goals.map((goal) => (
+                <GoalMobileRow key={goal.id} goal={goal} onDelete={() => onDeleteGoal(goal)} />
+              ))}
+            </AnimatePresence>
+          </ul>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        className="add-icon-btn goals-mobile__fab"
+        aria-label="Add goal"
+        onClick={onAddGoal}
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+    </motion.section>
+  );
+}
+
 type DetailTaskDraft = {
   id?: string;
   title: string;
@@ -1025,6 +1489,7 @@ function GoalDetailTaskRow({
   const [draft, setDraft] = useState<DetailTaskDraft>(() => toDetailTaskDraft(task));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState("");
+  const iconButtonRef = useRef<HTMLButtonElement | null>(null);
   const subtaskCount = task.subtasks?.length ?? 0;
   const doneSubtasks = task.subtasks?.filter((s) => s.completed).length ?? 0;
   const complete = isTaskComplete(task);
@@ -1084,7 +1549,7 @@ function GoalDetailTaskRow({
       dragListener={false}
       dragControls={dragControls}
       onDragEnd={onPersistOrder}
-      className={`goal-detail-task ${isEditing ? "is-editing" : ""} ${complete ? "is-complete" : ""} ${expanded ? "is-expanded" : ""}`.trim()}
+      className={`goal-detail-task ${isEditing ? "is-editing" : ""} ${complete ? "is-complete" : ""} ${expanded ? "is-expanded" : ""} ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
     >
       <div className="goal-detail-task__head">
         <button
@@ -1113,8 +1578,9 @@ function GoalDetailTaskRow({
         </button>
         {isEditing ? (
           <div className="goal-detail-task__main goal-detail-task__main--editing">
-            <div className="goal-detail-task__icon-edit-wrap">
+            <div className={`goal-detail-task__icon-edit-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
               <button
+                ref={iconButtonRef}
                 type="button"
                 className="goal-detail-task__icon-edit"
                 onClick={() => setPickerOpen((current) => !current)}
@@ -1123,15 +1589,15 @@ function GoalDetailTaskRow({
                 <GoalTaskIcon iconId={draft.iconId} />
               </button>
               {pickerOpen ? (
-                <div className="goal-detail-task__icon-popover">
-                  <IconPicker
-                    value={draft.iconId}
-                    onChange={(iconId) => {
-                      setDraft((current) => ({ ...current, iconId }));
-                      setPickerOpen(false);
-                    }}
-                  />
-                </div>
+                <IconPickerPopover
+                  anchorRef={iconButtonRef}
+                  className="goal-detail-task__icon-popover"
+                  value={draft.iconId}
+                  onChange={(iconId) => {
+                    setDraft((current) => ({ ...current, iconId }));
+                    setPickerOpen(false);
+                  }}
+                />
               ) : null}
             </div>
             <div className="goal-detail-task__title-edit">
@@ -1571,6 +2037,7 @@ function GoalDetailTaskAddRow({
   const [draft, setDraft] = useState<DetailTaskDraft>(() => emptyDetailTaskDraft());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState("");
+  const iconButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setDraft(emptyDetailTaskDraft());
@@ -1603,7 +2070,7 @@ function GoalDetailTaskAddRow({
   return (
     <motion.li
       ref={addRowRef}
-      className={`goal-detail-task goal-detail-task--add is-editing ${disabled ? "is-disabled" : ""}`.trim()}
+      className={`goal-detail-task goal-detail-task--add is-editing ${disabled ? "is-disabled" : ""} ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1613,8 +2080,9 @@ function GoalDetailTaskAddRow({
         <span className="goal-detail-task__drag goal-detail-task__drag--placeholder" aria-hidden="true" />
         <span className="goal-detail-task__check goal-detail-task__check--add" aria-hidden="true">+</span>
         <div className="goal-detail-task__main goal-detail-task__main--editing">
-          <div className="goal-detail-task__icon-edit-wrap">
+          <div className={`goal-detail-task__icon-edit-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
             <button
+              ref={iconButtonRef}
               type="button"
               className="goal-detail-task__icon-edit"
               onClick={() => setPickerOpen((current) => !current)}
@@ -1624,15 +2092,15 @@ function GoalDetailTaskAddRow({
               <GoalTaskIcon iconId={draft.iconId} />
             </button>
             {pickerOpen ? (
-              <div className="goal-detail-task__icon-popover">
-                <IconPicker
-                  value={draft.iconId}
-                  onChange={(iconId) => {
-                    setDraft((current) => ({ ...current, iconId }));
-                    setPickerOpen(false);
-                  }}
-                />
-              </div>
+              <IconPickerPopover
+                anchorRef={iconButtonRef}
+                className="goal-detail-task__icon-popover"
+                value={draft.iconId}
+                onChange={(iconId) => {
+                  setDraft((current) => ({ ...current, iconId }));
+                  setPickerOpen(false);
+                }}
+              />
             ) : null}
           </div>
           <div className="goal-detail-task__title-edit">
@@ -1928,6 +2396,8 @@ export function GoalDetailPage() {
 
 export function GoalsPage() {
   const goalsQuery = useGoals();
+  const deleteGoal = useDeleteGoal();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editorGoal, setEditorGoal] = useState<Goal | null | undefined>(undefined);
   const goals = goalsQuery.data ?? [];
@@ -1948,6 +2418,26 @@ export function GoalsPage() {
     );
     return { totalTasks, doneTasks };
   }, [goals]);
+
+  if (isMobile) {
+    return (
+      <>
+        <GoalsMobileList
+          goals={goals}
+          isLoading={goalsQuery.isLoading}
+          stats={stats}
+          onAddGoal={() => setEditorGoal(null)}
+          onDeleteGoal={(goal) => deleteGoal.mutate(goal.id)}
+        />
+
+        <AnimatePresence>
+          {editorGoal !== undefined ? (
+            <GoalEditorModal goal={editorGoal} onClose={() => setEditorGoal(undefined)} />
+          ) : null}
+        </AnimatePresence>
+      </>
+    );
+  }
 
   return (
     <>

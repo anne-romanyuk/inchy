@@ -1,5 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { checkpointDatabase, db } from "../db";
+import { assignCategoryColor } from "../lib/categoryColors";
 import { newId } from "../lib/ids";
 import { toOccurrence, type OccurrenceRow, type GoalTaskRow, type GoalSubtaskRow } from "../lib/mappers";
 import { requireUser, type AuthEnv } from "../middleware/auth";
@@ -13,6 +14,8 @@ import {
   OccurrencesEnvelopeSchema,
   OkResponseSchema,
 } from "../../shared/schemas";
+import { normalizeTaskDurationValue } from "../../shared/duration";
+import { normalizeTaskTimeValue } from "../../shared/time";
 
 export const occurrenceRoutes = createApp<AuthEnv>();
 occurrenceRoutes.use("*", requireUser);
@@ -72,9 +75,7 @@ const SELECT_OCCURRENCES_WITH_RESOLVED = `
 function saveTaskCategory(userId: string, category: string) {
   const name = category.trim();
   if (!name) return;
-  db.prepare(
-    "INSERT OR IGNORE INTO task_categories (id, user_id, name, created_at) VALUES (?, ?, ?, ?)",
-  ).run(newId(), userId, name, new Date().toISOString());
+  assignCategoryColor(db, "task_categories", userId, name);
 }
 
 const listOccurrencesRoute = createRoute({
@@ -147,7 +148,8 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       title: input.title,
       priority: input.priority ?? null,
       category: input.category ?? "",
-      duration: input.duration ?? "",
+      duration: normalizeTaskDurationValue(input.duration),
+      time: normalizeTaskTimeValue(input.time),
       completed: 0,
       position,
       created_at: now,
@@ -194,6 +196,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       priority: null,
       category: "",
       duration: "",
+      time: "",
       completed: 0,
       position,
       created_at: now,
@@ -232,6 +235,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       priority: null,
       category: "",
       duration: "",
+      time: "",
       completed: 0,
       position,
       created_at: now,
@@ -246,8 +250,8 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
     db.prepare(
       `INSERT INTO task_occurrences
        (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
-        title, priority, category, duration, completed, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        title, priority, category, duration, time, completed, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       row.id,
       row.user_id,
@@ -260,6 +264,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       row.priority,
       row.category,
       row.duration,
+      row.time,
       row.completed,
       row.position,
       row.created_at,
@@ -270,9 +275,9 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       saveTaskCategory(userId, row.category);
       if (input.saveToDefault) {
         db.prepare(
-          `INSERT INTO default_tasks (id, user_id, title, priority, category, duration, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        ).run(newId(), userId, row.title, row.priority, row.category, row.duration, row.created_at);
+          `INSERT INTO default_tasks (id, user_id, title, priority, category, duration, time, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(newId(), userId, row.title, row.priority, row.category, row.duration, row.time, row.created_at);
       }
     }
   })();
@@ -295,6 +300,7 @@ const updateOccurrenceRoute = createRoute({
   responses: {
     200: { description: "Updated", content: { "application/json": { schema: OccurrenceEnvelopeSchema } } },
     404: { description: "Not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+    409: { description: "Already exists / invariant violated", content: { "application/json": { schema: ErrorResponseSchema } } },
     422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
   },
 });
@@ -310,21 +316,70 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
   if (!existing) return c.json({ message: "Occurrence not found." }, 404);
 
   const isGoalLinked = existing.source_kind !== "standalone";
+  const nextOccurrenceDate = updates.occurrenceDate ?? existing.occurrence_date;
   const nextTitle = !isGoalLinked && updates.title !== undefined ? updates.title : existing.title;
   const nextPriority = !isGoalLinked && updates.priority !== undefined ? updates.priority : existing.priority;
-  const nextCategory = !isGoalLinked && updates.category !== undefined ? updates.category : existing.category;
-  const nextDuration = !isGoalLinked && updates.duration !== undefined ? updates.duration : existing.duration;
+  const nextCategory = updates.category !== undefined ? updates.category : existing.category;
+  const nextDuration =
+    updates.duration !== undefined
+      ? normalizeTaskDurationValue(updates.duration)
+      : normalizeTaskDurationValue(existing.duration);
+  const nextTime =
+    updates.time !== undefined
+      ? normalizeTaskTimeValue(updates.time)
+      : normalizeTaskTimeValue(existing.time);
   const nextCompleted =
     typeof updates.completed === "boolean" ? (updates.completed ? 1 : 0) : existing.completed;
   const now = new Date().toISOString();
+  const isMovingDate = nextOccurrenceDate !== existing.occurrence_date;
+
+  if (isMovingDate && nextCompleted === 0) {
+    if (existing.source_kind === "goal_task" && existing.goal_task_id) {
+      const duplicate = db
+        .prepare(
+          `SELECT id FROM task_occurrences
+           WHERE user_id = ? AND occurrence_date = ? AND goal_task_id = ? AND completed = 0 AND id <> ?`,
+        )
+        .get(userId, nextOccurrenceDate, existing.goal_task_id, id) as { id: string } | undefined;
+      if (duplicate) return c.json({ message: "Already added to this date." }, 409);
+    } else if (existing.source_kind === "goal_subtask" && existing.goal_subtask_id) {
+      const duplicate = db
+        .prepare(
+          `SELECT id FROM task_occurrences
+           WHERE user_id = ? AND occurrence_date = ? AND goal_subtask_id = ? AND completed = 0 AND id <> ?`,
+        )
+        .get(userId, nextOccurrenceDate, existing.goal_subtask_id, id) as { id: string } | undefined;
+      if (duplicate) return c.json({ message: "Already added to this date." }, 409);
+    }
+  }
+
+  const nextPosition = isMovingDate
+    ? ((db
+        .prepare(
+          "SELECT MIN(position) AS min_position FROM task_occurrences WHERE user_id = ? AND occurrence_date = ?",
+        )
+        .get(userId, nextOccurrenceDate) as { min_position: number | null }).min_position ?? 1) - 1
+    : existing.position;
 
   db.transaction(() => {
-    if (!isGoalLinked && nextCategory) saveTaskCategory(userId, nextCategory);
+    if (nextCategory) saveTaskCategory(userId, nextCategory);
     db.prepare(
       `UPDATE task_occurrences
-       SET title = ?, priority = ?, category = ?, duration = ?, completed = ?, updated_at = ?
+       SET occurrence_date = ?, title = ?, priority = ?, category = ?, duration = ?, time = ?, completed = ?, position = ?, updated_at = ?
        WHERE id = ? AND user_id = ?`,
-    ).run(nextTitle, nextPriority, nextCategory, nextDuration, nextCompleted, now, id, userId);
+    ).run(
+      nextOccurrenceDate,
+      nextTitle,
+      nextPriority,
+      nextCategory,
+      nextDuration,
+      nextTime,
+      nextCompleted,
+      nextPosition,
+      now,
+      id,
+      userId,
+    );
 
     // Propagate to parent goal_task/goal_subtask if asked to.
     if (

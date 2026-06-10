@@ -7,6 +7,7 @@
 @import "./styles/02-base.css";
 @import "./styles/10-sidebar.css";
 @import "./styles/11-profile.css";
+@import "./styles/12-settings.css";
 @import "./styles/20-pomodoro.css";
 @import "./styles/30-goals.css";
 @import "./styles/21-plan.css";
@@ -14,4 +15,5 @@
 @import "./styles/31-today.css";
 @import "./styles/32-notes.css";
 @import "./styles/40-auth.css";
+@import "./styles/45-mobile.css";
 @import "./styles/99-responsive.css";

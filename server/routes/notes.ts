@@ -1,5 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { db } from "../db";
+import { assignCategoryColor } from "../lib/categoryColors";
 import { newId } from "../lib/ids";
 import { toNote, type NoteRow } from "../lib/mappers";
 import { requireUser, type AuthEnv } from "../middleware/auth";
@@ -14,9 +15,26 @@ export const noteRoutes = createApp<AuthEnv>();
 noteRoutes.use("*", requireUser);
 
 function listNotes(userId: string): NoteRow[] {
+  syncNoteCategories(userId);
   return db
-    .prepare("SELECT * FROM notes WHERE user_id = ? ORDER BY pinned DESC, updated_at DESC, created_at DESC")
+    .prepare(
+      `SELECT notes.*, note_categories.color AS category_color
+       FROM notes
+       LEFT JOIN note_categories
+         ON note_categories.user_id = notes.user_id
+        AND lower(note_categories.name) = lower(notes.category)
+       WHERE notes.user_id = ?
+       ORDER BY pinned DESC, updated_at DESC, created_at DESC`,
+    )
     .all(userId) as NoteRow[];
+}
+
+function syncNoteCategories(userId: string) {
+  const rows = db
+    .prepare("SELECT DISTINCT category FROM notes WHERE user_id = ? AND trim(category) <> ''")
+    .all(userId) as Array<{ category: string }>;
+
+  rows.forEach((row) => assignCategoryColor(db, "note_categories", userId, row.category));
 }
 
 const listNotesRoute = createRoute({
@@ -81,6 +99,7 @@ noteRoutes.openapi(saveNotesRoute, (c) => {
       const id = note.id ?? newId();
       const previous = existing.get(id);
       const category = note.category ?? "";
+      if (category.trim()) assignCategoryColor(db, "note_categories", userId, category);
       const createdAt = previous?.created_at ?? now;
       const updatedAt =
         previous &&

@@ -32,7 +32,8 @@
      short user-typed categories and (clipped) goal names for goal-linked
      occurrences. The grid `minmax(0, 1fr)` on the title column absorbs
      any leftover space. */
-  --task-col-category: 180px;
+  --task-col-time: 74px;
+  --task-col-category: 150px;
   --task-col-focus: 28px;
   --task-col-edit: 26px;
   --task-col-delete: 26px;

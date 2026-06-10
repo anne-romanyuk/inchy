@@ -46,23 +46,43 @@ export function useUpdateOccurrence() {
     }) => api.updateOccurrence(id, updates),
     onMutate: async ({ id, occurrenceDate, updates }) => {
       const key = queryKeys.occurrences(occurrenceDate);
+      const nextDate = updates.occurrenceDate;
+      const nextKey = nextDate && nextDate !== occurrenceDate ? queryKeys.occurrences(nextDate) : null;
       await client.cancelQueries({ queryKey: key });
+      if (nextKey) await client.cancelQueries({ queryKey: nextKey });
       const previous = client.getQueryData<Occurrence[]>(key);
-      client.setQueryData<Occurrence[]>(key, (current = []) =>
-        current.map((o) =>
-          o.id === id
-            ? {
-                ...o,
-                ...(updates.title !== undefined ? { title: updates.title } : {}),
-                ...(updates.priority !== undefined ? { priority: updates.priority } : {}),
-                ...(updates.category !== undefined ? { category: updates.category } : {}),
-                ...(updates.duration !== undefined ? { duration: updates.duration } : {}),
-                ...(updates.completed !== undefined ? { completed: updates.completed } : {}),
-              }
-            : o,
-        ),
-      );
-      return { previous, key };
+      const previousNext = nextKey ? client.getQueryData<Occurrence[]>(nextKey) : undefined;
+      let movedOccurrence: Occurrence | null = null;
+
+      client.setQueryData<Occurrence[]>(key, (current = []) => {
+        const nextItems = current
+          .map((o) => {
+            if (o.id !== id) return o;
+            const updated = {
+              ...o,
+              ...(updates.occurrenceDate !== undefined ? { occurrenceDate: updates.occurrenceDate } : {}),
+              ...(updates.title !== undefined ? { title: updates.title } : {}),
+              ...(updates.priority !== undefined ? { priority: updates.priority } : {}),
+              ...(updates.category !== undefined ? { category: updates.category } : {}),
+              ...(updates.duration !== undefined ? { duration: updates.duration } : {}),
+              ...(updates.time !== undefined ? { time: updates.time } : {}),
+              ...(updates.completed !== undefined ? { completed: updates.completed } : {}),
+            };
+            movedOccurrence = updated;
+            return updated;
+          })
+          .filter((o) => !nextKey || o.id !== id);
+        return nextItems;
+      });
+
+      if (nextKey && movedOccurrence) {
+        client.setQueryData<Occurrence[]>(nextKey, (current = []) => [
+          movedOccurrence as Occurrence,
+          ...current.filter((o) => o.id !== id),
+        ]);
+      }
+
+      return { previous, previousNext, key, nextKey };
     },
     onError: (error, variables, ctx) => {
       // 404 = the occurrence is already gone server-side (most often its goal
@@ -72,16 +92,35 @@ export function useUpdateOccurrence() {
         client.setQueryData<Occurrence[]>(ctx.key, (current = []) =>
           current.filter((o) => o.id !== variables.id),
         );
+        if (ctx.nextKey) {
+          client.setQueryData<Occurrence[]>(ctx.nextKey, (current = []) =>
+            current.filter((o) => o.id !== variables.id),
+          );
+          client.invalidateQueries({ queryKey: ctx.nextKey });
+        }
         client.invalidateQueries({ queryKey: ctx.key });
         return;
       }
       if (ctx?.previous) client.setQueryData(ctx.key, ctx.previous);
+      if (ctx?.nextKey) client.setQueryData(ctx.nextKey, ctx.previousNext);
     },
     onSuccess: ({ occurrence }, variables) => {
-      client.setQueryData<Occurrence[]>(
-        queryKeys.occurrences(variables.occurrenceDate),
-        (current = []) => current.map((o) => (o.id === occurrence.id ? occurrence : o)),
-      );
+      const oldKey = queryKeys.occurrences(variables.occurrenceDate);
+      const newKey = queryKeys.occurrences(occurrence.occurrenceDate);
+      if (occurrence.occurrenceDate !== variables.occurrenceDate) {
+        client.setQueryData<Occurrence[]>(oldKey, (current = []) => current.filter((o) => o.id !== occurrence.id));
+        client.setQueryData<Occurrence[]>(newKey, (current = []) => [
+          occurrence,
+          ...current.filter((o) => o.id !== occurrence.id),
+        ]);
+        client.invalidateQueries({ queryKey: oldKey });
+        client.invalidateQueries({ queryKey: newKey });
+      } else {
+        client.setQueryData<Occurrence[]>(
+          oldKey,
+          (current = []) => current.map((o) => (o.id === occurrence.id ? occurrence : o)),
+        );
+      }
       // If completion propagated to a goal task/subtask, the goals view is stale.
       if (variables.updates.completionScope === "whole") {
         client.invalidateQueries({ queryKey: queryKeys.goals });

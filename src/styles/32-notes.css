@@ -201,90 +201,6 @@
   width: 100%;
   padding-left: var(--space-10);
 }
-.notes-category-filter__trigger {
-  appearance: none;
-  width: 100%;
-  min-width: 0;
-  min-height: calc(var(--space-10) + var(--space-1));
-  padding: 0 var(--space-4);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
-  color: var(--c-text-secondary);
-  box-shadow: none;
-  cursor: pointer;
-  font: var(--text-body-weight) var(--text-body-size) / 1 var(--font-base);
-  text-align: left;
-}
-.notes-category-filter__trigger > svg {
-  width: 1em;
-  height: 1em;
-  flex: 0 0 auto;
-}
-.notes-category-filter__trigger .task-modal__dropdown-caret {
-  margin-left: auto;
-  transform: translateY(-2px) rotate(45deg);
-}
-.notes-category-filter__trigger[aria-expanded="true"] .task-modal__dropdown-caret {
-  transform: translateY(2px) rotate(225deg);
-}
-.notes-category-filter__trigger:focus-visible {
-  outline: none;
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
-  box-shadow: var(--shadow-focus-ring);
-}
-.notes-category-filter__trigger.notes-category-badge {
-  border-radius: var(--radius-sm);
-}
-.notes-category-filter__trigger--all {
-  color: var(--c-text-secondary);
-}
-.notes-category-filter__dropdown {
-  left: 0;
-  right: 0;
-  min-width: calc(var(--space-10) * 5);
-  padding: var(--space-2);
-  border: var(--app-popup-border);
-  background: var(--app-popup-bg);
-  backdrop-filter: var(--app-popup-backdrop);
-  -webkit-backdrop-filter: var(--app-popup-backdrop);
-  box-shadow: var(--app-popup-shadow);
-}
-.notes-category-filter__list {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-2);
-  max-height: calc(var(--space-10) * 5);
-  padding: 0;
-}
-.notes-category-filter__option {
-  width: 100%;
-  justify-content: flex-start;
-  border-radius: var(--radius-pill);
-  padding: var(--space-2) var(--space-4);
-  font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
-  letter-spacing: var(--text-badge-tracking);
-  cursor: pointer;
-}
-.notes-category-filter__option--all {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  border: 0;
-  background: var(--c-accent-soft);
-  color: var(--c-accent);
-}
-.notes-category-filter__option:hover,
-.notes-category-filter__option:focus-visible,
-.notes-category-filter__option[aria-selected="true"] {
-  outline: none;
-  box-shadow: inset 0 0 0 1px currentColor;
-}
 .notes-control-icon {
   position: absolute;
   left: var(--space-5);
@@ -514,8 +430,8 @@
   stroke: currentColor;
 }
 .notes-category-badge--empty {
-  background: var(--c-surface-soft);
-  color: var(--c-text-muted);
+  background: color-mix(in srgb, var(--c-surface-elevated) 92%, var(--c-text-on-accent));
+  color: var(--c-text-secondary);
 }
 .notes-list-card__meta .notes-category-badge {
   flex: 1 1 auto;
@@ -672,75 +588,6 @@
   position: relative;
   flex: 0 0 auto;
   margin-left: auto;
-}
-.notes-category-picker__trigger {
-  border: 0;
-  cursor: pointer;
-}
-.notes-category-picker__trigger .task-modal__dropdown-caret {
-  margin-left: var(--space-1);
-  transform: translateY(-2px) rotate(45deg);
-}
-.notes-category-picker__trigger[aria-expanded="true"] .task-modal__dropdown-caret {
-  transform: translateY(2px) rotate(225deg);
-}
-.notes-category-picker__dropdown {
-  left: auto;
-  right: 0;
-  min-width: calc(var(--space-10) * 5 + var(--space-4));
-  padding: var(--space-2);
-  border: var(--app-popup-border);
-  background: var(--app-popup-bg);
-  backdrop-filter: var(--app-popup-backdrop);
-  -webkit-backdrop-filter: var(--app-popup-backdrop);
-  box-shadow: var(--app-popup-shadow);
-}
-.notes-category-picker__input {
-  width: 100%;
-  min-width: 0;
-  height: var(--space-10);
-  margin: 0 0 var(--space-2);
-  padding: 0 var(--space-4);
-  border: 1px solid var(--c-border-soft);
-  border-radius: var(--radius-sm);
-  background: var(--c-surface-glass);
-  color: var(--c-text-primary);
-  font: var(--text-body-weight) var(--text-body-small-size) / 1 var(--font-base);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-surface-elevated) 56%, transparent);
-}
-.notes-category-picker__input::placeholder {
-  color: var(--c-text-muted);
-}
-.notes-category-picker__input:focus-visible {
-  outline: none;
-  border-color: var(--c-focus);
-  box-shadow: var(--shadow-focus-ring);
-}
-.notes-category-picker__list {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-2);
-  max-height: calc(var(--space-10) * 5);
-  padding: 0;
-}
-.notes-category-picker__list .notes-category-badge {
-  width: 100%;
-  justify-content: flex-start;
-  border-radius: var(--radius-pill);
-  padding: var(--space-2) var(--space-4);
-  font: var(--text-badge-weight) var(--text-body-small-size) / 1 var(--font-base);
-  letter-spacing: var(--text-badge-tracking);
-  cursor: pointer;
-}
-.notes-category-picker__list .notes-category-badge {
-  box-shadow: none;
-}
-.notes-category-picker__list .notes-category-badge:hover,
-.notes-category-picker__list .notes-category-badge:focus-visible,
-.notes-category-picker__list .notes-category-badge[aria-selected="true"] {
-  outline: none;
-  box-shadow: inset 0 0 0 1px currentColor;
 }
 .notes-editor-card__meta {
   display: flex;
@@ -1145,9 +992,7 @@
 }
 
 :root[data-theme="forest"] .notes-card-menu__dropdown,
-:root[data-theme="forest"] .notes-emoji-picker__popover,
-:root[data-theme="forest"] .notes-category-picker__dropdown,
-:root[data-theme="forest"] .notes-category-picker__dropdown .task-modal__combobox-list {
+:root[data-theme="forest"] .notes-emoji-picker__popover {
   border: var(--app-popup-border);
   background: var(--app-popup-bg);
   backdrop-filter: var(--app-popup-backdrop);
@@ -1225,7 +1070,6 @@
 
 .notes-search .ui-field__control,
 .notes-date-picker .goal-date-picker__trigger,
-.notes-category-filter__trigger,
 .notes-filter-strip,
 .notes-list-card,
 .notes-editor-card,
@@ -1244,7 +1088,6 @@
    surface rule (02-base.css) so the cream fill actually wins. */
 .notes-tools .notes-search .ui-field__control,
 .notes-tools .notes-date-picker .goal-date-picker__trigger,
-.notes-tools .notes-category-filter__trigger,
 .notes-tools .notes-filter-strip {
   min-height: calc(var(--space-10) + var(--space-1));
   border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
@@ -1270,8 +1113,7 @@
 .notes-tools .notes-search .ui-field__control:focus,
 .notes-tools .notes-search .ui-field__control:focus-visible,
 .notes-tools .notes-date-picker .goal-date-picker__trigger:focus-visible,
-.notes-tools .notes-date-picker .goal-date-picker__trigger[aria-expanded="true"],
-.notes-tools .notes-category-filter__trigger:focus-visible {
+.notes-tools .notes-date-picker .goal-date-picker__trigger[aria-expanded="true"] {
   border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
   box-shadow: var(--shadow-focus-ring);
 }

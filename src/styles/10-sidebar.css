@@ -2,6 +2,7 @@
    Part of the split of the old monolithic styles.css. Forest theme only. */
 
 .app-sidebar {
+  --sidebar-item-width: min(calc(var(--sidebar-w, 204px) - 40px), 100%);
   position: sticky;
   top: 0;
   align-self: start;
@@ -16,6 +17,7 @@
     rgba(226, 222, 232, 0.68);
   backdrop-filter: blur(26px) saturate(1.18);
   -webkit-backdrop-filter: blur(26px) saturate(1.18);
+  z-index: 10;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.28),
     18px 20px 32px -12px rgba(0, 0, 0, 0.2),
@@ -23,22 +25,26 @@
     inset -2px -2px 12px rgba(255, 255, 255, 0.34),
     inset 2px 2px 10px rgba(0, 0, 0, 0.06);
   padding: 9px 14px clamp(14px, 2.6vh, 24px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .sidebar-brand {
+  --sidebar-brand-avatar-size: calc(var(--space-10) + var(--space-6));
   position: relative;
   isolation: isolate;
   display: grid;
-  align-items: start;
-  width: min(calc(var(--sidebar-w, 204px) - 20px), 100%);
+  grid-template-columns: var(--sidebar-brand-avatar-size) minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-5);
+  width: var(--sidebar-item-width);
   min-height: 78px;
   justify-self: center;
   border-radius: 0;
-  padding: var(--space-8) 0 var(--space-3);
+  padding: var(--space-3) 0;
   text-decoration: none;
   background: transparent;
   box-shadow: none;
+  z-index: 40;
 }
 
 /* Keep the sidebar greeting clean, without decorative brand glow. */
@@ -48,13 +54,15 @@
 }
 
 .sidebar-brand__greeting {
+  align-self: center;
   display: grid;
+  justify-content: start;
   gap: var(--space-1);
   min-width: 0;
   width: 100%;
   color: var(--c-text-primary);
   letter-spacing: 0;
-  text-align: center;
+  text-align: left;
   text-transform: none;
   -webkit-user-select: none;
   user-select: none;
@@ -65,24 +73,54 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 400 18px / 1.2 var(--font-base);
+  color: var(--c-text-secondary);
+  font: 400 16px / 1.12 var(--font-base);
 }
 
-.sidebar-brand__hello strong {
-  min-width: 0;
-  color: var(--c-text-primary);
-  font-weight: var(--text-section-title-weight);
-  letter-spacing: 0;
-}
-
-.sidebar-brand__tagline {
+.sidebar-brand__name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--c-text-secondary);
-  font: var(--text-item-title-weight) clamp(11px, 0.82vw, 13px) / 1.2 var(--font-base);
-  letter-spacing: var(--text-item-title-tracking);
+  color: var(--c-text-primary);
+  font: var(--text-section-title-weight) 20px / 1.08 var(--font-base);
+  letter-spacing: var(--text-section-title-tracking);
+}
+
+.sidebar-brand__avatar {
+  position: relative;
+  width: var(--sidebar-brand-avatar-size);
+  height: var(--sidebar-brand-avatar-size);
+  display: grid;
+  place-items: center;
+  border: 2px solid color-mix(in srgb, var(--c-accent) 52%, var(--c-surface-elevated));
+  border-radius: var(--radius-pill);
+  background:
+    radial-gradient(circle at 32% 24%, color-mix(in srgb, var(--c-surface-elevated) 82%, transparent), transparent 38%),
+    color-mix(in srgb, var(--c-accent) 14%, var(--c-surface-elevated));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--c-surface-elevated) 72%, transparent),
+    inset -2px -2px 14px color-mix(in srgb, var(--c-surface-elevated) 70%, transparent),
+    inset 3px 3px 14px color-mix(in srgb, var(--c-accent) 12%, transparent),
+    var(--shadow-soft);
+  line-height: 0;
+  overflow: hidden;
+}
+
+.sidebar-brand__initial {
+  color: color-mix(in srgb, var(--c-accent) 76%, var(--c-text-primary));
+  font: var(--planner-display-weight) calc(var(--sidebar-brand-avatar-size) * 0.7) / 1 var(--planner-font);
+  letter-spacing: 0;
+}
+
+.sidebar-brand__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: contain;
 }
 
 .sidebar-brand:hover,
@@ -101,7 +139,7 @@
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  width: min(calc(var(--sidebar-w, 204px) - 40px), 100%);
+  width: var(--sidebar-item-width);
   justify-self: center;
   border: 0;
   border-radius: var(--radius-md);
@@ -114,6 +152,8 @@
 }
 
 .sidebar-nav {
+  position: relative;
+  z-index: 1;
   display: grid;
   align-content: start;
   gap: clamp(6px, 1.25vh, 12px);
@@ -202,6 +242,10 @@
 :root[data-theme="forest"] .app-sidebar > * {
   position: relative;
   z-index: 2;
+}
+
+:root[data-theme="forest"] .app-sidebar > .sidebar-brand {
+  z-index: 50;
 }
 
 /* Bottom glow removed — no green halo behind the mascot, just a faint light
