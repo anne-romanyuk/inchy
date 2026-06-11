@@ -6,6 +6,8 @@ const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, {
   month: "long",
   year: "numeric",
 });
+const DEFAULT_POPOVER_Z_INDEX = 1000;
+const TASK_MODAL_POPOVER_Z_INDEX = 5010;
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -95,6 +97,8 @@ export function GoalDatePicker({
   displayValueOverride,
   footerActions = [],
   footerActionsAfterToday = [],
+  showTodayShortcut = true,
+  minDate,
   leadingControl,
   trailingControl,
 }: {
@@ -108,10 +112,13 @@ export function GoalDatePicker({
   displayValueOverride?: string;
   footerActions?: Array<{ label: string; onClick: () => void }>;
   footerActionsAfterToday?: Array<{ label: string; onClick: () => void }>;
+  showTodayShortcut?: boolean;
+  minDate?: string;
   leadingControl?: ReactNode;
   trailingControl?: ReactNode;
 }) {
   const selectedDate = parseIsoDate(value);
+  const minIsoDate = minDate || "";
   const [isOpen, setIsOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const pickerRef = useRef<HTMLDivElement | null>(null);
@@ -166,13 +173,16 @@ export function GoalDatePicker({
       const popW = popover.offsetWidth;
       const spaceBelow = window.innerHeight - trigger.bottom;
       const openUp = spaceBelow < popH + gap && trigger.top > spaceBelow;
+      const zIndex = pickerRef.current?.closest(".task-modal-backdrop")
+        ? TASK_MODAL_POPOVER_Z_INDEX
+        : DEFAULT_POPOVER_Z_INDEX;
       const left = Math.max(
         margin,
         Math.min(trigger.right - popW, window.innerWidth - popW - margin),
       );
       setPopoverStyle({
         position: "fixed",
-        zIndex: 1000,
+        zIndex,
         left,
         right: "auto",
         top: openUp ? "auto" : trigger.bottom + gap,
@@ -269,6 +279,7 @@ export function GoalDatePicker({
               const isSelected = iso === value;
               const isToday = iso === today;
               const isOutside = day.getMonth() !== viewMonth.getMonth();
+              const isDisabled = Boolean(minIsoDate && iso < minIsoDate);
               return (
                 <button
                   key={iso}
@@ -278,8 +289,11 @@ export function GoalDatePicker({
                     isSelected ? "is-selected" : "",
                     isToday ? "is-today" : "",
                     isOutside ? "is-outside" : "",
+                    isDisabled ? "is-disabled" : "",
                   ].filter(Boolean).join(" ")}
+                  disabled={isDisabled}
                   onClick={() => {
+                    if (isDisabled) return;
                     onChange(iso);
                     setIsOpen(false);
                   }}
@@ -306,16 +320,18 @@ export function GoalDatePicker({
                 {action.label}
               </button>
             ))}
-            <button
-              type="button"
-              className="pomodoro-btn pomodoro-btn--ghost-text"
-              onClick={() => {
-                onChange(today);
-                setIsOpen(false);
-              }}
-            >
-              Today
-            </button>
+            {showTodayShortcut ? (
+              <button
+                type="button"
+                className="pomodoro-btn pomodoro-btn--ghost-text"
+                onClick={() => {
+                  onChange(today);
+                  setIsOpen(false);
+                }}
+              >
+                Today
+              </button>
+            ) : null}
             {footerActionsAfterToday.map((action) => (
               <button
                 key={action.label}

@@ -41,7 +41,7 @@ export function MobileShell() {
           <NavLink
             key={tab.id}
             to={tab.path}
-            end={tab.path === "/today"}
+            end={false}
             className={({ isActive }) =>
               isActive ? "mobile-tabbar__item is-active" : "mobile-tabbar__item"
             }

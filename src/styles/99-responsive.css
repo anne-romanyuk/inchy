@@ -160,7 +160,7 @@
   }
 
   .task-item {
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
   }
 
   .task-item > .task-drag-handle {
@@ -196,12 +196,8 @@
     grid-column: 6;
   }
 
-  .task-action--delete {
-    grid-column: 7;
-  }
-
   .tasks-table-header {
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
   }
 
   .tasks-table-header__cell--task {
@@ -536,6 +532,12 @@
   .settings-category-row {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
+  }
+
+  .settings-preference-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-4);
   }
 
   .settings-category-row__identity,

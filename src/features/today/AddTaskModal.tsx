@@ -1,21 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "motion/react";
-import type { CategoryInfo, DefaultTask } from "../../../shared/schemas";
+import type {
+  CategoryInfo,
+  DefaultTask,
+  RecurrenceDeleteScope,
+  RecurrenceUpdateScope,
+  RepeatFrequency,
+} from "../../../shared/schemas";
 import { normalizeTaskDurationValue } from "../../../shared/duration";
-import { formatTaskTimeDisplay, taskTimeFrom12Hour, taskTimeTo12Hour } from "../../../shared/time";
+import { formatTaskTimeDisplay } from "../../../shared/time";
 import { useOverflowFade } from "../../shared/hooks/useOverflowFade";
-import { useIsMobile } from "../../shared/hooks/useIsMobile";
 import { ApiError } from "../../shared/api/client";
 import { DeleteActionButton } from "../../shared/ui/DeleteActionButton";
 import { useCreateTask, useDeleteDefaultTask } from "./useTasks";
 import { todayDateKey } from "./useOccurrences";
 import { TaskCategoryPicker } from "./TaskCategoryPicker";
 import { TaskDurationInput } from "./TaskDurationInput";
+import { TimePickerDropdown } from "./TaskTimePicker";
 import { GoalDatePicker } from "../goals/GoalDatePicker";
 
-const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1);
-const TIME_MINUTES = Array.from({ length: 60 }, (_, index) => index);
-const TIME_PERIODS = ["AM", "PM"] as const;
+export { TimePickerDropdown } from "./TaskTimePicker";
 
 type QueuedTask = {
   localId: string;
@@ -24,9 +29,102 @@ type QueuedTask = {
   time: string;
   category: string;
   duration: string;
+  repeatFrequency: RepeatFrequency | null;
+  repeatInterval: number;
+  repeatWeekdays: number[];
+  repeatMonthDays: number[];
+  repeatMonthOverflow: "last-day" | "skip";
+  repeatYearMonths: number[];
+  repeatEndDate: string;
   saveToDefault: boolean;
   fromDefault: boolean;
 };
+
+type EditableTask = Pick<DefaultTask, "title" | "category" | "duration" | "time"> & {
+  recurringTaskId?: string | null;
+  repeatFrequency?: RepeatFrequency | null;
+  repeatInterval?: number;
+  repeatWeekdays?: number[];
+  repeatMonthDays?: number[];
+  repeatMonthOverflow?: "last-day" | "skip";
+  repeatYearMonths?: number[];
+  repeatEndDate?: string | null;
+};
+
+type EditTaskUpdates = {
+  title: string;
+  category: string;
+  duration: string;
+  time: string;
+  date?: string;
+  repeatFrequency?: RepeatFrequency | null;
+  repeatInterval?: number;
+  repeatWeekdays?: number[];
+  repeatMonthDays?: number[];
+  repeatMonthOverflow?: "last-day" | "skip";
+  repeatYearMonths?: number[];
+  repeatEndDate?: string | null;
+  recurrenceUpdateScope?: RecurrenceUpdateScope;
+};
+
+const REPEAT_OPTIONS: Array<{ value: RepeatFrequency; label: string }> = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+const REPEAT_INTERVAL_UNITS: Record<RepeatFrequency, { singular: string; plural: string }> = {
+  daily: { singular: "day", plural: "days" },
+  weekly: { singular: "week", plural: "weeks" },
+  monthly: { singular: "month", plural: "months" },
+  yearly: { singular: "year", plural: "years" },
+};
+
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: "Mon" },
+  { value: 1, label: "Tue" },
+  { value: 2, label: "Wed" },
+  { value: 3, label: "Thu" },
+  { value: 4, label: "Fri" },
+  { value: 5, label: "Sat" },
+  { value: 6, label: "Sun" },
+] as const;
+
+const WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, index) => index + 1);
+const YEAR_MONTH_OPTIONS = MONTH_NAMES.map((name, index) => ({
+  value: index,
+  label: name.slice(0, 3),
+}));
+
+const MONTH_OVERFLOW_OPTIONS: Array<{ value: "last-day" | "skip"; title: string; description: string }> = [
+  {
+    value: "last-day",
+    title: "Use the last day available",
+    description: "Schedule on the last day of the month (e.g. Feb 28 or 29).",
+  },
+  {
+    value: "skip",
+    title: "Skip this month",
+    description: "Don't schedule this task in shorter months.",
+  },
+];
 
 function addDaysToDateKey(dateKey: string, days: number) {
   const [year, month, day] = dateKey.split("-").map(Number);
@@ -49,314 +147,352 @@ function formatTaskDate(value: string) {
   }).format(date);
 }
 
-function initialTimeParts(value: string) {
-  const parsed = taskTimeTo12Hour(value);
-  if (parsed) return parsed;
-  const now = new Date();
-  const period = now.getHours() >= 12 ? "PM" : "AM";
-  return {
-    hour: now.getHours() % 12 || 12,
-    minute: now.getMinutes(),
-    period,
-  } as const;
+function normalizeRepeatInterval(value: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(999, Math.max(1, Math.trunc(parsed)));
 }
 
-function timeInputMask(value: string, fallbackPeriod: "AM" | "PM") {
-  const upper = value.toUpperCase();
-  const explicitPeriod = upper.includes("P") ? "PM" : upper.includes("A") ? "AM" : "";
-  const digits = upper.replace(/\D/g, "").slice(0, 4);
-  if (!digits) return explicitPeriod;
-
-  const hour = digits.length <= 2 ? digits : digits.length === 3 ? digits.slice(0, 1) : digits.slice(0, 2);
-  const minute = digits.length <= 2 ? "" : digits.length === 3 ? digits.slice(1) : digits.slice(2);
-  const numericHour = Number(hour);
-  const period = explicitPeriod || (minute.length === 2 && numericHour >= 1 && numericHour <= 12 ? fallbackPeriod : "");
-  return `${hour}${minute ? `:${minute}` : ""}${period ? ` ${period}` : ""}`;
+function sanitizeRepeatIntervalInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 3);
+  if (!digits) return "";
+  return String(normalizeRepeatInterval(digits));
 }
 
-function parseTimeInput(value: string, fallbackPeriod: "AM" | "PM") {
-  const upper = value.trim().toUpperCase();
-  if (!upper) return null;
-
-  const periodMatch = upper.match(/\b([AP])\.?M?\.?\b|([AP])$/);
-  const period = periodMatch ? (periodMatch[1] || periodMatch[2]) === "P" ? "PM" : "AM" : "";
-  const digits = upper.replace(/\D/g, "");
-  if (digits.length < 3) return null;
-
-  const hourText = digits.length === 3 ? digits.slice(0, 1) : digits.slice(0, 2);
-  const minuteText = digits.length === 3 ? digits.slice(1, 3) : digits.slice(2, 4);
-  const rawHour = Number(hourText);
-  const minute = Number(minuteText);
-  if (!Number.isFinite(rawHour) || !Number.isFinite(minute) || minute < 0 || minute > 59) return null;
-
-  if (period) {
-    if (rawHour < 1 || rawHour > 12) return null;
-    return { hour: rawHour, minute, period } as const;
-  }
-
-  if (rawHour >= 0 && rawHour <= 23) {
-    const inferredPeriod = rawHour >= 12 ? "PM" : "AM";
-    return { hour: rawHour % 12 || 12, minute, period: inferredPeriod } as const;
-  }
-
-  if (rawHour >= 1 && rawHour <= 12) {
-    return { hour: rawHour, minute, period: fallbackPeriod } as const;
-  }
-
-  return null;
+function formatRepeatUnit(frequency: RepeatFrequency, interval: number) {
+  const unit = REPEAT_INTERVAL_UNITS[frequency];
+  return interval === 1 ? unit.singular : unit.plural;
 }
 
-function getWheelStep(column: HTMLDivElement) {
-  const first = column.querySelector("button");
-  const second = first?.nextElementSibling as HTMLElement | null;
-  if (!first) return 1;
-  return second ? second.offsetTop - first.offsetTop : first.offsetHeight;
+function dateKeyToPlannerWeekday(dateKey: string) {
+  const date = new Date(`${dateKey}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return 0;
+  return (date.getUTCDay() + 6) % 7;
 }
 
-function TimeWheel<TValue extends string | number>({
-  ariaLabel,
-  className = "",
-  format,
-  onChange,
-  value,
-  values,
+function dateKeyToMonthDay(dateKey: string) {
+  const day = Number(dateKey.split("-")[2]);
+  return Number.isInteger(day) && day >= 1 && day <= 31 ? day : 1;
+}
+
+function dateKeyToMonthIndex(dateKey: string) {
+  const month = Number(dateKey.split("-")[1]);
+  return Number.isInteger(month) && month >= 1 && month <= 12 ? month - 1 : 0;
+}
+
+function normalizeRepeatWeekdays(values: number[]) {
+  const unique = new Set(values.filter((value) => Number.isInteger(value) && value >= 0 && value <= 6));
+  return [...unique].sort((a, b) => a - b);
+}
+
+function normalizeRepeatMonthDays(values: number[]) {
+  const unique = new Set(values.filter((value) => Number.isInteger(value) && value >= 1 && value <= 31));
+  return [...unique].sort((a, b) => a - b);
+}
+
+function normalizeRepeatYearMonths(values: number[]) {
+  const unique = new Set(values.filter((value) => Number.isInteger(value) && value >= 0 && value <= 11));
+  return [...unique].sort((a, b) => a - b);
+}
+
+function formatWeekdayList(values: number[]) {
+  const weekdays = normalizeRepeatWeekdays(values);
+  if (!weekdays.length) return "";
+  return weekdays
+    .map((value) => WEEKDAY_OPTIONS.find((option) => option.value === value)?.label)
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatWeekdayNameList(values: number[]) {
+  return normalizeRepeatWeekdays(values)
+    .map((value) => WEEKDAY_NAMES[value])
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatMonthDayList(values: number[]) {
+  return normalizeRepeatMonthDays(values).join(", ");
+}
+
+function formatYearMonthList(values: number[]) {
+  return normalizeRepeatYearMonths(values)
+    .map((value) => YEAR_MONTH_OPTIONS.find((option) => option.value === value)?.label)
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatRepeatCadence(interval: number, singular: string, plural: string) {
+  return interval === 1 ? `every ${singular}` : `every ${interval} ${plural}`;
+}
+
+function formatListWithAnd(items: string[]) {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function formatYearlyDateList(date: string, yearMonths: number[] = []) {
+  const selectedMonths = normalizeRepeatYearMonths(yearMonths);
+  const months = selectedMonths.length ? selectedMonths : [dateKeyToMonthIndex(date)];
+  const day = dateKeyToMonthDay(date);
+  return formatListWithAnd(months.map((month) => `${MONTH_NAMES[month] ?? MONTH_NAMES[0]} ${day}`));
+}
+
+function buildRepeatSummary({
+  date,
+  frequency,
+  interval,
+  monthDays,
+  time,
+  weekdays,
+  yearMonths,
 }: {
-  ariaLabel: string;
-  className?: string;
-  format: (value: TValue) => string;
-  onChange: (value: TValue) => void;
-  value: TValue;
-  values: readonly TValue[];
+  date: string;
+  frequency: RepeatFrequency;
+  interval: number;
+  monthDays: number[];
+  time: string;
+  weekdays: number[];
+  yearMonths: number[];
 }) {
-  const columnRef = useRef<HTMLDivElement>(null);
-  const scrollFrameRef = useRef<number | null>(null);
-  const userScrollValueRef = useRef<TValue | null>(null);
+  const timeLabel = time ? ` at ${formatTaskTimeDisplay(time)}` : "";
+  if (frequency === "daily") {
+    return `This task will repeat ${formatRepeatCadence(interval, "day", "days")}${timeLabel}.`;
+  }
+  if (frequency === "weekly") {
+    const selectedWeekdays = weekdays.length ? weekdays : [dateKeyToPlannerWeekday(date)];
+    return `This task will repeat ${formatRepeatCadence(interval, "week", "weeks")} on ${formatWeekdayNameList(selectedWeekdays)}${timeLabel}.`;
+  }
+  if (frequency === "monthly") {
+    const selectedMonthDays = monthDays.length ? monthDays : [dateKeyToMonthDay(date)];
+    return `This task will repeat ${formatRepeatCadence(interval, "month", "months")} on day ${formatMonthDayList(selectedMonthDays)}${timeLabel}.`;
+  }
+  return `This task will repeat ${formatRepeatCadence(interval, "year", "years")} on ${formatYearlyDateList(date, yearMonths)}${timeLabel}.`;
+}
 
-  const scrollToIndex = (index: number, behavior: ScrollBehavior = "auto") => {
-    const column = columnRef.current;
-    if (!column) return;
-    column.scrollTo({ top: index * getWheelStep(column), behavior });
-  };
+function getOverflowMonthDays(values: number[]) {
+  return normalizeRepeatMonthDays(values).filter((day) => day >= 29);
+}
+
+function InfoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 10.8v5.4" />
+      <path d="M12 7.4h.01" />
+    </svg>
+  );
+}
+
+function LastDayOptionIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="5.7" y="6.1" width="12.6" height="12.1" rx="2.1" />
+      <path d="M8.7 4.6v3" />
+      <path d="M15.3 4.6v3" />
+      <path d="M5.7 9.4h12.6" />
+      <path d="M9.1 13h5.8" />
+      <path d="M9.1 15.6h3.8" />
+    </svg>
+  );
+}
+
+function SkipMonthOptionIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="5.7" y="6.1" width="12.6" height="12.1" rx="2.1" />
+      <path d="M8.7 4.6v3" />
+      <path d="M15.3 4.6v3" />
+      <path d="M5.7 9.4h12.6" />
+      <circle cx="16.2" cy="16.2" r="2.8" />
+      <path d="M15.3 15.3l1.8 1.8" />
+      <path d="M17.1 15.3l-1.8 1.8" />
+    </svg>
+  );
+}
+
+function formatRepeatLabel(
+  frequency: RepeatFrequency | null,
+  endDate: string,
+  interval = 1,
+  weekdays: number[] = [],
+  monthDays: number[] = [],
+  yearMonths: number[] = [],
+) {
+  if (!frequency) return "";
+  const option = REPEAT_OPTIONS.find((item) => item.value === frequency);
+  const endLabel = endDate ? `through ${formatTaskDate(endDate)}` : "forever";
+  const weekdayLabel = frequency === "weekly" && weekdays.length ? ` on ${formatWeekdayList(weekdays)}` : "";
+  const monthDayLabel = frequency === "monthly" && monthDays.length ? ` on ${formatMonthDayList(monthDays)}` : "";
+  const yearMonthLabel = frequency === "yearly" && yearMonths.length ? ` in ${formatYearMonthList(yearMonths)}` : "";
+  if (interval > 1) {
+    return `Every ${interval} ${formatRepeatUnit(frequency, interval)}${weekdayLabel}${monthDayLabel}${yearMonthLabel}, ${endLabel}`;
+  }
+  if (weekdayLabel) return `${option?.label ?? frequency} repeat${weekdayLabel}, ${endLabel}`;
+  if (monthDayLabel) return `${option?.label ?? frequency} repeat${monthDayLabel}, ${endLabel}`;
+  if (yearMonthLabel) return `${option?.label ?? frequency} repeat${yearMonthLabel}, ${endLabel}`;
+  return `${option?.label ?? frequency} repeat, ${endLabel}`;
+}
+
+function RepeatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M17.5 3.8L20.2 6.5L17.5 9.2" />
+      <path d="M4 11V9.5C4 7.8 5.3 6.5 7 6.5H20" />
+      <path d="M6.5 20.2L3.8 17.5L6.5 14.8" />
+      <path d="M20 13V14.5C20 16.2 18.7 17.5 17 17.5H4" />
+    </svg>
+  );
+}
+
+function ClockFieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.8V12l3 2.1" />
+    </svg>
+  );
+}
+
+function DurationFieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M7 4h10" />
+      <path d="M7 20h10" />
+      <path d="M8 4c0 4 4 5 4 8s-4 4-4 8" />
+      <path d="M16 4c0 4-4 5-4 8s4 4 4 8" />
+      <path d="M9.4 8.2h5.2" />
+      <path d="M9.4 15.8h5.2" />
+    </svg>
+  );
+}
+
+function RepeatFrequencyDropdown({
+  value,
+  onChange,
+}: {
+  value: RepeatFrequency;
+  onChange: (value: RepeatFrequency) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const selected = REPEAT_OPTIONS.find((item) => item.value === value) ?? REPEAT_OPTIONS[1];
 
   useEffect(() => {
-    if (userScrollValueRef.current === value) {
-      userScrollValueRef.current = null;
-      return;
-    }
-    const index = values.findIndex((option) => option === value);
-    if (index >= 0) {
-      requestAnimationFrame(() => scrollToIndex(index));
-    }
-  }, [value, values]);
-
-  useEffect(() => {
-    return () => {
-      if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current);
+    if (!isOpen) return;
+    const onPointerDown = (event: Event) => {
+      if (!dropdownRef.current?.contains(event.target as Node)) setIsOpen(false);
     };
-  }, []);
-
-  const handleScroll = () => {
-    if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current);
-    scrollFrameRef.current = requestAnimationFrame(() => {
-      scrollFrameRef.current = null;
-      const column = columnRef.current;
-      if (!column) return;
-      const step = getWheelStep(column);
-      const index = Math.max(0, Math.min(values.length - 1, Math.round(column.scrollTop / step)));
-      const nextValue = values[index];
-      if (nextValue !== value) {
-        userScrollValueRef.current = nextValue;
-        onChange(nextValue);
-      }
-    });
-  };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [isOpen]);
 
   return (
-    <div className={`task-modal__time-column-frame ${className}`.trim()}>
-      <div ref={columnRef} className={`task-modal__time-column ${className}`.trim()} aria-label={ariaLabel} onScroll={handleScroll}>
-        {values.map((option, index) => (
-          <button
-            key={String(option)}
-            type="button"
-            className={option === value ? "is-selected" : ""}
-            onClick={() => {
-              onChange(option);
-              scrollToIndex(index);
-            }}
-          >
-            {format(option)}
-          </button>
-        ))}
+    <div className="task-modal__select task-modal__repeat-select" ref={dropdownRef}>
+      <button
+        type="button"
+        className="task-modal__dropdown-trigger"
+        aria-label="Repeat frequency"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>{selected.label}</span>
+        <span className="task-modal__dropdown-caret" aria-hidden="true"></span>
+      </button>
+      <div className="task-modal__dropdown-wrap" data-open={isOpen}>
+        <ul className="task-modal__combobox-list" role="listbox" aria-label="Repeat frequency options">
+          {REPEAT_OPTIONS.map((option) => (
+            <li className="task-modal__dropdown-item" key={option.value}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
-export function TimePickerDropdown({
-  value,
-  onChange,
+function RepeatDisableConfirm({
+  disabled,
+  onCancel,
+  onConfirm,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  disabled: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [draftHour, setDraftHour] = useState(() => initialTimeParts(value).hour);
-  const [draftMinute, setDraftMinute] = useState(() => initialTimeParts(value).minute);
-  const [draftPeriod, setDraftPeriod] = useState<"AM" | "PM">(() => initialTimeParts(value).period);
-  const [timeText, setTimeText] = useState(() => formatTaskTimeDisplay(value));
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const displayValue = formatTaskTimeDisplay(value);
-
-  useEffect(() => {
-    setTimeText(displayValue);
-  }, [displayValue]);
-
-  const updateDraftTime = useCallback((hour: number, minute: number, period: "AM" | "PM") => {
-    setDraftHour(hour);
-    setDraftMinute(minute);
-    setDraftPeriod(period);
-    setTimeText(formatTaskTimeDisplay(taskTimeFrom12Hour(hour, minute, period)));
-  }, []);
-
-  const commitTextValue = useCallback(() => {
-    const trimmed = timeText.trim();
-    if (!trimmed) {
-      onChange("");
-      return true;
-    }
-    const parsed = parseTimeInput(trimmed, draftPeriod);
-    if (!parsed) {
-      setTimeText(displayValue);
-      return false;
-    }
-    setDraftHour(parsed.hour);
-    setDraftMinute(parsed.minute);
-    setDraftPeriod(parsed.period);
-    onChange(taskTimeFrom12Hour(parsed.hour, parsed.minute, parsed.period));
-    return true;
-  }, [displayValue, draftPeriod, onChange, timeText]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const next = initialTimeParts(value);
-    setDraftHour(next.hour);
-    setDraftMinute(next.minute);
-    setDraftPeriod(next.period);
-  }, [isOpen, value]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
-        commitTextValue();
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [commitTextValue, isOpen]);
-
-  const save = () => {
-    if (timeText.trim()) {
-      const committed = commitTextValue();
-      if (committed) setIsOpen(false);
-      return;
-    }
-    onChange(taskTimeFrom12Hour(draftHour, draftMinute, draftPeriod));
-    setIsOpen(false);
-  };
-
   return (
-    <div className="task-modal__time-picker" ref={pickerRef}>
-      <input
-        className={`task-modal__time-trigger ${displayValue ? "" : "is-empty"}`.trim()}
-        type="text"
-        inputMode="numeric"
-        placeholder="Time"
-        value={timeText}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        aria-label="Task time"
-        onFocus={() => setIsOpen(true)}
-        onClick={() => setIsOpen(true)}
-        onBlur={() => {
-          window.setTimeout(() => {
-            if (!pickerRef.current?.contains(document.activeElement)) {
-              commitTextValue();
-              setIsOpen(false);
-            }
-          }, 0);
-        }}
-        onChange={(event) => {
-          const nextText = timeInputMask(event.target.value, draftPeriod);
-          setTimeText(nextText);
-          const parsed = parseTimeInput(nextText, draftPeriod);
-          if (parsed) {
-            setDraftHour(parsed.hour);
-            setDraftMinute(parsed.minute);
-            setDraftPeriod(parsed.period);
-          }
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (commitTextValue()) setIsOpen(false);
-          }
-          if (event.key === "Escape") {
-            event.preventDefault();
-            setTimeText(displayValue);
-            setIsOpen(false);
-          }
-        }}
-      />
-      <span className="task-modal__dropdown-caret task-modal__time-caret" aria-hidden="true" />
-      {isOpen ? (
-        <div className="task-modal__time-popover" role="dialog" aria-label="Select time">
-          <h3>Select time</h3>
-          <div className="task-modal__time-wheels">
-            <TimeWheel
-              ariaLabel="Hour"
-              format={(hour) => String(hour).padStart(2, "0")}
-              onChange={(hour) => updateDraftTime(hour, draftMinute, draftPeriod)}
-              value={draftHour}
-              values={TIME_HOURS}
-            />
-            <div className="task-modal__time-separator" aria-hidden="true">:</div>
-            <TimeWheel
-              ariaLabel="Minute"
-              format={(minute) => String(minute).padStart(2, "0")}
-              onChange={(minute) => updateDraftTime(draftHour, minute, draftPeriod)}
-              value={draftMinute}
-              values={TIME_MINUTES}
-            />
-            <TimeWheel
-              ariaLabel="Period"
-              className="task-modal__time-column--period"
-              format={(period) => period}
-              onChange={(period) => updateDraftTime(draftHour, draftMinute, period)}
-              value={draftPeriod}
-              values={TIME_PERIODS}
-            />
-          </div>
-          <div className="task-modal__time-actions">
-            {displayValue ? (
-              <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => {
-                onChange("");
-                setTimeText("");
-                setIsOpen(false);
-              }}>
-                Clear
-              </button>
-            ) : null}
-            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={() => setIsOpen(false)}>
-              Cancel
-            </button>
-            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text task-modal__time-save" onClick={save}>
-              Save
-            </button>
-          </div>
+    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm" role="dialog" aria-modal="true" aria-label="Confirm repeat removal">
+      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card">
+        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
+          <RepeatIcon />
         </div>
-      ) : null}
+        <div className="pomodoro-confirm__content">
+          <h3>Remove future repeats?</h3>
+          <p>This task will stay on this date. Future repetitions from this series will be removed.</p>
+        </div>
+        <div className="task-modal__recurrence-confirm-actions">
+          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={disabled}>
+            Cancel
+          </button>
+          <button type="button" className="task-add" onClick={onConfirm} disabled={disabled}>
+            Remove future repeats
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RepeatDeleteConfirm({
+  onCancel,
+  onPick,
+}: {
+  onCancel: () => void;
+  onPick: (scope: RecurrenceDeleteScope) => void;
+}) {
+  return (
+    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm" role="dialog" aria-modal="true" aria-label="Delete recurring task">
+      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide task-modal__recurrence-confirm-card--delete">
+        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
+          <RepeatIcon />
+        </div>
+        <div className="pomodoro-confirm__content">
+          <h3>Delete recurring task?</h3>
+          <p>Choose how much of this repeating series should be removed.</p>
+        </div>
+        <div className="task-modal__recurrence-choice-list">
+          <button type="button" onClick={() => onPick("single")}>
+            <strong>Only this occurrence</strong>
+            <span>Keep the rest of the series.</span>
+          </button>
+          <button type="button" onClick={() => onPick("future")}>
+            <strong>This and future occurrences</strong>
+            <span>Keep earlier occurrences in the calendar.</span>
+          </button>
+          <button type="button" onClick={() => onPick("series")}>
+            <strong>Entire series</strong>
+            <span>Remove every task in this recurring series.</span>
+          </button>
+        </div>
+        <div className="task-modal__recurrence-confirm-actions">
+          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel}>
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -375,18 +511,17 @@ export function AddTaskModal({
   onClose: () => void;
   categories: CategoryInfo[];
   defaultTasks: DefaultTask[];
-  editingTask?: Pick<DefaultTask, "title" | "category" | "duration" | "time">;
+  editingTask?: EditableTask;
   // When provided (edit mode), the date field is shown and its value is passed
   // back via onSaveEdit so the caller can move the task to another day.
   editingDate?: string;
-  onSaveEdit?: (updates: { title: string; category: string; duration: string; time: string; date?: string }) => Promise<unknown> | unknown;
-  onDelete?: () => void;
+  onSaveEdit?: (updates: EditTaskUpdates) => Promise<unknown> | unknown;
+  onDelete?: (scope?: RecurrenceDeleteScope) => void;
   context?: "default" | "plan";
   variant?: "panel" | "dialog";
 }) {
   const createTask = useCreateTask();
   const deleteDefaultTask = useDeleteDefaultTask();
-  const isMobile = useIsMobile();
   const isEditMode = Boolean(editingTask);
   const today = todayDateKey();
   const tomorrow = addDaysToDateKey(today, 1);
@@ -395,11 +530,33 @@ export function AddTaskModal({
   const [draftTime, setDraftTime] = useState(editingTask?.time ?? "");
   const [draftCategory, setDraftCategory] = useState(editingTask?.category ?? "");
   const [draftDuration, setDraftDuration] = useState(() => normalizeTaskDurationValue(editingTask?.duration));
+  const initialRepeatFrequency = editingTask?.repeatFrequency ?? "weekly";
+  const initialRepeatInterval = Math.max(1, Math.trunc(editingTask?.repeatInterval ?? 1));
+  const [draftRepeatEnabled, setDraftRepeatEnabled] = useState(Boolean(editingTask?.repeatFrequency));
+  const [draftRepeatFrequency, setDraftRepeatFrequency] = useState<RepeatFrequency>(initialRepeatFrequency);
+  const [draftRepeatEndDate, setDraftRepeatEndDate] = useState(editingTask?.repeatEndDate ?? "");
+  const [draftRepeatCustom, setDraftRepeatCustom] = useState(
+    Boolean(editingTask?.repeatFrequency && (initialRepeatInterval > 1 || editingTask.repeatWeekdays?.length || editingTask.repeatMonthDays?.length || editingTask.repeatYearMonths?.length)),
+  );
+  const [draftRepeatInterval, setDraftRepeatInterval] = useState(String(initialRepeatInterval));
+  const [draftRepeatWeekdays, setDraftRepeatWeekdays] = useState<number[]>(() =>
+    editingTask?.repeatWeekdays?.length ? editingTask.repeatWeekdays : [dateKeyToPlannerWeekday(editingDate ?? today)],
+  );
+  const [draftRepeatMonthDays, setDraftRepeatMonthDays] = useState<number[]>(() =>
+    editingTask?.repeatMonthDays?.length ? editingTask.repeatMonthDays : [dateKeyToMonthDay(editingDate ?? today)],
+  );
+  const [draftRepeatMonthOverflow, setDraftRepeatMonthOverflow] = useState<"last-day" | "skip">(editingTask?.repeatMonthOverflow ?? "skip");
+  const [draftRepeatYearMonths, setDraftRepeatYearMonths] = useState<number[]>(() =>
+    editingTask?.repeatYearMonths?.length ? editingTask.repeatYearMonths : [dateKeyToMonthIndex(editingDate ?? today)],
+  );
   const [draftSaveToDefault, setDraftSaveToDefault] = useState(false);
   const [queuedTasks, setQueuedTasks] = useState<QueuedTask[]>([]);
   const [addTaskError, setAddTaskError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [confirmDisableRepeat, setConfirmDisableRepeat] = useState(false);
+  const [confirmDeleteRepeat, setConfirmDeleteRepeat] = useState(false);
   const poolScrollRef = useRef<HTMLDivElement>(null);
+  const repeatCustomId = useId();
   // Names typed into queued/default tasks that aren't saved categories yet, so
   // the picker can still surface them while composing.
   const extraCategoryNames = useMemo(
@@ -424,9 +581,34 @@ export function AddTaskModal({
   );
   const submitTaskCount = queuedTasks.length + (draftTitle.trim() ? 1 : 0);
   const submitTaskLabel =
-    submitTaskCount > 0
+    context === "plan"
+      ? "Add task"
+      : submitTaskCount > 0
       ? `Add ${submitTaskCount} ${submitTaskCount === 1 ? "task" : "tasks"}`
       : "Add task";
+  const showRepeatControls = context === "plan";
+  const isEditingRecurring = Boolean(editingTask?.recurringTaskId || editingTask?.repeatFrequency);
+  const repeatIntervalNumber = normalizeRepeatInterval(draftRepeatInterval);
+  const repeatIntervalUnit = formatRepeatUnit(draftRepeatFrequency, repeatIntervalNumber);
+  const showRepeatWeekdays = draftRepeatEnabled && draftRepeatCustom && draftRepeatFrequency === "weekly";
+  const showRepeatMonthDays = draftRepeatEnabled && draftRepeatCustom && draftRepeatFrequency === "monthly";
+  const showRepeatYearMonths = draftRepeatEnabled && draftRepeatCustom && draftRepeatFrequency === "yearly";
+  const activeRepeatWeekdays = showRepeatWeekdays ? normalizeRepeatWeekdays(draftRepeatWeekdays) : [];
+  const activeRepeatMonthDays = showRepeatMonthDays ? normalizeRepeatMonthDays(draftRepeatMonthDays) : [];
+  const activeRepeatYearMonths = showRepeatYearMonths ? normalizeRepeatYearMonths(draftRepeatYearMonths) : [];
+  const overflowRepeatMonthDays = getOverflowMonthDays(activeRepeatMonthDays);
+  const activeRepeatInterval = draftRepeatCustom ? repeatIntervalNumber : 1;
+  const repeatSummary = draftRepeatEnabled
+    ? buildRepeatSummary({
+        date: draftDate,
+        frequency: draftRepeatFrequency,
+        interval: activeRepeatInterval,
+        monthDays: activeRepeatMonthDays,
+        time: draftTime,
+        weekdays: activeRepeatWeekdays,
+        yearMonths: activeRepeatYearMonths,
+      })
+    : "";
 
   useOverflowFade(poolScrollRef, [defaultTasks.length, pendingDefaults.length]);
 
@@ -437,9 +619,34 @@ export function AddTaskModal({
     setDraftTime(editingTask.time);
     setDraftCategory(editingTask.category);
     setDraftDuration(normalizeTaskDurationValue(editingTask.duration));
+    setDraftRepeatEnabled(Boolean(editingTask.repeatFrequency));
+    setDraftRepeatFrequency(editingTask.repeatFrequency ?? "weekly");
+    setDraftRepeatEndDate(editingTask.repeatEndDate ?? "");
+    setDraftRepeatCustom(
+      Boolean(
+        editingTask.repeatFrequency &&
+          ((editingTask.repeatInterval ?? 1) > 1 ||
+            editingTask.repeatWeekdays?.length ||
+            editingTask.repeatMonthDays?.length ||
+            editingTask.repeatYearMonths?.length),
+      ),
+    );
+    setDraftRepeatInterval(String(Math.max(1, Math.trunc(editingTask.repeatInterval ?? 1))));
+    setDraftRepeatWeekdays(
+      editingTask.repeatWeekdays?.length ? normalizeRepeatWeekdays(editingTask.repeatWeekdays) : [dateKeyToPlannerWeekday(editingDate ?? today)],
+    );
+    setDraftRepeatMonthDays(
+      editingTask.repeatMonthDays?.length ? normalizeRepeatMonthDays(editingTask.repeatMonthDays) : [dateKeyToMonthDay(editingDate ?? today)],
+    );
+    setDraftRepeatMonthOverflow(editingTask.repeatMonthOverflow ?? "skip");
+    setDraftRepeatYearMonths(
+      editingTask.repeatYearMonths?.length ? normalizeRepeatYearMonths(editingTask.repeatYearMonths) : [dateKeyToMonthIndex(editingDate ?? today)],
+    );
     setDraftSaveToDefault(false);
     setQueuedTasks([]);
     setAddTaskError("");
+    setConfirmDisableRepeat(false);
+    setConfirmDeleteRepeat(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingTask, editingDate]);
 
@@ -449,7 +656,85 @@ export function AddTaskModal({
     setDraftTime("");
     setDraftCategory("");
     setDraftDuration("");
+    setDraftRepeatEnabled(false);
+    setDraftRepeatFrequency("weekly");
+    setDraftRepeatEndDate("");
+    setDraftRepeatCustom(false);
+    setDraftRepeatInterval("1");
+    setDraftRepeatWeekdays([dateKeyToPlannerWeekday(todayDateKey())]);
+    setDraftRepeatMonthDays([dateKeyToMonthDay(todayDateKey())]);
+    setDraftRepeatMonthOverflow("skip");
+    setDraftRepeatYearMonths([dateKeyToMonthIndex(todayDateKey())]);
     setDraftSaveToDefault(false);
+  };
+
+  useEffect(() => {
+    if (!draftRepeatEnabled) {
+      setDraftRepeatCustom(false);
+      setDraftRepeatInterval("1");
+      setDraftRepeatWeekdays([dateKeyToPlannerWeekday(draftDate)]);
+      setDraftRepeatMonthDays([dateKeyToMonthDay(draftDate)]);
+      setDraftRepeatMonthOverflow("skip");
+      setDraftRepeatYearMonths([dateKeyToMonthIndex(draftDate)]);
+    }
+  }, [draftDate, draftRepeatEnabled]);
+
+  useEffect(() => {
+    if (!draftRepeatCustom) {
+      setDraftRepeatInterval("1");
+      setDraftRepeatWeekdays([dateKeyToPlannerWeekday(draftDate)]);
+      setDraftRepeatMonthDays([dateKeyToMonthDay(draftDate)]);
+      setDraftRepeatMonthOverflow("skip");
+      setDraftRepeatYearMonths([dateKeyToMonthIndex(draftDate)]);
+    }
+  }, [draftDate, draftRepeatCustom]);
+
+  useEffect(() => {
+    if (showRepeatWeekdays && !draftRepeatWeekdays.length) {
+      setDraftRepeatWeekdays([dateKeyToPlannerWeekday(draftDate)]);
+    }
+  }, [draftDate, draftRepeatWeekdays.length, showRepeatWeekdays]);
+
+  useEffect(() => {
+    if (showRepeatMonthDays && !draftRepeatMonthDays.length) {
+      setDraftRepeatMonthDays([dateKeyToMonthDay(draftDate)]);
+    }
+  }, [draftDate, draftRepeatMonthDays.length, showRepeatMonthDays]);
+
+  useEffect(() => {
+    if (showRepeatYearMonths && !draftRepeatYearMonths.length) {
+      setDraftRepeatYearMonths([dateKeyToMonthIndex(draftDate)]);
+    }
+  }, [draftDate, draftRepeatYearMonths.length, showRepeatYearMonths]);
+
+  const toggleRepeatWeekday = (weekday: number) => {
+    setDraftRepeatWeekdays((current) => {
+      const normalized = normalizeRepeatWeekdays(current);
+      if (normalized.includes(weekday)) {
+        return normalized.length > 1 ? normalized.filter((item) => item !== weekday) : normalized;
+      }
+      return normalizeRepeatWeekdays([...normalized, weekday]);
+    });
+  };
+
+  const toggleRepeatMonthDay = (day: number) => {
+    setDraftRepeatMonthDays((current) => {
+      const normalized = normalizeRepeatMonthDays(current);
+      if (normalized.includes(day)) {
+        return normalized.length > 1 ? normalized.filter((item) => item !== day) : normalized;
+      }
+      return normalizeRepeatMonthDays([...normalized, day]);
+    });
+  };
+
+  const toggleRepeatYearMonth = (month: number) => {
+    setDraftRepeatYearMonths((current) => {
+      const normalized = normalizeRepeatYearMonths(current);
+      if (normalized.includes(month)) {
+        return normalized.length > 1 ? normalized.filter((item) => item !== month) : normalized;
+      }
+      return normalizeRepeatYearMonths([...normalized, month]);
+    });
   };
 
   const queueDraft = () => {
@@ -469,6 +754,13 @@ export function AddTaskModal({
         time: draftTime,
         category: draftCategory.trim(),
         duration: draftDuration,
+        repeatFrequency: draftRepeatEnabled ? draftRepeatFrequency : null,
+        repeatInterval: draftRepeatEnabled && draftRepeatCustom ? repeatIntervalNumber : 1,
+        repeatWeekdays: activeRepeatWeekdays,
+        repeatMonthDays: activeRepeatMonthDays,
+        repeatMonthOverflow: showRepeatMonthDays ? draftRepeatMonthOverflow : "skip",
+        repeatYearMonths: activeRepeatYearMonths,
+        repeatEndDate: draftRepeatEnabled ? draftRepeatEndDate : "",
         saveToDefault: draftSaveToDefault,
         fromDefault: false,
       },
@@ -488,6 +780,13 @@ export function AddTaskModal({
         time: defaultTask.time,
         category: defaultTask.category,
         duration: normalizeTaskDurationValue(defaultTask.duration),
+        repeatFrequency: draftRepeatEnabled ? draftRepeatFrequency : null,
+        repeatInterval: draftRepeatEnabled && draftRepeatCustom ? repeatIntervalNumber : 1,
+        repeatWeekdays: activeRepeatWeekdays,
+        repeatMonthDays: activeRepeatMonthDays,
+        repeatMonthOverflow: showRepeatMonthDays ? draftRepeatMonthOverflow : "skip",
+        repeatYearMonths: activeRepeatYearMonths,
+        repeatEndDate: draftRepeatEnabled ? draftRepeatEndDate : "",
         saveToDefault: false,
         fromDefault: true,
       },
@@ -498,40 +797,73 @@ export function AddTaskModal({
     setQueuedTasks((current) => current.filter((item) => item.localId !== localId));
   };
 
+  const saveEdit = async (options: { confirmedDisableRepeat?: boolean } = {}) => {
+    const title = draftTitle.trim();
+    if (!title) {
+      setAddTaskError("Task title is required.");
+      return;
+    }
+    if (draftRepeatEnabled && draftRepeatEndDate && draftRepeatEndDate < draftDate) {
+      setAddTaskError("End repeat must be on or after the task date.");
+      return;
+    }
+    if (isEditingRecurring && !draftRepeatEnabled && !options.confirmedDisableRepeat) {
+      setConfirmDisableRepeat(true);
+      return;
+    }
+
+    const recurrenceUpdates =
+      showRepeatControls && (draftRepeatEnabled || isEditingRecurring)
+        ? {
+            repeatFrequency: draftRepeatEnabled ? draftRepeatFrequency : null,
+            repeatInterval: draftRepeatEnabled && draftRepeatCustom ? repeatIntervalNumber : 1,
+            repeatWeekdays: activeRepeatWeekdays,
+            repeatMonthDays: activeRepeatMonthDays,
+            repeatMonthOverflow: showRepeatMonthDays ? draftRepeatMonthOverflow : "skip",
+            repeatYearMonths: activeRepeatYearMonths,
+            repeatEndDate: draftRepeatEnabled ? draftRepeatEndDate || null : null,
+            recurrenceUpdateScope: isEditingRecurring ? ("series" as const) : ("single" as const),
+          }
+        : {};
+
+    setAddTaskError("");
+    setEditSaving(true);
+    try {
+      await onSaveEdit?.({
+        title,
+        category: draftCategory.trim(),
+        duration: draftDuration,
+        time: draftTime,
+        ...(editingDate != null ? { date: draftDate } : null),
+        ...recurrenceUpdates,
+      });
+      onClose();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setAddTaskError(error.payload?.errors?.title ?? error.payload?.errors?.repeatEndDate ?? error.payload?.message ?? error.message);
+      } else {
+        setAddTaskError("Could not update this task.");
+      }
+    } finally {
+      setEditSaving(false);
+      setConfirmDisableRepeat(false);
+    }
+  };
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (isEditMode) {
-      const title = draftTitle.trim();
-      if (!title) {
-        setAddTaskError("Task title is required.");
-        return;
-      }
-      setAddTaskError("");
-      setEditSaving(true);
-      try {
-        await onSaveEdit?.({
-          title,
-          category: draftCategory.trim(),
-          duration: draftDuration,
-          time: draftTime,
-          ...(editingDate != null ? { date: draftDate } : null),
-        });
-        onClose();
-      } catch (error) {
-        if (error instanceof ApiError) {
-          setAddTaskError(error.payload?.errors?.title ?? error.payload?.message ?? error.message);
-        } else {
-          setAddTaskError("Could not update this task.");
-        }
-      } finally {
-        setEditSaving(false);
-      }
+      await saveEdit();
       return;
     }
 
     const items = [...queuedTasks];
     const pendingDraft = draftTitle.trim();
+    if (draftRepeatEnabled && draftRepeatEndDate && draftRepeatEndDate < draftDate) {
+      setAddTaskError("End repeat must be on or after the task date.");
+      return;
+    }
     if (pendingDraft) {
       items.push({
         localId: `draft-${Date.now()}`,
@@ -540,6 +872,13 @@ export function AddTaskModal({
         time: draftTime,
         category: draftCategory.trim(),
         duration: draftDuration,
+        repeatFrequency: draftRepeatEnabled ? draftRepeatFrequency : null,
+        repeatInterval: draftRepeatEnabled && draftRepeatCustom ? repeatIntervalNumber : 1,
+        repeatWeekdays: activeRepeatWeekdays,
+        repeatMonthDays: activeRepeatMonthDays,
+        repeatMonthOverflow: showRepeatMonthDays ? draftRepeatMonthOverflow : "skip",
+        repeatYearMonths: activeRepeatYearMonths,
+        repeatEndDate: draftRepeatEnabled ? draftRepeatEndDate : "",
         saveToDefault: draftSaveToDefault,
         fromDefault: false,
       });
@@ -561,6 +900,13 @@ export function AddTaskModal({
           category: item.category,
           duration: item.duration,
           saveToDefault: item.saveToDefault,
+          repeatFrequency: item.repeatFrequency,
+          repeatInterval: item.repeatInterval,
+          repeatWeekdays: item.repeatWeekdays,
+          repeatMonthDays: item.repeatMonthDays,
+          repeatMonthOverflow: item.repeatMonthOverflow,
+          repeatYearMonths: item.repeatYearMonths,
+          repeatEndDate: item.repeatEndDate || null,
         });
       }
       onClose();
@@ -598,55 +944,76 @@ export function AddTaskModal({
           <div className="task-modal__draft">
             <div className={`task-modal__draft-row task-modal__draft-row--inline ${isEditMode ? "task-modal__draft-row--edit" : ""}`.trim()}>
               <div className="task-modal__draft-line task-modal__draft-line--primary">
-                <input
-                  className="task-modal__title-input"
-                  type="text"
-                  maxLength={120}
-                  placeholder="Task name"
-                  value={draftTitle}
-                  autoFocus
-                  onChange={(event) => setDraftTitle(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      if (isEditMode || isMobile) event.currentTarget.form?.requestSubmit();
-                      else queueDraft();
-                    }
-                  }}
-                />
-                <TaskCategoryPicker
-                  mode="select"
-                  ariaLabel="Category"
-                  placeholder="Category"
-                  value={draftCategory}
-                  onChange={setDraftCategory}
-                  allowCreate
-                  extraCategoryNames={extraCategoryNames}
-                />
+                <div className="task-modal__field-shell">
+                  <span className="task-modal__field-label">Task name</span>
+                  <input
+                    className="task-modal__title-input"
+                    type="text"
+                    maxLength={120}
+                    placeholder="Task name"
+                    value={draftTitle}
+                    autoFocus
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (isEditMode || context === "plan") event.currentTarget.form?.requestSubmit();
+                        else queueDraft();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="task-modal__field-shell">
+                  <span className="task-modal__field-label">Category</span>
+                  <TaskCategoryPicker
+                    mode="select"
+                    ariaLabel="Category"
+                    placeholder="Category"
+                    value={draftCategory}
+                    onChange={setDraftCategory}
+                    allowCreate
+                    extraCategoryNames={extraCategoryNames}
+                  />
+                </div>
               </div>
               <div className="task-modal__draft-line task-modal__draft-line--secondary">
                 {!isEditMode || editingDate != null ? (
-                  <GoalDatePicker
-                    className="task-modal__date-picker"
-                    value={draftDate}
-                    onChange={(value) => {
-                      if (value) setDraftDate(value);
-                    }}
-                    allowClear={false}
-                    ariaLabel="Select task date"
-                    emptyDisplayValue="Today"
-                    formatDisplayValue={formatTaskDate}
-                    footerActionsAfterToday={[
-                      {
-                        label: "Tomorrow",
-                        onClick: () => setDraftDate(tomorrow),
-                      },
-                    ]}
-                  />
+                  <div className="task-modal__field-shell task-modal__field-shell--date">
+                    <span className="task-modal__field-label">Date</span>
+                    <GoalDatePicker
+                      className="task-modal__date-picker"
+                      value={draftDate}
+                      onChange={(value) => {
+                        if (value) setDraftDate(value);
+                      }}
+                      allowClear={false}
+                      ariaLabel="Select task date"
+                      emptyDisplayValue="Today"
+                      formatDisplayValue={formatTaskDate}
+                      footerActionsAfterToday={[
+                        {
+                          label: "Tomorrow",
+                          onClick: () => setDraftDate(tomorrow),
+                        },
+                      ]}
+                    />
+                  </div>
                 ) : null}
-                <TimePickerDropdown value={draftTime} onChange={setDraftTime} />
-                <TaskDurationInput value={draftDuration} onChange={setDraftDuration} />
-                {!isEditMode ? (
+                <div className="task-modal__field-shell task-modal__field-shell--time">
+                  <span className="task-modal__field-label">Time</span>
+                  <span className="task-modal__field-icon">
+                    <ClockFieldIcon />
+                  </span>
+                  <TimePickerDropdown value={draftTime} onChange={setDraftTime} />
+                </div>
+                <div className="task-modal__field-shell task-modal__field-shell--duration">
+                  <span className="task-modal__field-label">Duration</span>
+                  <span className="task-modal__field-icon">
+                    <DurationFieldIcon />
+                  </span>
+                  <TaskDurationInput value={draftDuration} onChange={setDraftDuration} />
+                </div>
+                {!isEditMode && context !== "plan" ? (
                   <button
                     className="add-icon-btn"
                     type="button"
@@ -657,6 +1024,195 @@ export function AddTaskModal({
                   </button>
                 ) : null}
               </div>
+              {showRepeatControls ? (
+                <div
+                  className={["task-modal__repeat-row", draftRepeatEnabled ? "is-repeat-open" : ""]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <div className="task-modal__repeat-control">
+                    <button
+                      className="task-modal__repeat-label"
+                      type="button"
+                      aria-pressed={draftRepeatEnabled}
+                      onClick={() => setDraftRepeatEnabled((current) => !current)}
+                    >
+                      <span className="task-modal__repeat-icon" aria-hidden="true">
+                        <RepeatIcon />
+                      </span>
+                      <span>Repeat</span>
+                    </button>
+                    <button
+                      className="task-modal__repeat-knob"
+                      type="button"
+                      role="switch"
+                      aria-checked={draftRepeatEnabled}
+                      aria-label="Repeat task"
+                      onClick={() => setDraftRepeatEnabled((current) => !current)}
+                    >
+                      <span className="task-modal__repeat-knob-bg" aria-hidden="true">
+                      </span>
+                      <span className="task-modal__repeat-knob-handle" aria-hidden="true">
+                        <span className="task-modal__repeat-knob-handle-ring" />
+                        <span className="task-modal__repeat-knob-handle-face" />
+                      </span>
+                    </button>
+                    {draftRepeatEnabled ? (
+                      <div className="task-modal__repeat-custom">
+                        <div className="checkbox-wrapper">
+                          <input
+                            id={repeatCustomId}
+                            type="checkbox"
+                            checked={draftRepeatCustom}
+                            onChange={(event) => setDraftRepeatCustom(event.target.checked)}
+                          />
+                          <label htmlFor={repeatCustomId}>
+                            <span className="tick_mark" aria-hidden="true"></span>
+                          </label>
+                        </div>
+                        <label htmlFor={repeatCustomId}>Custom</label>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div
+                    className={["task-modal__repeat-fields", draftRepeatEnabled ? "" : "is-hidden"].filter(Boolean).join(" ")}
+                    aria-hidden={!draftRepeatEnabled}
+                  >
+                    <div className="task-modal__field-shell task-modal__repeat-frequency-field">
+                      <span className="task-modal__field-label">Frequency</span>
+                      <RepeatFrequencyDropdown value={draftRepeatFrequency} onChange={setDraftRepeatFrequency} />
+                    </div>
+                    {draftRepeatCustom ? (
+                      <div className="task-modal__repeat-interval-field" aria-label="Custom repeat interval">
+                        <span>Every</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          aria-label="Repeat interval count"
+                          value={draftRepeatInterval}
+                          placeholder="1"
+                          onChange={(event) => setDraftRepeatInterval(sanitizeRepeatIntervalInput(event.target.value))}
+                          onBlur={() => setDraftRepeatInterval(String(repeatIntervalNumber))}
+                        />
+                        <span>{repeatIntervalUnit}</span>
+                      </div>
+                    ) : null}
+                    {showRepeatWeekdays ? (
+                      <div className="task-modal__repeat-weekdays-field">
+                        <span className="task-modal__field-label">Repeat on</span>
+                        <div className="task-modal__repeat-weekdays" aria-label="Repeat on weekdays">
+                          {WEEKDAY_OPTIONS.map((weekday) => {
+                            const isSelected = activeRepeatWeekdays.includes(weekday.value);
+                            return (
+                              <button
+                                key={weekday.value}
+                                type="button"
+                                aria-pressed={isSelected}
+                                onClick={() => toggleRepeatWeekday(weekday.value)}
+                              >
+                                <span>{weekday.label}</span>
+                                {isSelected ? (
+                                  <span className="task-modal__repeat-weekday-check" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" focusable="false">
+                                      <path d="M4.4 8.1l2.1 2.1 5-5" />
+                                    </svg>
+                                  </span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {showRepeatMonthDays ? (
+                      <div className="task-modal__repeat-monthdays-field">
+                        <div className="task-modal__repeat-monthdays-calendar">
+                          <span className="task-modal__field-label">Each</span>
+                          <div className="task-modal__repeat-monthdays" aria-label="Repeat on month day">
+                            {MONTH_DAY_OPTIONS.map((day) => (
+                              <button
+                                key={day}
+                                type="button"
+                                aria-pressed={activeRepeatMonthDays.includes(day)}
+                                onClick={() => toggleRepeatMonthDay(day)}
+                              >
+                                {day}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    {showRepeatYearMonths ? (
+                      <div className="task-modal__repeat-yearmonths-field">
+                        <div className="task-modal__repeat-yearmonths-calendar">
+                          <span className="task-modal__field-label">Months</span>
+                          <div className="task-modal__repeat-yearmonths" aria-label="Repeat in months">
+                            {YEAR_MONTH_OPTIONS.map((month) => (
+                              <button
+                                key={month.value}
+                                type="button"
+                                aria-pressed={activeRepeatYearMonths.includes(month.value)}
+                                onClick={() => toggleRepeatYearMonth(month.value)}
+                              >
+                                {month.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    {showRepeatMonthDays && overflowRepeatMonthDays.length ? (
+                      <div className="task-modal__repeat-month-overflow">
+                        <div className="task-modal__repeat-month-overflow-header">
+                          <div>
+                            <h4>
+                              Short months behavior
+                              <span className="task-modal__repeat-month-overflow-info">
+                                <InfoIcon />
+                              </span>
+                            </h4>
+                            <p>Choose what happens when a month doesn&apos;t have the selected day.</p>
+                          </div>
+                        </div>
+                        <div className="task-modal__repeat-month-overflow-options">
+                          {MONTH_OVERFLOW_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                                  aria-pressed={draftRepeatMonthOverflow === option.value}
+                                  onClick={() => setDraftRepeatMonthOverflow(option.value)}
+                                >
+                                  <span className="task-modal__repeat-month-overflow-option-icon" aria-hidden="true">
+                                    {option.value === "last-day" ? <LastDayOptionIcon /> : <SkipMonthOptionIcon />}
+                                  </span>
+                              <span className="task-modal__repeat-month-overflow-option-copy">
+                                <strong>{option.title}</strong>
+                                <span>{option.description}</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="task-modal__field-shell task-modal__repeat-end-field">
+                      <span className="task-modal__field-label">Repeat until</span>
+                      <GoalDatePicker
+                        className="task-modal__date-picker task-modal__repeat-end"
+                        value={draftRepeatEndDate}
+                        onChange={setDraftRepeatEndDate}
+                        allowClear
+                        showTodayShortcut={false}
+                        minDate={draftDate}
+                        ariaLabel="Repeat until"
+                        emptyDisplayValue="Never"
+                        formatDisplayValue={formatTaskDate}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {!isEditMode ? (
@@ -677,7 +1233,7 @@ export function AddTaskModal({
             ) : null}
           </div>
 
-          {!isEditMode ? (
+          {!isEditMode && context !== "plan" ? (
             <section className="task-modal__queue" aria-label="Tasks to add">
             {queuedTasks.length ? (
               <div className="task-modal__queue-groups">
@@ -697,6 +1253,7 @@ export function AddTaskModal({
                                 item.category,
                                 item.time ? formatTaskTimeDisplay(item.time) : "",
                                 item.duration,
+                                formatRepeatLabel(item.repeatFrequency, item.repeatEndDate, item.repeatInterval, item.repeatWeekdays, item.repeatMonthDays),
                                 item.saveToDefault ? "Save to pool" : "",
                               ]
                                 .filter(Boolean)
@@ -732,6 +1289,7 @@ export function AddTaskModal({
                                 item.time ? formatTaskTimeDisplay(item.time) : "",
                                 item.category,
                                 item.duration,
+                                formatRepeatLabel(item.repeatFrequency, item.repeatEndDate, item.repeatInterval, item.repeatWeekdays, item.repeatMonthDays),
                                 item.saveToDefault ? "Save to pool" : "",
                               ]
                                 .filter(Boolean)
@@ -751,9 +1309,7 @@ export function AddTaskModal({
                   </div>
                 ) : null}
               </div>
-            ) : (
-              <p className="task-modal__queue-empty">No tasks queued yet.</p>
-            )}
+            ) : null}
             </section>
           ) : null}
 
@@ -782,6 +1338,7 @@ export function AddTaskModal({
                             item.occurrenceDate !== today ? formatTaskDate(item.occurrenceDate) : "",
                             item.time ? formatTaskTimeDisplay(item.time) : "",
                             item.duration,
+                            formatRepeatLabel(item.repeatFrequency, item.repeatEndDate, item.repeatInterval, item.repeatWeekdays, item.repeatMonthDays),
                             "Pending",
                           ]
                             .filter(Boolean)
@@ -831,35 +1388,62 @@ export function AddTaskModal({
         ) : null}
 
         <footer className="task-modal__footer">
-          {isEditMode && onDelete ? (
-            <DeleteActionButton onClick={() => onDelete()} disabled={editSaving}>
-              Delete task
-            </DeleteActionButton>
+          {showRepeatControls && repeatSummary ? (
+            <p className="task-modal__repeat-summary" aria-live="polite">
+              {repeatSummary}
+            </p>
           ) : null}
-          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="task-add" type="submit" disabled={isEditMode ? editSaving : createTask.isPending}>
-            {isMobile && !isEditMode && !createTask.isPending ? (
-              <>
-                <span aria-hidden="true">+</span>
-                {submitTaskLabel}
-              </>
-            ) : isEditMode
-              ? editSaving
-                ? "Saving..."
-                : "Save changes"
-              : createTask.isPending
-                ? "Adding..."
-                : submitTaskLabel}
-          </button>
+          <div className="task-modal__footer-actions">
+            {isEditMode && onDelete ? (
+              <DeleteActionButton
+                className="task-modal__delete"
+                onClick={() => {
+                  if (isEditingRecurring) setConfirmDeleteRepeat(true);
+                  else onDelete();
+                }}
+                disabled={editSaving}
+              >
+                Delete task
+              </DeleteActionButton>
+            ) : null}
+            <div className="task-modal__footer-main-actions">
+              <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onClose}>
+                Cancel
+              </button>
+              <button className="task-add" type="submit" disabled={isEditMode ? editSaving : createTask.isPending}>
+                {isEditMode
+                  ? editSaving
+                    ? "Saving..."
+                    : "Save changes"
+                  : createTask.isPending
+                    ? "Adding..."
+                    : submitTaskLabel}
+              </button>
+            </div>
+          </div>
         </footer>
       </form>
+      {confirmDisableRepeat ? (
+        <RepeatDisableConfirm
+          onCancel={() => setConfirmDisableRepeat(false)}
+          onConfirm={() => void saveEdit({ confirmedDisableRepeat: true })}
+          disabled={editSaving}
+        />
+      ) : null}
+      {confirmDeleteRepeat && onDelete ? (
+        <RepeatDeleteConfirm
+          onCancel={() => setConfirmDeleteRepeat(false)}
+          onPick={(scope) => {
+            onDelete(scope);
+            setConfirmDeleteRepeat(false);
+          }}
+        />
+      ) : null}
     </motion.div>
   );
 
   if (variant === "dialog") {
-    return (
+    const dialog = (
       <motion.div
         className={`task-modal-backdrop ${context === "plan" ? "task-modal-backdrop--plan" : ""}`.trim()}
         initial={{ opacity: 0 }}
@@ -869,6 +1453,8 @@ export function AddTaskModal({
         {modal}
       </motion.div>
     );
+
+    return createPortal(dialog, document.body);
   }
 
   return modal;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, animate, motion, Reorder, useDragControls, useMotionValue, useTransform } from "motion/react";
 import type { CategoryInfo, Occurrence } from "../../../shared/schemas";
+import { compareTaskTimeForDisplay, formatTaskTimeDisplay } from "../../../shared/time";
 import { categoryStyleForName } from "./categoryColor";
 import {
   useDefaultTasks,
@@ -12,7 +13,7 @@ import {
   useUpdateTask,
 } from "./useTasks";
 import { useGoals, useUpdateGoal } from "../goals/useGoals";
-import { AddTaskModal } from "./AddTaskModal";
+import { AddTaskModalMobile } from "./AddTaskModalMobile";
 import { CompletionScopeModal } from "./CompletionScopeModal";
 import { ParentTaskCompletionModal } from "./ParentTaskCompletionModal";
 
@@ -37,6 +38,21 @@ function isoDate(offsetDays = 0): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function formatFocusDuration(seconds: number): string {
+  const totalMinutes = Math.floor(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  return `${minutes}m`;
+}
+
+function sortTasksByTime(tasks: Occurrence[]) {
+  return tasks
+    .map((task, index) => ({ task, index }))
+    .sort((first, second) => compareTaskTimeForDisplay(first.task.time, second.task.time) || first.index - second.index)
+    .map(({ task }) => task);
 }
 
 function ProgressRing({ done, total }: { done: number; total: number }) {
@@ -110,6 +126,8 @@ function TaskSwipeRow({
   const focusVisibility = useTransform(x, (value) => (value > 1 ? "visible" : "hidden"));
   const deleteVisibility = useTransform(x, (value) => (value < -1 ? "visible" : "hidden"));
   const [didSwipe, setDidSwipe] = useState(false);
+  const timeLabel = task.time ? formatTaskTimeDisplay(task.time) : "";
+  const focusLabel = task.focusSeconds > 0 ? `${formatFocusDuration(task.focusSeconds)} focus` : "";
 
   const clearHold = () => {
     if (!holdTimer.current) return;
@@ -196,14 +214,25 @@ function TaskSwipeRow({
         </div>
 
         <div className="tm-task__body">
-          <span className="tm-task__title">{task.title}</span>
-          {chip ? (
-            <span
-              className="task-category tm-task__chip"
-              style={categoryStyleForName(chip, categories)}
-              title={chip}
-            >
-              {chip}
+          <span className="tm-task__title-row">
+            <span className="tm-task__title">{task.title}</span>
+            {focusLabel ? <span className="tm-task__inline-meta tm-task__focus-time">{focusLabel}</span> : null}
+          </span>
+          {chip || task.duration || timeLabel ? (
+            <span className="tm-task__detail-row">
+              <span className="tm-task__category-slot">
+                {chip ? (
+                  <span
+                    className="task-category tm-task__chip"
+                    style={categoryStyleForName(chip, categories)}
+                    title={chip}
+                  >
+                    {chip}
+                  </span>
+                ) : null}
+                {task.duration ? <span className="tm-task__inline-meta tm-task__duration">{task.duration}</span> : null}
+              </span>
+              {timeLabel ? <span className="tm-task__time">{timeLabel}</span> : null}
             </span>
           ) : null}
         </div>
@@ -243,7 +272,6 @@ function TaskSectionList({
     <section className="today-mobile__section" aria-label={title}>
       <div className="today-mobile__section-header">
         <h2>{title}</h2>
-        <span>{tasks.length}</span>
       </div>
       <Reorder.Group
         as="ul"
@@ -336,8 +364,8 @@ export function TodayMobile() {
     return tasks;
   }, [tasks, filter]);
 
-  const openTasks = useMemo(() => visibleTasks.filter((task) => !task.completed), [visibleTasks]);
-  const doneTasks = useMemo(() => visibleTasks.filter((task) => task.completed), [visibleTasks]);
+  const openTasks = useMemo(() => sortTasksByTime(visibleTasks.filter((task) => !task.completed)), [visibleTasks]);
+  const doneTasks = useMemo(() => sortTasksByTime(visibleTasks.filter((task) => task.completed)), [visibleTasks]);
   const editingTask = useMemo(
     () => tasks.find((task) => task.id === editingId && task.sourceKind === "standalone") ?? null,
     [editingId, tasks],
@@ -489,7 +517,7 @@ export function TodayMobile() {
       </header>
 
       {attention.total > 0 ? (
-        <button type="button" className="today-mobile__attention" onClick={() => navigate("/goals")}>
+        <button type="button" className="today-mobile__attention" onClick={() => navigate("/today/alerts")}>
           <svg className="today-mobile__attention-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 4.8 21 19.2H3L12 4.8Z" />
             <path d="M12 10v4.2" />
@@ -569,7 +597,7 @@ export function TodayMobile() {
 
       <AnimatePresence>
         {addOpen ? (
-          <AddTaskModal
+          <AddTaskModalMobile
             categories={categoriesQuery.data ?? []}
             defaultTasks={defaultTasksQuery.data ?? []}
             onClose={() => setAddOpen(false)}
@@ -579,7 +607,7 @@ export function TodayMobile() {
 
       <AnimatePresence>
         {editingTask ? (
-          <AddTaskModal
+          <AddTaskModalMobile
             categories={categoriesQuery.data ?? []}
             defaultTasks={defaultTasksQuery.data ?? []}
             editingTask={editingTask}

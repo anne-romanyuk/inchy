@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
-import type { CategoryInfo, Occurrence } from "../../../shared/schemas";
+import type { CategoryInfo, Occurrence, RecurrenceDeleteScope } from "../../../shared/schemas";
 import { compareTaskTimeForDisplay, formatTaskTimeDisplay } from "../../../shared/time";
 // After the storage unification, the Today widget renders task_occurrences.
 // We alias them as `Task` locally so the existing renderer code paths
 // (variables called `task`, `Task[]`) stay readable without a mass rename.
 type Task = Occurrence;
 import { useOverflowFade } from "../../shared/hooks/useOverflowFade";
+import { useAppPreferences } from "../../shared/hooks/useAppPreferences";
 import { categoryStyleForName, normalizeCategoryInfos } from "./categoryColor";
-import { TaskCategoryPicker } from "./TaskCategoryPicker";
 import {
   useDefaultTasks,
   useDeleteTask,
@@ -20,12 +20,13 @@ import {
 } from "./useTasks";
 import { CompletionScopeModal } from "./CompletionScopeModal";
 import { ParentTaskCompletionModal } from "./ParentTaskCompletionModal";
-import { AddTaskModal, TimePickerDropdown } from "./AddTaskModal";
+import { AddTaskModal } from "./AddTaskModal";
 import { NeedsAttentionWidget } from "./NeedsAttentionWidget";
 import { ActionIcon, FocusIcon } from "./taskIcons";
 import PomodoroPanel from "../focus/Pomodoro";
 import { GoalJourney } from "../goals/GoalsPage";
 import { useGoals, useUpdateGoal } from "../goals/useGoals";
+import { todayDateKey } from "./useOccurrences";
 
 function formatFocusDuration(seconds: number): string {
   const totalMinutes = Math.floor(seconds / 60);
@@ -147,15 +148,9 @@ function TaskListItem({
   scrollRef,
   isFocusActive,
   isFocusRunning,
-  isEditing,
-  editDraft,
   onToggleCompleted,
   onToggleFocus,
   onStartEdit,
-  onChangeDraft,
-  onCancelEdit,
-  onSaveEdit,
-  onDelete,
 }: {
   task: Task;
   categories: CategoryInfo[];
@@ -164,15 +159,9 @@ function TaskListItem({
   scrollRef: React.RefObject<HTMLDivElement | null>;
   isFocusActive: boolean;
   isFocusRunning: boolean;
-  isEditing: boolean;
-  editDraft: { title: string; category: string; time: string };
   onToggleCompleted: (completed: boolean) => void;
   onToggleFocus: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onStartEdit: () => void;
-  onChangeDraft: (draft: { title: string; category: string; time: string }) => void;
-  onCancelEdit: () => void;
-  onSaveEdit: () => void;
-  onDelete: () => void;
 }) {
   const controls = useDragControls();
   const autoScrollDir = useRef(0);
@@ -227,7 +216,7 @@ function TaskListItem({
       value={task}
       dragListener={false}
       dragControls={controls}
-      className={`task-item ${task.completed ? "is-completed" : ""} ${isFocusActive ? "is-focus-active" : ""} ${isEditing ? "is-editing" : ""}`.trim()}
+      className={`task-item ${task.completed ? "is-completed" : ""} ${isFocusActive ? "is-focus-active" : ""}`.trim()}
       layout
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -241,7 +230,7 @@ function TaskListItem({
         className="task-drag-handle"
         aria-label="Reorder task"
         onPointerDown={(event) => {
-          if (!isEditing) controls.start(event);
+          controls.start(event);
         }}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -265,85 +254,52 @@ function TaskListItem({
           <span className="tick_mark" aria-hidden="true"></span>
         </label>
       </div>
-      {isEditing ? (
-        <>
-          <label className="task-edit-field task-edit-field--title">
-            <span className="sr-only">Task description</span>
-            <input
-              value={editDraft.title}
-              maxLength={120}
-              onChange={(event) => onChangeDraft({ ...editDraft, title: event.target.value })}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") onSaveEdit();
-                if (event.key === "Escape") onCancelEdit();
-              }}
-              autoFocus
-            />
-          </label>
-          <TimePickerDropdown value={editDraft.time} onChange={(time) => onChangeDraft({ ...editDraft, time })} />
-          <TaskCategoryPicker
-            mode="select"
-            className="task-edit-field task-edit-field--category"
-            ariaLabel="Category"
-            placeholder="Category"
-            value={editDraft.category}
-            onChange={(category) => onChangeDraft({ ...editDraft, category })}
-            allowCreate
-          />
-          <ActionIcon type="cancel" label={`Cancel editing ${task.title}`} onClick={onCancelEdit} />
-          <ActionIcon type="save" label={`Save ${task.title}`} onClick={onSaveEdit} />
-          <ActionIcon type="delete" label={`Delete ${task.title}`} onClick={onDelete} />
-        </>
-      ) : (
-        <>
-          <span className="task-title">
-            <span className="task-title__text">{task.title}</span>
-            {task.duration ? <span className="task-title__chip">{task.duration}</span> : null}
-            {task.focusSeconds > 0 ? (
-              <span className="task-title__chip">{formatFocusDuration(task.focusSeconds)} focus</span>
-            ) : null}
+      <>
+        <span className="task-title">
+          <span className="task-title__text">{task.title}</span>
+          {task.duration ? <span className="task-title__chip">{task.duration}</span> : null}
+          {task.focusSeconds > 0 ? (
+            <span className="task-title__chip">{formatFocusDuration(task.focusSeconds)} focus</span>
+          ) : null}
+        </span>
+        <span className={`task-time ${task.time ? "" : "task-time--empty"}`.trim()} title={task.time ? formatTaskTimeDisplay(task.time) : ""}>
+          {task.time ? formatTaskTimeDisplay(task.time) : ""}
+        </span>
+        {/* Category column: for standalone we show the user-typed
+            category (with its saved palette color); for goal-linked we show the goal
+            name, which may visually clip if long — that's
+            acceptable per design. */}
+        {task.sourceKind === "standalone" ? (
+          <span
+            className="task-category"
+            style={categoryStyleForName(task.category, normalizedCategories)}
+            title={task.category || ""}
+          >
+            {task.category || ""}
           </span>
-          <span className={`task-time ${task.time ? "" : "task-time--empty"}`.trim()} title={task.time ? formatTaskTimeDisplay(task.time) : ""}>
-            {task.time ? formatTaskTimeDisplay(task.time) : ""}
+        ) : (
+          <span
+            className="task-category task-category--goal"
+            style={categoryStyleForName(goalLabel, normalizedCategories)}
+            title={goalLabel}
+          >
+            {goalLabel}
           </span>
-          {/* Category column: for standalone we show the user-typed
-              category (with its saved palette color); for goal-linked we show the goal
-              name, which may visually clip if long — that's
-              acceptable per design. */}
-          {task.sourceKind === "standalone" ? (
-            <span
-              className="task-category"
-              style={categoryStyleForName(task.category, normalizedCategories)}
-              title={task.category || ""}
-            >
-              {task.category || ""}
-            </span>
-          ) : (
-            <span
-              className="task-category task-category--goal"
-              style={categoryStyleForName(goalLabel, normalizedCategories)}
-              title={goalLabel}
-            >
-              {goalLabel}
-            </span>
-          )}
-          <FocusIcon
-            isActive={isFocusActive}
-            isRunning={isFocusRunning}
-            label={`Focus on ${task.title}`}
-            onClick={onToggleFocus}
-          />
-          {task.sourceKind === "standalone" ? (
-            <ActionIcon type="edit" label={`Edit ${task.title}`} onClick={onStartEdit} />
-          ) : (
-            // Goal-linked occurrences are not editable here — their title
-            // comes from the underlying goal_task / goal_subtask. We render
-            // an invisible spacer to keep the delete column aligned.
-            <span className="task-action--ghost" aria-hidden="true" />
-          )}
-          <ActionIcon type="delete" label={`Delete ${task.title}`} onClick={onDelete} />
-        </>
-      )}
+        )}
+        <FocusIcon
+          isActive={isFocusActive}
+          isRunning={isFocusRunning}
+          label={`Focus on ${task.title}`}
+          onClick={onToggleFocus}
+        />
+        {task.sourceKind === "standalone" ? (
+          <ActionIcon type="edit" label={`Edit ${task.title}`} onClick={onStartEdit} />
+        ) : (
+          // Goal-linked occurrences are not editable here — their title
+          // comes from the underlying goal_task / goal_subtask.
+          <span className="task-action--ghost" aria-hidden="true" />
+        )}
+      </>
     </Reorder.Item>
   );
 }
@@ -456,13 +412,12 @@ export function TodayPage() {
   const [runningFocusTaskId, setRunningFocusTaskId] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<{ title: string; category: string; time: string }>({
-    title: "",
-    category: "",
-    time: "",
-  });
   const completionTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const tasksScrollRef = useRef<HTMLDivElement>(null);
+  const today = todayDateKey();
+  const [appPreferences, setAppPreferences] = useAppPreferences();
+  const showGoalsWidget = appPreferences.showGoalsWidget;
+  const savedTodayGoalId = appPreferences.todaySelectedGoalId;
 
   const taskCategories = useMemo(() => normalizeCategoryInfos(savedCategories), [savedCategories]);
 
@@ -572,34 +527,11 @@ export function TodayPage() {
   };
 
   const startEditing = (task: Task) => {
+    setAddTaskOpen(false);
     setEditingTaskId(task.id);
-    setEditDraft({
-      title: task.title,
-      category: task.category,
-      time: task.time,
-    });
   };
 
-  const cancelEditing = () => {
-    setEditingTaskId(null);
-    setEditDraft({ title: "", category: "", time: "" });
-  };
-
-  const saveEditing = (task: Task) => {
-    const title = editDraft.title.trim();
-    if (!title) return;
-    updateTask.mutate({
-      id: task.id,
-      updates: {
-        title,
-        category: editDraft.category.trim(),
-        time: editDraft.time,
-      },
-    });
-    cancelEditing();
-  };
-
-  const handleDelete = (taskId: string) => {
+  const handleDelete = (taskId: string, recurrenceDeleteScope?: RecurrenceDeleteScope) => {
     const timer = completionTimers.current.get(taskId);
     if (timer) {
       clearTimeout(timer);
@@ -613,10 +545,36 @@ export function TodayPage() {
       setRunningFocusTaskId(null);
     }
     if (editingTaskId === taskId) {
-      cancelEditing();
+      setEditingTaskId(null);
     }
-    deleteTask.mutate(taskId);
+    deleteTask.mutate({ id: taskId, recurrenceDeleteScope });
   };
+
+  const editingTask = useMemo(
+    () => tasks.find((task) => task.id === editingTaskId && task.sourceKind === "standalone") ?? null,
+    [editingTaskId, tasks],
+  );
+
+  const editingTaskData = useMemo(
+    () =>
+      editingTask
+        ? {
+            title: editingTask.title,
+            category: editingTask.category,
+            duration: editingTask.duration,
+            time: editingTask.time,
+            recurringTaskId: editingTask.recurringTaskId,
+            repeatFrequency: editingTask.repeatFrequency,
+            repeatInterval: editingTask.repeatInterval,
+            repeatWeekdays: editingTask.repeatWeekdays,
+            repeatMonthDays: editingTask.repeatMonthDays,
+            repeatMonthOverflow: editingTask.repeatMonthOverflow,
+            repeatYearMonths: editingTask.repeatYearMonths,
+            repeatEndDate: editingTask.repeatEndDate,
+          }
+        : undefined,
+    [editingTask],
+  );
 
   const activeFocusTask = useMemo(
     () => tasks.find((task) => task.id === activeFocusTaskId) ?? null,
@@ -637,10 +595,19 @@ export function TodayPage() {
       setSelectedGoalId(null);
       return;
     }
-    if (!selectedGoalId || !goals.some((goal) => goal.id === selectedGoalId)) {
-      setSelectedGoalId(defaultGoalId);
+    if (selectedGoalId && goals.some((goal) => goal.id === selectedGoalId)) {
+      return;
     }
-  }, [defaultGoalId, goals, selectedGoalId]);
+    const savedGoalExists = savedTodayGoalId && goals.some((goal) => goal.id === savedTodayGoalId);
+    if (savedGoalExists) {
+      setSelectedGoalId(savedTodayGoalId);
+      return;
+    }
+    if (savedTodayGoalId) {
+      setAppPreferences({ todaySelectedGoalId: null });
+    }
+    setSelectedGoalId(defaultGoalId);
+  }, [defaultGoalId, goals, savedTodayGoalId, selectedGoalId, setAppPreferences]);
 
   const selectedGoal = useMemo(
     () => goals.find((goal) => goal.id === selectedGoalId) ?? goals.find((goal) => goal.id === defaultGoalId) ?? null,
@@ -649,8 +616,8 @@ export function TodayPage() {
   const status = tasksQuery.error ? "Could not load tasks." : "";
 
   return (
-    <div className={`today-dashboard ${addTaskOpen ? "today-dashboard--modal-open" : ""}`.trim()}>
-      <div className={`dashboard-grid ${addTaskOpen ? "dashboard-grid--modal-open" : ""}`.trim()}>
+    <div className="today-dashboard">
+      <div className="dashboard-grid">
         {/* Left column: the Today tasks panel grows to fill the height, the
             goal widget sits below it at its natural (compact) size. */}
         <div className="today-col today-col--left">
@@ -724,12 +691,6 @@ export function TodayPage() {
                         scrollRef={tasksScrollRef}
                         isFocusActive={activeFocusTaskId === task.id}
                         isFocusRunning={runningFocusTaskId === task.id}
-                        isEditing={editingTaskId === task.id}
-                        editDraft={editingTaskId === task.id ? editDraft : {
-                          title: task.title,
-                          category: task.category,
-                          time: task.time,
-                        }}
                         onToggleCompleted={(completed) => toggleCompleted(task, completed)}
                         onToggleFocus={(event) => {
                           const wasActive = activeFocusTaskId === task.id;
@@ -754,10 +715,6 @@ export function TodayPage() {
                           }
                         }}
                         onStartEdit={() => startEditing(task)}
-                        onChangeDraft={setEditDraft}
-                        onCancelEdit={cancelEditing}
-                        onSaveEdit={() => saveEditing(task)}
-                        onDelete={() => handleDelete(task.id)}
                       />
                     ))}
                   </Reorder.Group>
@@ -780,7 +737,37 @@ export function TodayPage() {
               <AddTaskModal
                 categories={taskCategories}
                 defaultTasks={defaultTasks}
+                context="plan"
+                variant="dialog"
                 onClose={() => setAddTaskOpen(false)}
+              />
+            ) : null}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {editingTask ? (
+              <AddTaskModal
+                categories={taskCategories}
+                defaultTasks={defaultTasks}
+                context="plan"
+                variant="dialog"
+                editingTask={editingTaskData}
+                editingDate={today}
+                onClose={() => setEditingTaskId(null)}
+                onSaveEdit={async ({ date, ...fields }) => {
+                  const toDate = date ?? today;
+                  await updateTask.mutateAsync({
+                    id: editingTask.id,
+                    updates: {
+                      ...fields,
+                      ...(toDate !== today ? { occurrenceDate: toDate } : {}),
+                    },
+                  });
+                }}
+                onDelete={(scope) => {
+                  handleDelete(editingTask.id, scope);
+                  setEditingTaskId(null);
+                }}
               />
             ) : null}
           </AnimatePresence>
@@ -828,46 +815,51 @@ export function TodayPage() {
           </AnimatePresence>
         </motion.section>
 
-        {selectedGoal ? (
-          <motion.div
-            className="today-goal-widget"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <GoalJourney
-              goal={selectedGoal}
-              compact
-              selectableGoals={goals}
-              selectedGoalId={selectedGoal.id}
-              onSelectGoal={setSelectedGoalId}
-            />
-          </motion.div>
-        ) : !goalsQuery.isLoading ? (
-          <motion.div
-            className="today-goal-widget today-goal-widget--empty"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="goal-journey goal-journey--empty">
-              <div className="goal-journey__empty-content">
-                <div className="goal-journey__empty-text">
-                  <h2>No goals yet</h2>
-                  <p>Set your first goal and Inchy will help you break it into milestones.</p>
+        {showGoalsWidget ? (
+          selectedGoal ? (
+            <motion.div
+              className="today-goal-widget"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <GoalJourney
+                goal={selectedGoal}
+                compact
+                selectableGoals={goals}
+                selectedGoalId={selectedGoal.id}
+                onSelectGoal={(goalId) => {
+                  setSelectedGoalId(goalId);
+                  setAppPreferences({ todaySelectedGoalId: goalId });
+                }}
+              />
+            </motion.div>
+          ) : !goalsQuery.isLoading ? (
+            <motion.div
+              className="today-goal-widget today-goal-widget--empty"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="goal-journey goal-journey--empty">
+                <div className="goal-journey__empty-content">
+                  <div className="goal-journey__empty-text">
+                    <h2>No goals yet</h2>
+                    <p>Set your first goal and Inchy will help you break it into milestones.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="task-add goal-journey__empty-cta"
+                    onClick={() => navigate("/goals?new=1")}
+                  >
+                    <span aria-hidden="true">+</span> Create your first goal
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="task-add goal-journey__empty-cta"
-                  onClick={() => navigate("/goals?new=1")}
-                >
-                  <span aria-hidden="true">+</span> Create your first goal
-                </button>
               </div>
-            </div>
-          </motion.div>
-        ) : (
-          // Placeholder while goals load — keeps the left column reserved.
-          <div />
-        )}
+            </motion.div>
+          ) : (
+            // Placeholder while goals load — keeps the left column reserved.
+            <div />
+          )
+        ) : null}
         </div>
 
         {/* Right column: pomodoro grows to fill, "Needs attention" sits below

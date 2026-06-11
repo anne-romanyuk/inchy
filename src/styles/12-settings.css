@@ -630,6 +630,34 @@
   margin-top: var(--space-6);
 }
 
+.settings-goals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.settings-preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--c-border) 62%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-border) 62%, transparent);
+  padding: var(--space-5) 0;
+}
+
+.settings-preference-row__copy {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.settings-switch {
+  flex: 0 0 auto;
+}
+
 .settings-subsection__header {
   display: flex;
   flex-direction: column;

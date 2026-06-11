@@ -3,16 +3,19 @@ import { motion } from "motion/react";
 import { CATEGORY_PALETTE, type CategoryColor } from "../../../shared/categoryPalette";
 import { MAX_CATEGORY_LENGTH } from "../../../shared/constants";
 import { COUNTRY_REGION_CODES } from "../../shared/countryRegions";
+import { useAppPreferences } from "../../shared/hooks/useAppPreferences";
+import { SidebarIcon } from "../../shared/ui/SidebarIcon";
 import type { CategoryInfo } from "../../../shared/schemas";
 import { DeleteActionButton } from "../../shared/ui/DeleteActionButton";
 import { useCurrentUser, useUpdateAvatarImage, useUpdateProfile } from "../auth/useCurrentUser";
 import { useDeleteTaskCategory, useTaskCategories, useUpdateTaskCategory } from "../today/useTasks";
 
-type SectionId = "profile" | "tasks" | "notifications";
+type SectionId = "profile" | "tasks" | "goals" | "notifications";
 
 const SECTIONS: Array<{ id: SectionId; label: string; disabled?: boolean }> = [
   { id: "profile", label: "Profile" },
   { id: "tasks", label: "Tasks" },
+  { id: "goals", label: "Goals" },
   { id: "notifications", label: "Notifications", disabled: true },
 ];
 
@@ -50,6 +53,9 @@ function SectionIcon({ id }: { id: SectionId }) {
         <path d="m4.6 6.6 1 1 1.8-2M4.6 11.1l1 1 1.8-2M4.6 15.6l1 1 1.8-2" />
       </svg>
     );
+  }
+  if (id === "goals") {
+    return <SidebarIcon id="goals" />;
   }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -929,6 +935,45 @@ function TaskCategorySettings() {
   );
 }
 
+function GoalsSettings() {
+  const [preferences, setPreferences] = useAppPreferences();
+  const showGoalsWidget = preferences.showGoalsWidget;
+
+  return (
+    <section className="settings-goals" aria-labelledby="settings-goals-widget-title">
+      <div className="settings-preference-row">
+        <div className="settings-preference-row__copy">
+          <h3 id="settings-goals-widget-title" className="settings-subsection__title">
+            Show Goals widget
+          </h3>
+          <p className="settings-section__hint">
+            Keep the goals journey card visible on the Today page.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="task-modal__repeat-knob settings-switch"
+          role="switch"
+          aria-checked={showGoalsWidget}
+          aria-label="Show Goals widget"
+          onClick={() =>
+            setPreferences((current) => ({
+              showGoalsWidget: !current.showGoalsWidget,
+            }))
+          }
+        >
+          <span className="task-modal__repeat-knob-bg" aria-hidden="true">
+          </span>
+          <span className="task-modal__repeat-knob-handle" aria-hidden="true">
+            <span className="task-modal__repeat-knob-handle-ring" />
+            <span className="task-modal__repeat-knob-handle-face" />
+          </span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const [active, setActive] = useState<SectionId>("profile");
 
@@ -985,6 +1030,14 @@ export function SettingsPage() {
               <h2 className="settings-section__title">Tasks</h2>
               <p className="settings-section__hint">Manage task preferences and category details.</p>
               <TaskCategorySettings />
+            </div>
+          ) : null}
+
+          {active === "goals" ? (
+            <div className="settings-section">
+              <h2 className="settings-section__title">Goals</h2>
+              <p className="settings-section__hint">Tune how goal context appears around your daily work.</p>
+              <GoalsSettings />
             </div>
           ) : null}
         </div>

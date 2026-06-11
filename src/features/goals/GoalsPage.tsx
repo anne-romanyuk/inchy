@@ -526,7 +526,6 @@ function GoalEditorModal({
   );
   const [newTask, setNewTask] = useState<DraftTask>(() => newDraftTask());
   const [newTaskPickerOpen, setNewTaskPickerOpen] = useState(false);
-  const newTaskIconButtonRef = useRef<HTMLButtonElement | null>(null);
   const [goalIconPickerOpen, setGoalIconPickerOpen] = useState(false);
   const goalIconButtonRef = useRef<HTMLButtonElement | null>(null);
   const [mobileCreateStep, setMobileCreateStep] = useState(0);
@@ -804,7 +803,6 @@ function GoalEditorModal({
                 <span className="goal-task-add-row__label">Add a new step</span>
                 <div className={`goal-task-editor__icon-wrap goal-task-add-row__icon-wrap ${newTaskPickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
                   <button
-                    ref={newTaskIconButtonRef}
                     type="button"
                     className="goal-task-editor__icon goal-task-add-row__icon"
                     onClick={() => setNewTaskPickerOpen((current) => !current)}
@@ -821,15 +819,21 @@ function GoalEditorModal({
                     </svg>
                   </button>
                   {newTaskPickerOpen ? (
-                    <IconPickerPopover
-                      anchorRef={newTaskIconButtonRef}
+                    <motion.div
                       className="goal-task-editor__popover goal-task-add-row__icon-picker"
-                      value={newTask.iconId}
-                      onChange={(iconId) => {
-                        setNewTask((current) => ({ ...current, iconId }));
-                        setNewTaskPickerOpen(false);
-                      }}
-                    />
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.14, ease: "easeOut" }}
+                    >
+                      <IconPicker
+                        value={newTask.iconId}
+                        onChange={(iconId) => {
+                          setNewTask((current) => ({ ...current, iconId }));
+                          setNewTaskPickerOpen(false);
+                        }}
+                      />
+                    </motion.div>
                   ) : null}
                 </div>
                 <div className="goal-task-add-row__fields">
@@ -1306,6 +1310,7 @@ function GoalMobileRow({ goal, onDelete }: { goal: Goal; onDelete: () => void })
             {doneTasks}/{goal.tasks.length} tasks done
           </span>
         </div>
+        <span className="gm-goal-row__chevron" aria-hidden="true">›</span>
       </motion.button>
     </motion.li>
   );

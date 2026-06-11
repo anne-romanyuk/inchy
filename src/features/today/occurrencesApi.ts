@@ -1,4 +1,4 @@
-import type { Occurrence } from "../../../shared/schemas";
+import type { Occurrence, RecurrenceDeleteScope, RecurrenceUpdateScope, RepeatFrequency } from "../../../shared/schemas";
 import { apiFetch } from "../../shared/api/client";
 
 export type CreateOccurrenceInput =
@@ -11,6 +11,14 @@ export type CreateOccurrenceInput =
       duration?: string;
       time?: string;
       saveToDefault?: boolean;
+      repeatFrequency?: RepeatFrequency | null;
+      repeatInterval?: number;
+      repeatWeekdays?: number[];
+      repeatMonthDay?: number | null;
+      repeatMonthDays?: number[];
+      repeatMonthOverflow?: "last-day" | "skip";
+      repeatYearMonths?: number[];
+      repeatEndDate?: string | null;
     }
   | {
       sourceKind: "goal_task";
@@ -30,6 +38,15 @@ export type UpdateOccurrenceInput = Partial<{
   category: string;
   duration: string;
   time: string;
+  repeatFrequency: RepeatFrequency | null;
+  repeatInterval: number;
+  repeatWeekdays: number[];
+  repeatMonthDay: number | null;
+  repeatMonthDays: number[];
+  repeatMonthOverflow: "last-day" | "skip";
+  repeatYearMonths: number[];
+  repeatEndDate: string | null;
+  recurrenceUpdateScope: RecurrenceUpdateScope;
   completed: boolean;
   completionScope: "today" | "whole";
 }>;
@@ -54,8 +71,11 @@ export function updateOccurrence(id: string, updates: UpdateOccurrenceInput) {
   });
 }
 
-export function deleteOccurrence(id: string) {
-  return apiFetch<{ ok: true }>(`/api/occurrences/${id}`, { method: "DELETE" });
+export function deleteOccurrence(id: string, recurrenceDeleteScope: RecurrenceDeleteScope = "single") {
+  return apiFetch<{ ok: true }>(
+    `/api/occurrences/${id}?recurrenceDeleteScope=${encodeURIComponent(recurrenceDeleteScope)}`,
+    { method: "DELETE" },
+  );
 }
 
 export function reorderOccurrences(occurrenceDate: string, ids: string[]) {

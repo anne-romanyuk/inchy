@@ -8,11 +8,13 @@ import { createApp } from "../openapi/hono";
 import {
   ErrorResponseSchema,
   OccurrenceCreateInputSchema,
+  OccurrenceDeleteInputSchema,
   OccurrenceEnvelopeSchema,
   OccurrenceReorderInputSchema,
   OccurrenceUpdateInputSchema,
   OccurrencesEnvelopeSchema,
   OkResponseSchema,
+  type RepeatFrequency,
 } from "../../shared/schemas";
 import { normalizeTaskDurationValue } from "../../shared/duration";
 import { normalizeTaskTimeValue } from "../../shared/time";
@@ -23,6 +25,8 @@ occurrenceRoutes.use("*", requireUser);
 const OccurrenceIdParamSchema = z.object({
   id: z.string().min(1).openapi({ param: { name: "id", in: "path" }, example: "occ_123" }),
 });
+
+const OccurrenceDeleteQuerySchema = OccurrenceDeleteInputSchema.openapi("OccurrenceDeleteQuery");
 
 const DateQuerySchema = z.object({
   date: z
@@ -43,6 +47,13 @@ const SELECT_OCCURRENCES_WITH_RESOLVED = `
       WHEN 'goal_subtask' THEN gs.title
       ELSE NULL
     END AS resolved_title,
+    rt.frequency AS repeat_frequency,
+    rt.interval_count AS repeat_interval,
+    rt.repeat_weekdays AS repeat_weekdays,
+    rt.repeat_month_days AS repeat_month_days,
+    rt.repeat_month_overflow AS repeat_month_overflow,
+    rt.repeat_year_months AS repeat_year_months,
+    rt.ends_on AS repeat_end_date,
     COALESCE((
       SELECT SUM(duration_seconds)
       FROM (
@@ -69,6 +80,7 @@ const SELECT_OCCURRENCES_WITH_RESOLVED = `
   FROM task_occurrences o
   LEFT JOIN goal_tasks    gt ON gt.id = o.goal_task_id
   LEFT JOIN goal_subtasks gs ON gs.id = o.goal_subtask_id
+  LEFT JOIN recurring_tasks rt ON rt.id = o.recurring_task_id AND rt.user_id = o.user_id
 `;
 
 /** Persist a category to the user's task_categories pool. No-op on empty. */
@@ -76,6 +88,217 @@ function saveTaskCategory(userId: string, category: string) {
   const name = category.trim();
   if (!name) return;
   assignCategoryColor(db, "task_categories", userId, name);
+}
+
+type RecurringTaskRow = {
+  id: string;
+  user_id: string;
+  starts_on: string;
+  frequency: RepeatFrequency;
+  interval_count: number;
+  repeat_weekdays: string;
+  repeat_month_day: number | null;
+  repeat_month_days: string;
+  repeat_month_overflow: "last-day" | "skip";
+  repeat_year_months: string;
+  ends_on: string | null;
+  title: string;
+  priority: "low" | "medium" | "high" | null;
+  category: string;
+  duration: string;
+  time: string;
+  created_at: string;
+  updated_at: string;
+};
+
+function parseDateParts(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return { year, month, day };
+}
+
+function daysBetween(from: string, to: string) {
+  const a = parseDateParts(from);
+  const b = parseDateParts(to);
+  const start = Date.UTC(a.year, a.month - 1, a.day);
+  const end = Date.UTC(b.year, b.month - 1, b.day);
+  return Math.floor((end - start) / 86_400_000);
+}
+
+function dateToUtcTime(value: string) {
+  const { year, month, day } = parseDateParts(value);
+  return Date.UTC(year, month - 1, day);
+}
+
+function plannerWeekday(value: string) {
+  const day = new Date(dateToUtcTime(value)).getUTCDay();
+  return (day + 6) % 7;
+}
+
+function plannerWeekStartUtc(value: string) {
+  return dateToUtcTime(value) - plannerWeekday(value) * 86_400_000;
+}
+
+function weeksBetween(from: string, to: string) {
+  return Math.floor((plannerWeekStartUtc(to) - plannerWeekStartUtc(from)) / (7 * 86_400_000));
+}
+
+function monthsBetween(from: string, to: string) {
+  const start = parseDateParts(from);
+  const target = parseDateParts(to);
+  return (target.year - start.year) * 12 + (target.month - start.month);
+}
+
+function daysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function addDaysToDateKey(value: string, days: number) {
+  const { year, month, day } = parseDateParts(value);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  const nextYear = date.getUTCFullYear();
+  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getUTCDate()).padStart(2, "0");
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+function parseRepeatWeekdays(value: string | null | undefined) {
+  if (!value) return [];
+  const unique = new Set<number>();
+  for (const item of value.split(",")) {
+    const weekday = Number(item);
+    if (Number.isInteger(weekday) && weekday >= 0 && weekday <= 6) unique.add(weekday);
+  }
+  return [...unique].sort((a, b) => a - b);
+}
+
+function serializeRepeatWeekdays(values: number[] | null | undefined) {
+  if (!values) return "";
+  return parseRepeatWeekdays(values.join(",")).join(",");
+}
+
+function parseRepeatMonthDays(value: string | null | undefined) {
+  if (!value) return [];
+  const unique = new Set<number>();
+  for (const item of value.split(",")) {
+    const monthDay = Number(item);
+    if (Number.isInteger(monthDay) && monthDay >= 1 && monthDay <= 31) unique.add(monthDay);
+  }
+  return [...unique].sort((a, b) => a - b);
+}
+
+function serializeRepeatMonthDays(values: number[] | null | undefined) {
+  if (!values) return "";
+  return parseRepeatMonthDays(values.join(",")).join(",");
+}
+
+function parseRepeatYearMonths(value: string | null | undefined) {
+  if (!value) return [];
+  const unique = new Set<number>();
+  for (const item of value.split(",")) {
+    const month = Number(item);
+    if (Number.isInteger(month) && month >= 0 && month <= 11) unique.add(month);
+  }
+  return [...unique].sort((a, b) => a - b);
+}
+
+function serializeRepeatYearMonths(values: number[] | null | undefined) {
+  if (!values) return "";
+  return parseRepeatYearMonths(values.join(",")).join(",");
+}
+
+function deleteFutureMaterializedOccurrences(recurringTaskId: string, userId: string, fromDate: string, includeCurrent: boolean) {
+  db.prepare(
+    `DELETE FROM task_occurrences
+     WHERE user_id = ?
+       AND recurring_task_id = ?
+       AND occurrence_date ${includeCurrent ? ">=" : ">"} ?`,
+  ).run(userId, recurringTaskId, fromDate);
+}
+
+function recurrenceMatchesDate(rule: RecurringTaskRow, date: string) {
+  if (date < rule.starts_on) return false;
+  if (rule.ends_on && date > rule.ends_on) return false;
+  const interval = Math.max(1, Math.trunc(rule.interval_count || 1));
+  if (rule.frequency === "daily") return daysBetween(rule.starts_on, date) % interval === 0;
+  const start = parseDateParts(rule.starts_on);
+  const target = parseDateParts(date);
+  if (rule.frequency === "weekly") {
+    const weekdays = parseRepeatWeekdays(rule.repeat_weekdays);
+    if (weekdays.length && !weekdays.includes(plannerWeekday(date))) return false;
+    if (!weekdays.length && daysBetween(rule.starts_on, date) % 7 !== 0) return false;
+    return weeksBetween(rule.starts_on, date) % interval === 0;
+  }
+  if (rule.frequency === "monthly") {
+    const monthDays = parseRepeatMonthDays(rule.repeat_month_days);
+    const selectedMonthDays = monthDays.length ? monthDays : [rule.repeat_month_day ?? start.day];
+    if (monthsBetween(rule.starts_on, date) % interval !== 0) return false;
+    if (selectedMonthDays.includes(target.day)) return true;
+    if (rule.repeat_month_overflow !== "last-day") return false;
+    const lastDay = daysInMonth(target.year, target.month);
+    return target.day === lastDay && selectedMonthDays.some((monthDay) => monthDay > lastDay);
+  }
+  const yearMonths = parseRepeatYearMonths(rule.repeat_year_months);
+  const selectedMonths = yearMonths.length ? yearMonths.map((month) => month + 1) : [start.month];
+  return selectedMonths.includes(target.month) && target.day === start.day && (target.year - start.year) % interval === 0;
+}
+
+function materializeRecurringOccurrences(userId: string, date: string) {
+  const rules = db
+    .prepare(
+      `SELECT * FROM recurring_tasks
+       WHERE user_id = ?
+         AND starts_on <= ?
+         AND (ends_on IS NULL OR ends_on >= ?)
+         AND NOT EXISTS (
+           SELECT 1 FROM recurring_task_exceptions
+           WHERE recurring_task_exceptions.recurring_task_id = recurring_tasks.id
+             AND recurring_task_exceptions.occurrence_date = ?
+         )
+       ORDER BY created_at ASC`,
+    )
+    .all(userId, date, date, date) as RecurringTaskRow[];
+  const matching = rules.filter((rule) => recurrenceMatchesDate(rule, date));
+  if (!matching.length) return;
+
+  const now = new Date().toISOString();
+  const minPositionRow = db
+    .prepare(
+      "SELECT MIN(position) AS min_position FROM task_occurrences WHERE user_id = ? AND occurrence_date = ?",
+    )
+    .get(userId, date) as { min_position: number | null };
+  let nextPosition = (minPositionRow.min_position ?? 1) - 1;
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO task_occurrences
+     (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
+      recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
+     VALUES (?, ?, ?, 'standalone', NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+  );
+
+  db.transaction(() => {
+    for (const rule of matching) {
+      insert.run(
+        newId(),
+        userId,
+        date,
+        rule.id,
+        rule.title,
+        rule.priority,
+        rule.category,
+        normalizeTaskDurationValue(rule.duration),
+        normalizeTaskTimeValue(rule.time),
+        nextPosition,
+        now,
+        now,
+      );
+      nextPosition -= 1;
+    }
+  })();
+}
+
+function materializeRecurringEndBoundary(userId: string, endDate: string | null | undefined) {
+  if (!endDate) return;
+  materializeRecurringOccurrences(userId, endDate);
 }
 
 const listOccurrencesRoute = createRoute({
@@ -94,6 +317,7 @@ const listOccurrencesRoute = createRoute({
 occurrenceRoutes.openapi(listOccurrencesRoute, (c) => {
   const userId = c.get("userId");
   const { date } = c.req.valid("query");
+  materializeRecurringOccurrences(userId, date);
   const rows = db
     .prepare(
       `${SELECT_OCCURRENCES_WITH_RESOLVED}
@@ -124,6 +348,28 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   const input = c.req.valid("json");
   const now = new Date().toISOString();
   const id = newId();
+  const repeatInterval =
+    input.sourceKind === "standalone" && input.repeatFrequency ? input.repeatInterval : 1;
+  const repeatWeekdays =
+    input.sourceKind === "standalone" && input.repeatFrequency === "weekly"
+      ? serializeRepeatWeekdays(input.repeatWeekdays)
+      : "";
+  const repeatMonthDay =
+    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+      ? input.repeatMonthDay
+      : null;
+  const repeatMonthDays =
+    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+      ? serializeRepeatMonthDays(input.repeatMonthDays?.length ? input.repeatMonthDays : input.repeatMonthDay ? [input.repeatMonthDay] : [])
+      : "";
+  const repeatMonthOverflow =
+    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+      ? input.repeatMonthOverflow
+      : "skip";
+  const repeatYearMonths =
+    input.sourceKind === "standalone" && input.repeatFrequency === "yearly"
+      ? serializeRepeatYearMonths(input.repeatYearMonths?.length ? input.repeatYearMonths : [parseDateParts(input.occurrenceDate).month - 1])
+      : "";
 
   // Insert at the top of the day (negative position) so newly added items
   // surface above existing ones, matching the standalone-task UX.
@@ -137,6 +383,10 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   let row: OccurrenceRow;
 
   if (input.sourceKind === "standalone") {
+    if (input.repeatEndDate && input.repeatEndDate < input.occurrenceDate) {
+      return c.json({ errors: { repeatEndDate: "End repeat must be on or after the start date." } }, 422);
+    }
+    const recurringTaskId = input.repeatFrequency ? newId() : null;
     row = {
       id,
       user_id: userId,
@@ -145,6 +395,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: null,
       goal_task_id: null,
       goal_subtask_id: null,
+      recurring_task_id: recurringTaskId,
       title: input.title,
       priority: input.priority ?? null,
       category: input.category ?? "",
@@ -192,6 +443,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: gt.goal_id,
       goal_task_id: gt.id,
       goal_subtask_id: null,
+      recurring_task_id: null,
       title: gt.title, // snapshot fallback
       priority: null,
       category: "",
@@ -231,6 +483,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: gs.parent_goal_id,
       goal_task_id: gs.goal_task_id,
       goal_subtask_id: gs.id,
+      recurring_task_id: null,
       title: gs.title,
       priority: null,
       category: "",
@@ -247,11 +500,38 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   // categories pool and optionally to the default_tasks templates pool —
   // these were features of the old /api/tasks endpoint and we keep them.
   db.transaction(() => {
+    if (input.sourceKind === "standalone" && input.repeatFrequency && row.recurring_task_id) {
+      db.prepare(
+        `INSERT INTO recurring_tasks
+         (id, user_id, starts_on, frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days, repeat_month_overflow, repeat_year_months, ends_on, title, priority, category, duration, time, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        row.recurring_task_id,
+        userId,
+        input.occurrenceDate,
+        input.repeatFrequency,
+        repeatInterval,
+        repeatWeekdays,
+        repeatMonthDay,
+        repeatMonthDays,
+        repeatMonthOverflow,
+        repeatYearMonths,
+        input.repeatEndDate ?? null,
+        row.title,
+        row.priority,
+        row.category,
+        row.duration,
+        row.time,
+        row.created_at,
+        row.updated_at,
+      );
+    }
+
     db.prepare(
       `INSERT INTO task_occurrences
        (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
-        title, priority, category, duration, time, completed, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       row.id,
       row.user_id,
@@ -260,6 +540,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       row.goal_id,
       row.goal_task_id,
       row.goal_subtask_id,
+      row.recurring_task_id ?? null,
       row.title,
       row.priority,
       row.category,
@@ -281,6 +562,10 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       }
     }
   })();
+
+  if (input.sourceKind === "standalone" && input.repeatFrequency) {
+    materializeRecurringEndBoundary(userId, input.repeatEndDate);
+  }
 
   const fetched = db
     .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ? AND o.user_id = ?`)
@@ -332,6 +617,30 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
     typeof updates.completed === "boolean" ? (updates.completed ? 1 : 0) : existing.completed;
   const now = new Date().toISOString();
   const isMovingDate = nextOccurrenceDate !== existing.occurrence_date;
+  const hasRecurrenceUpdate = Object.prototype.hasOwnProperty.call(updates, "repeatFrequency");
+  const recurrenceScope = updates.recurrenceUpdateScope ?? "single";
+  const nextRepeatFrequency = updates.repeatFrequency ?? null;
+  const nextRepeatInterval = updates.repeatFrequency ? updates.repeatInterval ?? 1 : 1;
+  const nextRepeatWeekdays =
+    updates.repeatFrequency === "weekly" ? serializeRepeatWeekdays(updates.repeatWeekdays) : "";
+  const nextRepeatMonthDay =
+    updates.repeatFrequency === "monthly"
+      ? updates.repeatMonthDay ?? (updates.repeatMonthDays?.length ? updates.repeatMonthDays[0] : null)
+      : null;
+  const nextRepeatMonthDays =
+    updates.repeatFrequency === "monthly"
+      ? serializeRepeatMonthDays(updates.repeatMonthDays?.length ? updates.repeatMonthDays : nextRepeatMonthDay ? [nextRepeatMonthDay] : [])
+      : "";
+  const nextRepeatMonthOverflow =
+    updates.repeatFrequency === "monthly" ? updates.repeatMonthOverflow ?? "skip" : "skip";
+  const nextRepeatYearMonths =
+    updates.repeatFrequency === "yearly"
+      ? serializeRepeatYearMonths(updates.repeatYearMonths?.length ? updates.repeatYearMonths : [parseDateParts(nextOccurrenceDate).month - 1])
+      : "";
+
+  if (hasRecurrenceUpdate && nextRepeatFrequency && updates.repeatEndDate && updates.repeatEndDate < nextOccurrenceDate) {
+    return c.json({ errors: { repeatEndDate: "End repeat must be on or after the start date." } }, 422);
+  }
 
   if (isMovingDate && nextCompleted === 0) {
     if (existing.source_kind === "goal_task" && existing.goal_task_id) {
@@ -363,12 +672,93 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
 
   db.transaction(() => {
     if (nextCategory) saveTaskCategory(userId, nextCategory);
+
+    let nextRecurringTaskId = existing.recurring_task_id ?? null;
+
+    if (!isGoalLinked && hasRecurrenceUpdate) {
+      if (nextRepeatFrequency) {
+        if (existing.recurring_task_id) {
+          db.prepare(
+            `UPDATE recurring_tasks
+             SET starts_on = ?, frequency = ?, interval_count = ?, repeat_weekdays = ?, repeat_month_day = ?,
+                 repeat_month_days = ?, repeat_month_overflow = ?, repeat_year_months = ?, ends_on = ?,
+                 title = ?, priority = ?, category = ?, duration = ?, time = ?, updated_at = ?
+             WHERE id = ? AND user_id = ?`,
+          ).run(
+            nextOccurrenceDate,
+            nextRepeatFrequency,
+            nextRepeatInterval,
+            nextRepeatWeekdays,
+            nextRepeatMonthDay,
+            nextRepeatMonthDays,
+            nextRepeatMonthOverflow,
+            nextRepeatYearMonths,
+            updates.repeatEndDate ?? null,
+            nextTitle,
+            nextPriority,
+            nextCategory,
+            nextDuration,
+            nextTime,
+            now,
+            existing.recurring_task_id,
+            userId,
+          );
+          if (recurrenceScope === "series") {
+            deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false);
+          }
+        } else {
+          nextRecurringTaskId = newId();
+          db.prepare(
+            `INSERT INTO recurring_tasks
+             (id, user_id, starts_on, frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days,
+              repeat_month_overflow, repeat_year_months, ends_on, title, priority, category, duration, time, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ).run(
+            nextRecurringTaskId,
+            userId,
+            nextOccurrenceDate,
+            nextRepeatFrequency,
+            nextRepeatInterval,
+            nextRepeatWeekdays,
+            nextRepeatMonthDay,
+            nextRepeatMonthDays,
+            nextRepeatMonthOverflow,
+            nextRepeatYearMonths,
+            updates.repeatEndDate ?? null,
+            nextTitle,
+            nextPriority,
+            nextCategory,
+            nextDuration,
+            nextTime,
+            now,
+            now,
+          );
+        }
+      } else if (existing.recurring_task_id && recurrenceScope === "series") {
+        db.prepare(
+          `UPDATE recurring_tasks
+           SET ends_on = ?, updated_at = ?
+           WHERE id = ? AND user_id = ?`,
+        ).run(addDaysToDateKey(existing.occurrence_date, -1), now, existing.recurring_task_id, userId);
+        deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false);
+        nextRecurringTaskId = null;
+      } else if (existing.recurring_task_id) {
+        db.prepare(
+          `INSERT OR IGNORE INTO recurring_task_exceptions
+           (recurring_task_id, occurrence_date, created_at)
+           VALUES (?, ?, ?)`,
+        ).run(existing.recurring_task_id, existing.occurrence_date, now);
+        nextRecurringTaskId = null;
+      }
+    }
+
     db.prepare(
       `UPDATE task_occurrences
-       SET occurrence_date = ?, title = ?, priority = ?, category = ?, duration = ?, time = ?, completed = ?, position = ?, updated_at = ?
+       SET occurrence_date = ?, recurring_task_id = ?, title = ?, priority = ?, category = ?, duration = ?, time = ?, completed = ?, position = ?, updated_at = ?
        WHERE id = ? AND user_id = ?`,
     ).run(
       nextOccurrenceDate,
+      nextRecurringTaskId,
       nextTitle,
       nextPriority,
       nextCategory,
@@ -415,6 +805,10 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
     }
   })();
 
+  if (!isGoalLinked && hasRecurrenceUpdate && nextRepeatFrequency) {
+    materializeRecurringEndBoundary(userId, updates.repeatEndDate);
+  }
+
   const fetched = db
     .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ? AND o.user_id = ?`)
     .get(id, userId) as OccurrenceRow;
@@ -450,7 +844,7 @@ const deleteOccurrenceRoute = createRoute({
   path: "/{id}",
   tags: ["Occurrences"],
   summary: "Remove an occurrence from a date.",
-  request: { params: OccurrenceIdParamSchema },
+  request: { params: OccurrenceIdParamSchema, query: OccurrenceDeleteQuerySchema },
   responses: {
     200: { description: "Deleted", content: { "application/json": { schema: OkResponseSchema } } },
     404: { description: "Not found", content: { "application/json": { schema: ErrorResponseSchema } } },
@@ -460,7 +854,36 @@ const deleteOccurrenceRoute = createRoute({
 occurrenceRoutes.openapi(deleteOccurrenceRoute, (c) => {
   const userId = c.get("userId");
   const { id } = c.req.valid("param");
-  const info = db.prepare("DELETE FROM task_occurrences WHERE id = ? AND user_id = ?").run(id, userId);
+  const { recurrenceDeleteScope } = c.req.valid("query");
+  const existing = db
+    .prepare("SELECT id, recurring_task_id, occurrence_date FROM task_occurrences WHERE id = ? AND user_id = ?")
+    .get(id, userId) as Pick<OccurrenceRow, "id" | "recurring_task_id" | "occurrence_date"> | undefined;
+  if (!existing) return c.json({ message: "Occurrence not found." }, 404);
+  const info = db.transaction(() => {
+    if (existing.recurring_task_id) {
+      const now = new Date().toISOString();
+      if (recurrenceDeleteScope === "series") {
+        db.prepare("DELETE FROM task_occurrences WHERE user_id = ? AND recurring_task_id = ?").run(userId, existing.recurring_task_id);
+        db.prepare("DELETE FROM recurring_tasks WHERE id = ? AND user_id = ?").run(existing.recurring_task_id, userId);
+        return { changes: 1 };
+      }
+      if (recurrenceDeleteScope === "future") {
+        db.prepare(
+          `UPDATE recurring_tasks
+           SET ends_on = ?, updated_at = ?
+           WHERE id = ? AND user_id = ?`,
+        ).run(addDaysToDateKey(existing.occurrence_date, -1), now, existing.recurring_task_id, userId);
+        deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, true);
+        return { changes: 1 };
+      }
+      db.prepare(
+        `INSERT OR IGNORE INTO recurring_task_exceptions
+         (recurring_task_id, occurrence_date, created_at)
+         VALUES (?, ?, ?)`,
+      ).run(existing.recurring_task_id, existing.occurrence_date, now);
+    }
+    return db.prepare("DELETE FROM task_occurrences WHERE id = ? AND user_id = ?").run(id, userId);
+  })();
   if (info.changes === 0) return c.json({ message: "Occurrence not found." }, 404);
   checkpointDatabase();
   return c.json({ ok: true as const }, 200);

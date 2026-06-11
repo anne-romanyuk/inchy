@@ -199,16 +199,191 @@
 }
 
 .task-modal-backdrop--plan .task-modal-overlay--dialog {
+  width: min(calc(var(--space-10) * 23), calc(100vw - var(--space-8) - var(--space-8)));
   min-height: min(calc(var(--space-10) * 11), calc(100dvh - calc(var(--space-10) * 3)));
   max-height: calc(100dvh - clamp(calc(var(--space-10) * 2), 14dvh, calc(var(--space-10) * 3)));
 }
 
-.task-modal-backdrop--plan .task-modal-overlay--dialog:has(.category-picker__input[aria-expanded="true"]) {
+.task-modal-backdrop--plan .task-modal-overlay--dialog:has(.category-picker__input[aria-expanded="true"]),
+.task-modal-backdrop--plan .task-modal-overlay--dialog:has(.task-modal__repeat-select [aria-expanded="true"]) {
   overflow: visible;
 }
 
-.task-modal-overlay--plan .task-modal__content--compact:has(.category-picker__input[aria-expanded="true"]) {
+.task-modal-overlay--plan .task-modal__content--compact:has(.category-picker__input[aria-expanded="true"]),
+.task-modal-overlay--plan .task-modal__content--compact:has(.task-modal__repeat-select [aria-expanded="true"]) {
   overflow: visible;
+}
+
+.task-modal-overlay--plan .task-modal__draft-line--primary {
+  grid-template-columns: minmax(0, 1fr) minmax(calc(var(--space-10) * 4 + var(--space-5)), calc(var(--space-10) * 5 + var(--space-5)));
+  gap: var(--space-7);
+}
+
+.task-modal-overlay--plan .task-modal__draft-line--secondary {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr) minmax(0, 1.06fr);
+  gap: var(--space-7);
+}
+
+.task-modal-overlay--plan .task-modal__draft,
+.task-modal-overlay--plan .task-modal__draft-row--inline {
+  gap: var(--space-8);
+}
+
+.task-modal-overlay--plan .task-modal__draft-line {
+  align-items: end;
+}
+
+.task-modal-overlay--plan .task-modal__field-shell {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.task-modal-overlay--plan .task-modal__field-label {
+  display: block;
+  color: var(--c-text-muted);
+  font: var(--planner-label-weight) var(--text-caption-size) / 1 var(--planner-font);
+  letter-spacing: 0.06em;
+}
+
+.task-modal-overlay--plan .task-modal__draft-line--secondary .goal-date-picker__trigger,
+.task-modal-overlay--plan .task-modal__draft-line--secondary .task-modal__time-trigger,
+.task-modal-overlay--plan .task-modal__draft-line--secondary .task-modal__duration-input,
+.task-modal-overlay--plan .task-modal__repeat-fields .task-modal__dropdown-trigger,
+.task-modal-overlay--plan .task-modal__repeat-fields .goal-date-picker__trigger {
+  height: 42px;
+  min-height: 42px;
+}
+
+.task-modal-overlay--plan .task-modal__draft-line--secondary .goal-date-picker__trigger,
+.task-modal-overlay--plan .task-modal__repeat-fields .goal-date-picker__trigger {
+  grid-template-columns: var(--space-7) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-inline: var(--space-5);
+}
+
+.task-modal-overlay--plan .task-modal__field-icon {
+  position: absolute;
+  z-index: 2;
+  left: var(--space-5);
+  bottom: calc(var(--space-4) + var(--space-1));
+  width: var(--space-6);
+  height: var(--space-6);
+  display: inline-grid;
+  place-items: center;
+  color: var(--c-text-secondary);
+  pointer-events: none;
+}
+
+.task-modal-overlay--plan .task-modal__field-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-modal-overlay--plan .task-modal__time-trigger {
+  padding-left: calc(var(--space-8) + var(--space-5));
+  padding-right: var(--space-7);
+}
+
+.task-modal-overlay--plan .task-modal__duration-input {
+  padding-left: calc(var(--space-8) + var(--space-5));
+}
+
+.task-modal-overlay--plan .task-modal__time-caret {
+  right: var(--space-5);
+}
+
+.task-modal-overlay--plan .task-modal__repeat-row {
+  grid-template-columns: calc(var(--space-10) * 4 + var(--space-6)) minmax(0, calc(var(--space-10) * 15));
+  gap: var(--space-7);
+  margin-top: var(--space-5);
+  border-top: 1px solid color-mix(in srgb, var(--c-border) 56%, transparent);
+  padding-top: var(--space-7);
+  align-items: start;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-control {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  align-content: start;
+  justify-content: start;
+  gap: var(--space-4);
+  min-height: 0;
+  padding: 0;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-knob {
+  width: calc(var(--space-10) + var(--space-3));
+  height: var(--space-8);
+}
+
+.task-modal-overlay--plan .task-modal__repeat-knob-handle {
+  width: calc(var(--space-7) - var(--space-1) / 2);
+  height: calc(var(--space-7) - var(--space-1) / 2);
+}
+
+.task-modal-overlay--plan .task-modal__repeat-knob[aria-checked="true"] .task-modal__repeat-knob-handle {
+  transform: translate(calc(var(--space-8) + var(--space-1) / 2), -50%);
+}
+
+.task-modal-overlay--plan .task-modal__repeat-custom {
+  grid-column: 1 / -1;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-fields {
+  grid-template-columns: minmax(calc(var(--space-10) * 4), 0.9fr) minmax(calc(var(--space-10) * 5), 1fr);
+  row-gap: var(--space-4);
+  max-width: none;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-frequency-field {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-end-field {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-interval-field {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-weekdays-field {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-monthdays-field {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-yearmonths-field {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-month-overflow {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-weekdays {
+  width: 100%;
+}
+
+.task-modal-overlay--plan .task-modal__repeat-weekdays button {
+  flex: 1 1 0;
 }
 
 .plan-calendar__status {
@@ -260,7 +435,26 @@
   --plan-days: 7;
   --plan-hour-h: calc(var(--space-10) + var(--space-9));
   --plan-head-h: calc(var(--space-10) + var(--space-3));
+  --plan-all-day-rows: 1;
+  --plan-all-day-collapsed-rows: 1;
+  --plan-all-day-expanded: 0;
+  --plan-all-day-chip-h: calc(var(--space-7) + var(--space-2));
+  --plan-all-day-collapsed-h: calc(
+    var(--space-2) + var(--space-2) +
+    (var(--plan-all-day-collapsed-rows) * var(--plan-all-day-chip-h)) +
+    ((var(--plan-all-day-collapsed-rows) - 1) * var(--space-1))
+  );
+  --plan-all-day-expanded-h: calc(
+    var(--space-2) + var(--space-2) +
+    (var(--plan-all-day-rows) * var(--plan-all-day-chip-h)) +
+    ((var(--plan-all-day-rows) - 1) * var(--space-1))
+  );
+  --plan-all-day-h: calc(
+    var(--plan-all-day-collapsed-h) +
+    ((var(--plan-all-day-expanded-h) - var(--plan-all-day-collapsed-h)) * var(--plan-all-day-expanded))
+  );
   --plan-head-bg: var(--c-surface-elevated);
+  --plan-all-day-bg: color-mix(in srgb, var(--c-success-soft) 64%, var(--plan-head-bg));
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
@@ -327,40 +521,147 @@
 
 .plan-timegrid__dayhead.is-today .plan-timegrid__daynum {
   background: var(--c-accent);
-  color: var(--c-text-inverse);
+  color: var(--c-text-on-accent);
   box-shadow: var(--shadow-soft);
 }
 
-/* "Anytime" row — untimed tasks, pinned just below the day header so it stays
-   visible while the hours scroll. (The "Anytime" caption is intentionally
-   omitted — the row sits above hour 0 and reads as the all-day strip.) */
+/* All-day row — untimed tasks. Sticky keeps it visible while the fixed row
+   height reserves space so expanded cards push the hour columns down. */
 .plan-timegrid__anytime-label,
 .plan-timegrid__anytime-cell {
   position: sticky;
   top: var(--plan-head-h);
   z-index: 5;
-  background: var(--plan-head-bg);
+  align-self: stretch;
+  height: var(--plan-all-day-h);
+  min-height: var(--plan-all-day-h);
+  background: var(--plan-all-day-bg);
   backdrop-filter: blur(var(--space-3));
   -webkit-backdrop-filter: blur(var(--space-3));
+  border-right: 1px solid color-mix(in srgb, var(--c-success) 18%, var(--c-border-soft));
+  border-bottom: 1px solid color-mix(in srgb, var(--c-success) 22%, var(--c-border-soft));
+  overflow: hidden;
+  transition:
+    height var(--dur-slow) var(--ease-soft),
+    min-height var(--dur-slow) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft);
+}
+
+.plan-timegrid__anytime-label {
+  min-width: 0;
+  display: grid;
+  place-items: start center;
+  padding: var(--space-2);
   border-right: 1px solid var(--c-border-soft);
-  border-bottom: 1px solid var(--c-border-soft);
+}
+
+.plan-timegrid__anytime-toggle {
+  width: var(--space-8);
+  min-width: 0;
+  height: var(--space-8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.plan-timegrid__anytime-toggle:hover,
+.plan-timegrid__anytime-toggle:focus-visible {
+  color: var(--c-text-primary);
+  outline: none;
+}
+
+.plan-timegrid__anytime-toggle:active {
+  transform: scale(0.98);
+}
+
+.plan-timegrid__anytime-chevron {
+  width: var(--space-5);
+  height: var(--space-5);
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  color: currentColor;
+  transform: rotate(-90deg);
+  transition: transform var(--dur-fast) var(--ease-soft);
+}
+
+.plan-timegrid__anytime-label.is-expanded .plan-timegrid__anytime-chevron {
+  transform: rotate(0deg);
+}
+
+.plan-timegrid__anytime-chevron svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .plan-timegrid__anytime-cell {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
   padding: var(--space-2);
+}
+
+.plan-timegrid__anytime-cell.is-collapsed {
+  display: block;
 }
 
 .plan-timegrid__anytime-cell:last-child {
   border-right: 0;
 }
 
-.plan-timegrid__anytime-empty {
-  color: var(--c-border-soft);
-  font-size: var(--text-caption-size);
+.plan-timegrid__anytime-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition:
+    opacity var(--dur-base) var(--ease-soft),
+    transform var(--dur-base) var(--ease-soft);
+}
+
+.plan-timegrid__anytime-more {
+  height: var(--plan-all-day-chip-h);
+  width: fit-content;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  font: var(--text-badge-weight) var(--text-caption-size) / 1 var(--font-base);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition:
+    background var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.plan-timegrid__anytime-more:hover,
+.plan-timegrid__anytime-more:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--c-surface-soft) 78%, transparent);
+  color: var(--c-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Hour gutter — 24 stacked labels, aligned to the day-column grid lines. */
@@ -458,6 +759,17 @@
   opacity: 0.72;
 }
 
+.plan-event--uncategorized {
+  --plan-event-bg: color-mix(in srgb, var(--c-surface-elevated) 96%, var(--c-text-on-accent));
+  --plan-event-text: var(--c-text-primary);
+  --plan-event-ring: var(--c-text-primary);
+  border-color: color-mix(in srgb, var(--c-text-primary) 34%, var(--c-border));
+  background: var(--plan-event-bg);
+  box-shadow:
+    inset var(--space-1) 0 0 var(--plan-event-ring),
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 78%, transparent);
+}
+
 /* Standalone task events can be opened (edit / delete) — give them affordance. */
 .plan-event--editable {
   cursor: pointer;
@@ -476,7 +788,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   color: var(--c-text-primary);
-  font: var(--text-item-title-weight) var(--text-caption-size) / 1.25 var(--font-base);
+  font: var(--text-item-title-weight) var(--text-caption-size) / 1.15 var(--font-base);
 }
 
 /* Timed event block, positioned absolutely inside a day column. Height is set
@@ -488,7 +800,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: var(--space-8);
+  min-height: var(--space-7);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -508,12 +820,21 @@
 
 /* Untimed event chip in the "Anytime" row — title only, category colour. */
 .plan-event--chip {
-  padding: var(--space-2) var(--space-3);
+  height: var(--plan-all-day-chip-h);
+  min-height: var(--plan-all-day-chip-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
   border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .plan-event--chip strong {
-  -webkit-line-clamp: 2;
+  min-width: 0;
+  display: block;
+  -webkit-line-clamp: unset;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Goal tasks with a deadline alert: outlined in the alert colour with matching

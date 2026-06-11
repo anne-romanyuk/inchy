@@ -32,6 +32,7 @@ type PlanEvent = {
   color: string;
   completed: boolean;
   alert: AlertKind;
+  uncategorized?: boolean;
   // Set only for standalone task occurrences — the ones that can be opened,
   // edited and deleted from the calendar. Goal deadlines / goal-linked
   // occurrences are read-only here.
@@ -142,7 +143,9 @@ function deadlineAlert(deadline: string | null | undefined, completed: boolean):
 
 function buildOccurrenceEvents(occurrences: Occurrence[], goals: Goal[], categories: CategoryInfo[]): PlanEvent[] {
   return occurrences.map((occurrence) => {
-    const category = occurrence.category.trim() || occurrenceGoalTitle(occurrence, goals) || "Task";
+    const explicitCategory = occurrence.category.trim();
+    const uncategorized = occurrence.sourceKind === "standalone" && !explicitCategory;
+    const category = explicitCategory || occurrenceGoalTitle(occurrence, goals) || "Task";
     return {
       id: `occurrence-${occurrence.id}`,
       date: occurrence.occurrenceDate,
@@ -153,6 +156,7 @@ function buildOccurrenceEvents(occurrences: Occurrence[], goals: Goal[], categor
       color: categoryColorForName(category, categories),
       completed: occurrence.completed,
       alert: null,
+      uncategorized,
       occurrenceId: occurrence.sourceKind === "standalone" ? occurrence.id : undefined,
     };
   });
@@ -245,6 +249,7 @@ export function PlanPage() {
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
   const [now, setNow] = useState(() => new Date());
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [allDayExpanded, setAllDayExpanded] = useState(false);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [editingOccurrenceId, setEditingOccurrenceId] = useState<string | null>(null);
   const updateOccurrence = useUpdateOccurrence();
@@ -295,6 +300,14 @@ export function PlanPage() {
             category: editingOccurrence.category,
             duration: editingOccurrence.duration,
             time: editingOccurrence.time,
+            recurringTaskId: editingOccurrence.recurringTaskId,
+            repeatFrequency: editingOccurrence.repeatFrequency,
+            repeatInterval: editingOccurrence.repeatInterval,
+            repeatWeekdays: editingOccurrence.repeatWeekdays,
+            repeatMonthDays: editingOccurrence.repeatMonthDays,
+            repeatMonthOverflow: editingOccurrence.repeatMonthOverflow,
+            repeatYearMonths: editingOccurrence.repeatYearMonths,
+            repeatEndDate: editingOccurrence.repeatEndDate,
           }
         : undefined,
     [editingOccurrence],
@@ -346,6 +359,22 @@ export function PlanPage() {
       return map;
     }, new Map());
   }, [visibleEvents]);
+  const allDayRowCount = useMemo(() => {
+    if (!allDayExpanded) return 1;
+    return Math.max(
+      1,
+      ...dateKeys.map((key) => (eventsByDate.get(key) ?? []).filter((event) => !parseTaskTime(event.time)).length),
+    );
+  }, [allDayExpanded, dateKeys, eventsByDate]);
+  const collapsedAllDayRowCount = useMemo(() => {
+    return Math.max(
+      1,
+      ...dateKeys.map((key) => {
+        const count = (eventsByDate.get(key) ?? []).filter((event) => !parseTaskTime(event.time)).length;
+        return count <= 3 ? count : 3;
+      }),
+    );
+  }, [dateKeys, eventsByDate]);
 
   const title = view === "week"
     ? `${DAY_FORMAT.format(dates[0])} - ${DAY_FORMAT.format(dates[dates.length - 1])}`
@@ -519,7 +548,12 @@ export function PlanPage() {
               className="plan-timegrid app-scroll"
               data-view={view}
               ref={gridRef}
-              style={{ ["--plan-days" as any]: dates.length }}
+              style={{
+                ["--plan-days" as any]: dates.length,
+                ["--plan-all-day-rows" as any]: allDayRowCount,
+                ["--plan-all-day-collapsed-rows" as any]: collapsedAllDayRowCount,
+                ["--plan-all-day-expanded" as any]: allDayExpanded ? 1 : 0,
+              }}
             >
               {/* Header row: empty corner above the hour gutter + one head per day. */}
               <div className="plan-timegrid__corner" aria-hidden="true" />
@@ -535,17 +569,34 @@ export function PlanPage() {
               })}
 
               {/* Untimed tasks (date but no specific time) — pinned all-day strip. */}
-              <div className="plan-timegrid__anytime-label" aria-hidden="true" />
+              <div className={`plan-timegrid__anytime-label ${allDayExpanded ? "is-expanded" : ""}`.trim()}>
+                <button
+                  type="button"
+                  className="plan-timegrid__anytime-toggle"
+                  aria-label={allDayExpanded ? "Collapse all-day tasks" : "Expand all-day tasks"}
+                  aria-expanded={allDayExpanded}
+                  onClick={() => setAllDayExpanded((current) => !current)}
+                >
+                  <span className="plan-timegrid__anytime-chevron" aria-hidden="true">
+                    <ChevronDownIcon />
+                  </span>
+                </button>
+              </div>
               {dates.map((date) => {
                 const key = dateKey(date);
                 const untimed = (eventsByDate.get(key) ?? []).filter((event) => !parseTaskTime(event.time));
+                const visibleUntimed = allDayExpanded || untimed.length <= 3 ? untimed : untimed.slice(0, 2);
+                const hiddenUntimedCount = allDayExpanded ? 0 : Math.max(untimed.length - visibleUntimed.length, 0);
                 return (
-                  <div key={`anytime-${key}`} className="plan-timegrid__anytime-cell">
-                    {untimed.length ? (
-                      untimed.map((event) => (
+                  <div
+                    key={`anytime-${key}`}
+                    className={`plan-timegrid__anytime-cell ${allDayExpanded ? "is-expanded" : "is-collapsed"}`.trim()}
+                  >
+                    <div className="plan-timegrid__anytime-stack">
+                      {visibleUntimed.map((event) => (
                         <div
                           key={event.id}
-                          className={`plan-event plan-event--chip ${event.occurrenceId ? "plan-event--editable" : ""} ${event.alert ? `plan-event--alert plan-event--alert-${event.alert}` : ""} ${event.completed ? "is-completed" : ""}`
+                          className={`plan-event plan-event--chip ${event.uncategorized ? "plan-event--uncategorized" : ""} ${event.occurrenceId ? "plan-event--editable" : ""} ${event.alert ? `plan-event--alert plan-event--alert-${event.alert}` : ""} ${event.completed ? "is-completed" : ""}`
                             .replace(/\s+/g, " ")
                             .trim()}
                           style={categoryStyle(event.color)}
@@ -561,10 +612,18 @@ export function PlanPage() {
                         >
                           <strong>{event.title}</strong>
                         </div>
-                      ))
-                    ) : (
-                      <span className="plan-timegrid__anytime-empty" aria-hidden="true">—</span>
-                    )}
+                      ))}
+                      {hiddenUntimedCount > 0 ? (
+                        <button
+                          type="button"
+                          className="plan-timegrid__anytime-more"
+                          aria-label={`${hiddenUntimedCount} more all-day task${hiddenUntimedCount === 1 ? "" : "s"}`}
+                          onClick={() => setAllDayExpanded(true)}
+                        >
+                          {hiddenUntimedCount} more
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 );
               })}
@@ -596,7 +655,7 @@ export function PlanPage() {
                     {placed.map((event) => (
                       <div
                         key={event.id}
-                        className={`plan-event plan-event--grid ${event.hasDuration ? "" : "plan-event--grid-line"} ${event.occurrenceId ? "plan-event--editable" : ""} ${event.alert ? `plan-event--alert plan-event--alert-${event.alert}` : ""} ${event.completed ? "is-completed" : ""}`
+                        className={`plan-event plan-event--grid ${event.hasDuration ? "" : "plan-event--grid-line"} ${event.uncategorized ? "plan-event--uncategorized" : ""} ${event.occurrenceId ? "plan-event--editable" : ""} ${event.alert ? `plan-event--alert plan-event--alert-${event.alert}` : ""} ${event.completed ? "is-completed" : ""}`
                           .replace(/\s+/g, " ")
                           .trim()}
                         style={{
@@ -661,10 +720,11 @@ export function PlanPage() {
                 },
               });
             }}
-            onDelete={() => {
+            onDelete={(scope) => {
               deleteOccurrence.mutate({
                 id: editingOccurrence.id,
                 occurrenceDate: editingOccurrence.occurrenceDate,
+                recurrenceDeleteScope: scope,
               });
               setEditingOccurrenceId(null);
             }}
@@ -684,6 +744,14 @@ function ListIcon() {
       <path d="M4.8 6.6h.1" />
       <path d="M4.8 12h.1" />
       <path d="M4.8 17.4h.1" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M7 10L12 15L17 10" />
     </svg>
   );
 }

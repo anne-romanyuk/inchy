@@ -97,6 +97,12 @@ taskRoutes.openapi(updateTaskCategoryRoute, (c) => {
       existing.name,
     );
 
+    db.prepare(
+      `UPDATE recurring_tasks
+       SET category = ?, updated_at = ?
+       WHERE user_id = ? AND lower(category) = lower(?)`,
+    ).run(nextName, now, userId, existing.name);
+
     return true;
   });
 
@@ -140,6 +146,10 @@ taskRoutes.openapi(deleteTaskCategoryRoute, (c) => {
       affectedTasks += db
         .prepare("DELETE FROM default_tasks WHERE user_id = ? AND lower(category) = lower(?)")
         .run(userId, existing.name).changes;
+      db.prepare("DELETE FROM recurring_tasks WHERE user_id = ? AND lower(category) = lower(?)").run(
+        userId,
+        existing.name,
+      );
     } else {
       affectedTasks += db
         .prepare(
@@ -151,6 +161,11 @@ taskRoutes.openapi(deleteTaskCategoryRoute, (c) => {
       affectedTasks += db
         .prepare("UPDATE default_tasks SET category = '' WHERE user_id = ? AND lower(category) = lower(?)")
         .run(userId, existing.name).changes;
+      db.prepare(
+        `UPDATE recurring_tasks
+         SET category = '', updated_at = ?
+         WHERE user_id = ? AND lower(category) = lower(?)`,
+      ).run(now, userId, existing.name);
     }
 
     db.prepare("DELETE FROM task_categories WHERE user_id = ? AND id = ?").run(userId, existing.id);

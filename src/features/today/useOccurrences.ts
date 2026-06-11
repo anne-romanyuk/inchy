@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Occurrence } from "../../../shared/schemas";
+import type { Occurrence, RecurrenceDeleteScope } from "../../../shared/schemas";
 import { ApiError } from "../../shared/api/client";
 import { queryKeys } from "../../shared/api/queryClient";
 import * as api from "./occurrencesApi";
@@ -23,11 +23,14 @@ export function useCreateOccurrence() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.createOccurrence,
-    onSuccess: ({ occurrence }) => {
+    onSuccess: ({ occurrence }, variables) => {
       client.setQueryData<Occurrence[]>(
         queryKeys.occurrences(occurrence.occurrenceDate),
         (current = []) => [occurrence, ...current.filter((o) => o.id !== occurrence.id)],
       );
+      if (variables.sourceKind === "standalone" && variables.repeatFrequency) {
+        void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
+      }
     },
   });
 }
@@ -125,6 +128,9 @@ export function useUpdateOccurrence() {
       if (variables.updates.completionScope === "whole") {
         client.invalidateQueries({ queryKey: queryKeys.goals });
       }
+      if (variables.updates.repeatFrequency !== undefined || variables.updates.recurrenceUpdateScope) {
+        void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
+      }
     },
   });
 }
@@ -132,7 +138,8 @@ export function useUpdateOccurrence() {
 export function useDeleteOccurrence() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string; occurrenceDate: string }) => api.deleteOccurrence(id),
+    mutationFn: ({ id, recurrenceDeleteScope = "single" }: { id: string; occurrenceDate: string; recurrenceDeleteScope?: RecurrenceDeleteScope }) =>
+      api.deleteOccurrence(id, recurrenceDeleteScope),
     onMutate: async ({ id, occurrenceDate }) => {
       const key = queryKeys.occurrences(occurrenceDate);
       await client.cancelQueries({ queryKey: key });
@@ -147,6 +154,11 @@ export function useDeleteOccurrence() {
       // — the optimistic removal was correct, so keep it removed.
       if (error instanceof ApiError && error.status === 404) return;
       if (ctx?.previous) client.setQueryData(ctx.key, ctx.previous);
+    },
+    onSuccess: (_result, variables) => {
+      if (variables.recurrenceDeleteScope && variables.recurrenceDeleteScope !== "single") {
+        void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
+      }
     },
   });
 }

@@ -10,6 +10,8 @@ import type {
   CategoryInfo,
   DefaultTask,
   Occurrence,
+  RecurrenceDeleteScope,
+  RepeatFrequency,
   TaskCategoryDeleteInput,
   TaskCategoryUpdateInput,
 } from "../../../shared/schemas";
@@ -92,6 +94,14 @@ export type CreateStandaloneInput = {
   duration?: string;
   time?: string;
   saveToDefault?: boolean;
+  repeatFrequency?: RepeatFrequency | null;
+  repeatInterval?: number;
+  repeatWeekdays?: number[];
+  repeatMonthDay?: number | null;
+  repeatMonthDays?: number[];
+  repeatMonthOverflow?: "last-day" | "skip";
+  repeatYearMonths?: number[];
+  repeatEndDate?: string | null;
 };
 
 export function useCreateTask() {
@@ -111,10 +121,18 @@ export function useCreateTask() {
         duration: input.duration ?? "",
         time: input.time ?? "",
         saveToDefault: input.saveToDefault ?? false,
+        repeatFrequency: input.repeatFrequency ?? null,
+        repeatInterval: input.repeatInterval ?? 1,
+        repeatWeekdays: input.repeatWeekdays ?? [],
+        repeatMonthDay: input.repeatMonthDay ?? null,
+        repeatMonthDays: input.repeatMonthDays ?? [],
+        repeatMonthOverflow: input.repeatMonthOverflow ?? "skip",
+        repeatYearMonths: input.repeatYearMonths ?? [],
+        repeatEndDate: input.repeatEndDate ?? null,
       });
       return { task: occurrence };
     },
-    onSuccess: ({ task }) => {
+    onSuccess: ({ task }, input) => {
       if (task.category) {
         client.setQueryData<CategoryInfo[]>(queryKeys.taskCategories, (current = []) => normalizeCategoryInfos(current));
         client.invalidateQueries({ queryKey: queryKeys.taskCategories });
@@ -145,7 +163,11 @@ export function useDeleteTask() {
   const today = todayDateKey();
   const del = useDeleteOccurrence();
   return useMutation({
-    mutationFn: (id: string) => del.mutateAsync({ id, occurrenceDate: today }),
+    mutationFn: (input: string | { id: string; recurrenceDeleteScope?: RecurrenceDeleteScope }) => {
+      const id = typeof input === "string" ? input : input.id;
+      const recurrenceDeleteScope = typeof input === "string" ? undefined : input.recurrenceDeleteScope;
+      return del.mutateAsync({ id, occurrenceDate: today, recurrenceDeleteScope });
+    },
   });
 }
 

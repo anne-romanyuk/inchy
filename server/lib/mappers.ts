@@ -217,6 +217,7 @@ export type OccurrenceRow = {
   goal_id: string | null;
   goal_task_id: string | null;
   goal_subtask_id: string | null;
+  recurring_task_id?: string | null;
   title: string;            // snapshot (used for standalone + fallback)
   priority: "low" | "medium" | "high" | null;
   category: string;
@@ -230,7 +231,24 @@ export type OccurrenceRow = {
   // the read query in occurrences.ts.
   resolved_title?: string | null;
   focus_seconds?: number | null;
+  repeat_frequency?: string | null;
+  repeat_interval?: number | null;
+  repeat_weekdays?: string | null;
+  repeat_month_days?: string | null;
+  repeat_month_overflow?: "last-day" | "skip" | null;
+  repeat_year_months?: string | null;
+  repeat_end_date?: string | null;
 };
+
+function parseNumberList(value: string | null | undefined, min: number, max: number) {
+  if (!value) return [];
+  const unique = new Set<number>();
+  for (const item of value.split(",")) {
+    const parsed = Number(item);
+    if (Number.isInteger(parsed) && parsed >= min && parsed <= max) unique.add(parsed);
+  }
+  return [...unique].sort((a, b) => a - b);
+}
 
 export function toOccurrence(row: OccurrenceRow): Occurrence {
   const liveTitle =
@@ -244,6 +262,7 @@ export function toOccurrence(row: OccurrenceRow): Occurrence {
     goalId: row.goal_id,
     goalTaskId: row.goal_task_id,
     goalSubtaskId: row.goal_subtask_id,
+    recurringTaskId: row.recurring_task_id ?? null,
     title: liveTitle,
     priority: row.priority,
     category: row.category,
@@ -252,6 +271,19 @@ export function toOccurrence(row: OccurrenceRow): Occurrence {
     completed: Boolean(row.completed),
     position: row.position,
     focusSeconds: row.focus_seconds ?? 0,
+    repeatFrequency:
+      row.repeat_frequency === "daily" ||
+      row.repeat_frequency === "weekly" ||
+      row.repeat_frequency === "monthly" ||
+      row.repeat_frequency === "yearly"
+        ? row.repeat_frequency
+        : null,
+    repeatInterval: Math.max(1, Math.trunc(row.repeat_interval ?? 1)),
+    repeatWeekdays: parseNumberList(row.repeat_weekdays, 0, 6),
+    repeatMonthDays: parseNumberList(row.repeat_month_days, 1, 31),
+    repeatMonthOverflow: row.repeat_month_overflow === "last-day" ? "last-day" : "skip",
+    repeatYearMonths: parseNumberList(row.repeat_year_months, 0, 11),
+    repeatEndDate: row.repeat_end_date ?? null,
     createdAt: row.created_at,
   };
 }

@@ -427,6 +427,17 @@ export const OccurrenceSourceKindSchema = z
   .enum(occurrenceSourceKindValues)
   .openapi("OccurrenceSourceKind");
 export type OccurrenceSourceKind = z.infer<typeof OccurrenceSourceKindSchema>;
+export const repeatFrequencyValues = ["daily", "weekly", "monthly", "yearly"] as const;
+export const RepeatFrequencySchema = z.enum(repeatFrequencyValues).openapi("RepeatFrequency");
+export type RepeatFrequency = z.infer<typeof RepeatFrequencySchema>;
+export const repeatMonthOverflowValues = ["last-day", "skip"] as const;
+export const RepeatMonthOverflowSchema = z.enum(repeatMonthOverflowValues).openapi("RepeatMonthOverflow");
+export const recurrenceUpdateScopeValues = ["single", "series"] as const;
+export const RecurrenceUpdateScopeSchema = z.enum(recurrenceUpdateScopeValues).openapi("RecurrenceUpdateScope");
+export type RecurrenceUpdateScope = z.infer<typeof RecurrenceUpdateScopeSchema>;
+export const recurrenceDeleteScopeValues = ["single", "future", "series"] as const;
+export const RecurrenceDeleteScopeSchema = z.enum(recurrenceDeleteScopeValues).openapi("RecurrenceDeleteScope");
+export type RecurrenceDeleteScope = z.infer<typeof RecurrenceDeleteScopeSchema>;
 
 export const OccurrenceSchema = z
   .object({
@@ -436,6 +447,7 @@ export const OccurrenceSchema = z
     goalId: z.string().nullable(),
     goalTaskId: z.string().nullable(),
     goalSubtaskId: z.string().nullable(),
+    recurringTaskId: z.string().nullable(),
     // Resolved title: live goal_task/goal_subtask title for goal-linked,
     // snapshot for standalone. Always present.
     title: z.string(),
@@ -446,6 +458,13 @@ export const OccurrenceSchema = z
     completed: z.boolean(),
     position: z.number().int(),
     focusSeconds: z.number().int().nonnegative(),
+    repeatFrequency: RepeatFrequencySchema.nullable(),
+    repeatInterval: z.number().int().min(1).max(999),
+    repeatWeekdays: z.array(z.number().int().min(0).max(6)).max(7),
+    repeatMonthDays: z.array(z.number().int().min(1).max(31)).max(31),
+    repeatMonthOverflow: RepeatMonthOverflowSchema,
+    repeatYearMonths: z.array(z.number().int().min(0).max(11)).max(12),
+    repeatEndDate: OccurrenceDateSchema.nullable(),
     createdAt: z.string(),
   })
   .openapi("Occurrence");
@@ -460,6 +479,14 @@ export const OccurrenceStandaloneCreateSchema = z.object({
   duration: DurationSchema.optional().default(""),
   time: TaskTimeSchema.optional().default(""),
   saveToDefault: z.boolean().optional().default(false),
+  repeatFrequency: RepeatFrequencySchema.nullable().optional().default(null),
+  repeatInterval: z.number().int().min(1).max(999).optional().default(1),
+  repeatWeekdays: z.array(z.number().int().min(0).max(6)).max(7).optional().default([]),
+  repeatMonthDay: z.number().int().min(1).max(31).nullable().optional().default(null),
+  repeatMonthDays: z.array(z.number().int().min(1).max(31)).max(31).optional().default([]),
+  repeatMonthOverflow: RepeatMonthOverflowSchema.optional().default("skip"),
+  repeatYearMonths: z.array(z.number().int().min(0).max(11)).max(12).optional().default([]),
+  repeatEndDate: OccurrenceDateSchema.nullable().optional().default(null),
 });
 
 export const OccurrenceFromGoalTaskCreateSchema = z.object({
@@ -492,6 +519,15 @@ export const OccurrenceUpdateInputSchema = z
     category: CategorySchema.optional(),
     duration: DurationSchema.optional(),
     time: TaskTimeSchema.optional(),
+    repeatFrequency: RepeatFrequencySchema.nullable().optional(),
+    repeatInterval: z.number().int().min(1).max(999).optional(),
+    repeatWeekdays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+    repeatMonthDay: z.number().int().min(1).max(31).nullable().optional(),
+    repeatMonthDays: z.array(z.number().int().min(1).max(31)).max(31).optional(),
+    repeatMonthOverflow: RepeatMonthOverflowSchema.optional(),
+    repeatYearMonths: z.array(z.number().int().min(0).max(11)).max(12).optional(),
+    repeatEndDate: OccurrenceDateSchema.nullable().optional(),
+    recurrenceUpdateScope: RecurrenceUpdateScopeSchema.optional(),
     // When true: server marks this occurrence done. If scope === 'whole' and
     // the occurrence is goal-linked, the parent goal_task/goal_subtask is also
     // marked done (and, for the last subtask of a task, the client should
@@ -500,6 +536,12 @@ export const OccurrenceUpdateInputSchema = z
     completionScope: z.enum(["today", "whole"]).optional(),
   })
   .openapi("OccurrenceUpdateInput");
+
+export const OccurrenceDeleteInputSchema = z
+  .object({
+    recurrenceDeleteScope: RecurrenceDeleteScopeSchema.optional().default("single"),
+  })
+  .openapi("OccurrenceDeleteInput");
 
 export const OccurrenceReorderInputSchema = z
   .object({

@@ -474,7 +474,7 @@
   display: grid;
   grid-template-columns:
     var(--task-col-drag) var(--task-col-check) minmax(0, 1fr)
-    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
+    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit);
   align-items: center;
   gap: var(--task-col-gap);
   padding: 0 var(--space-3) var(--space-1) var(--space-2);
@@ -562,7 +562,7 @@
   display: grid;
   grid-template-columns:
     var(--task-col-drag) var(--task-col-check) minmax(0, 1fr)
-    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit) var(--task-col-delete);
+    var(--task-col-time) var(--task-col-category) var(--task-col-focus) var(--task-col-edit);
   align-items: center;
   gap: var(--task-col-gap);
   min-height: var(--task-row-height, 44px);
@@ -1071,13 +1071,11 @@
   color: rgb(67, 94, 76);
 }
 
-.task-action--cancel,
-.task-action--delete {
+.task-action--cancel {
   color: rgba(142, 65, 75, 0.54);
 }
 
-.task-action--cancel:hover,
-.task-action--delete:hover {
+.task-action--cancel:hover {
   background: rgba(222, 193, 199, 0.42);
   color: rgb(142, 65, 75);
 }
@@ -1123,15 +1121,15 @@
 
 .task-modal-backdrop {
   position: fixed;
-  z-index: 7;
+  z-index: 5000;
   inset: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
   padding: clamp(var(--space-5), 3vh, var(--space-8));
-  background: rgba(42, 38, 66, 0.28);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--c-text-primary) 18%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .task-modal-backdrop .task-modal-overlay--dialog {
@@ -1256,6 +1254,18 @@
 .task-modal__draft-line--secondary > .add-icon-btn {
   grid-column: 5;
   justify-self: end;
+}
+
+.task-modal__field-shell {
+  min-width: 0;
+}
+
+.task-modal__field-label {
+  display: none;
+}
+
+.task-modal__field-icon {
+  display: none;
 }
 
 .task-modal__title-input,
@@ -1480,6 +1490,627 @@
   font-variant-numeric: tabular-nums;
 }
 
+.task-modal__repeat-row {
+  display: grid;
+  grid-template-columns: calc(var(--space-10) * 3 + var(--space-2)) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 42px;
+  min-width: 0;
+}
+
+.task-modal__repeat-control {
+  width: 100%;
+  min-height: var(--space-8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding: 0 var(--space-1);
+  color: var(--c-text-secondary);
+  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  letter-spacing: 0.04em;
+  transition: color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-row.is-repeat-open .task-modal__repeat-control,
+.task-modal__repeat-control:hover {
+  color: var(--c-text-primary);
+}
+
+.task-modal__repeat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  user-select: none;
+}
+
+.task-modal__repeat-label:focus-visible,
+.task-modal__repeat-knob:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.task-modal__repeat-icon {
+  width: var(--space-6);
+  height: var(--space-6);
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+}
+
+.task-modal__repeat-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-modal__repeat-knob {
+  position: relative;
+  width: calc(var(--space-10) + var(--space-2));
+  height: var(--space-7);
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.task-modal__repeat-knob-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--c-border) 68%, var(--c-surface-soft));
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--c-text-primary) 22%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--c-border) 58%, transparent);
+  transition:
+    background 260ms var(--ease-soft),
+    box-shadow 260ms var(--ease-soft);
+}
+
+.task-modal__repeat-knob[aria-checked="true"] .task-modal__repeat-knob-bg {
+  background: var(--c-accent-gradient);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--c-text-primary) 16%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--c-accent) 64%, transparent);
+}
+
+.task-modal__repeat-knob-handle {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--space-1) / 2);
+  width: var(--space-6);
+  height: var(--space-6);
+  transform: translateY(-50%);
+  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.task-modal__repeat-knob[aria-checked="true"] .task-modal__repeat-knob-handle {
+  transform: translate(calc(var(--space-8) + var(--space-1)), -50%);
+}
+
+.task-modal__repeat-knob-handle-ring,
+.task-modal__repeat-knob-handle-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.task-modal__repeat-knob-handle-ring {
+  background: linear-gradient(180deg, var(--c-surface-elevated) 0%, color-mix(in srgb, var(--c-border) 72%, var(--c-surface-soft)) 100%);
+  box-shadow:
+    0 1px 2px -1px color-mix(in srgb, var(--c-text-primary) 26%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--c-text-primary) 22%, transparent),
+    0 14px 24px -13px color-mix(in srgb, var(--c-text-primary) 18%, transparent);
+}
+
+.task-modal__repeat-knob-handle-face {
+  inset: 1px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c-surface-elevated) 92%, var(--c-text-on-accent)) 0%, color-mix(in srgb, var(--c-surface-soft) 84%, var(--c-border)) 100%);
+}
+
+.task-modal__repeat-knob:hover .task-modal__repeat-knob-handle {
+  filter: brightness(1.02);
+}
+
+.task-modal__repeat-fields {
+  display: grid;
+  grid-template-columns: minmax(calc(var(--space-10) * 3), 0.8fr) minmax(calc(var(--space-10) * 4), 1fr);
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: calc(var(--space-10) * 8);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--dur-fast) var(--ease-soft),
+    visibility var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-fields.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.task-modal__repeat-interval-field {
+  display: inline-grid;
+  grid-template-columns: auto minmax(var(--space-8), calc(var(--space-10) + var(--space-3))) minmax(0, auto);
+  align-items: center;
+  justify-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--space-10);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--c-text-secondary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1 var(--planner-font);
+  letter-spacing: 0.04em;
+  transition:
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-interval-field input {
+  width: 100%;
+  height: var(--space-9);
+  min-width: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-2);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) var(--text-body-size) / 1 var(--planner-font);
+  letter-spacing: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-interval-field input:focus {
+  outline: none;
+}
+
+.task-modal__repeat-weekdays-field {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.task-modal__repeat-weekdays-field .task-modal__field-label,
+.task-modal__repeat-monthdays-field .task-modal__field-label,
+.task-modal__repeat-yearmonths-field .task-modal__field-label {
+  display: block;
+}
+
+.task-modal__repeat-weekdays {
+  display: inline-flex;
+  align-items: center;
+  justify-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-weekdays button {
+  min-width: calc(var(--space-10) + var(--space-6));
+  height: var(--space-10);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid var(--c-border);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  cursor: pointer;
+  font: var(--planner-label-weight) var(--text-caption-size) / 1 var(--planner-font);
+  letter-spacing: 0.04em;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-weekdays button:hover,
+.task-modal__repeat-weekdays button:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
+  color: var(--c-text-primary);
+}
+
+.task-modal__repeat-weekdays button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--c-accent) 78%, var(--c-border));
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 44%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--c-accent) 68%, transparent);
+}
+
+.task-modal__repeat-weekday-check {
+  width: var(--space-6);
+  height: var(--space-6);
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--c-text-on-accent) 92%, transparent);
+  color: var(--c-accent);
+}
+
+.task-modal__repeat-weekday-check svg {
+  width: var(--space-4);
+  height: var(--space-4);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-modal__repeat-monthdays-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-monthdays-calendar {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-monthdays {
+  display: grid;
+  grid-template-columns: repeat(7, calc(var(--space-8) + var(--space-1)));
+  justify-content: start;
+  min-width: 0;
+  width: max-content;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.task-modal__repeat-monthdays button {
+  width: calc(var(--space-8) + var(--space-1));
+  height: calc(var(--space-8) + var(--space-1));
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--c-border) 72%, transparent);
+  margin-top: -1px;
+  margin-left: -1px;
+  border-radius: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  cursor: pointer;
+  font: var(--planner-label-weight) var(--text-caption-size) / 1 var(--planner-font);
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-monthdays button:nth-child(7n + 1) {
+  margin-left: 0;
+}
+
+.task-modal__repeat-monthdays button:nth-child(-n + 7) {
+  margin-top: 0;
+}
+
+.task-modal__repeat-monthdays button:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.task-modal__repeat-monthdays button:nth-child(7) {
+  border-top-right-radius: var(--radius-md);
+}
+
+.task-modal__repeat-monthdays button:nth-child(29) {
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.task-modal__repeat-monthdays button:nth-child(31) {
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.task-modal__repeat-monthdays button:hover,
+.task-modal__repeat-monthdays button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  background: color-mix(in srgb, var(--c-surface-soft) 72%, transparent);
+  color: var(--c-text-primary);
+}
+
+.task-modal__repeat-monthdays button[aria-pressed="true"] {
+  position: relative;
+  z-index: 2;
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 44%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--c-accent) 68%, transparent);
+}
+
+.task-modal__repeat-yearmonths-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-yearmonths-calendar {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-yearmonths {
+  display: grid;
+  grid-template-columns: repeat(4, calc(var(--space-10) + var(--space-7)));
+  justify-content: start;
+  min-width: 0;
+  width: max-content;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.task-modal__repeat-yearmonths button {
+  width: calc(var(--space-10) + var(--space-7));
+  height: var(--space-10);
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--c-border) 72%, transparent);
+  margin-top: -1px;
+  margin-left: -1px;
+  border-radius: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  cursor: pointer;
+  font: var(--planner-label-weight) var(--text-caption-size) / 1 var(--planner-font);
+  letter-spacing: 0.04em;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-yearmonths button:nth-child(4n + 1) {
+  margin-left: 0;
+}
+
+.task-modal__repeat-yearmonths button:nth-child(-n + 4) {
+  margin-top: 0;
+}
+
+.task-modal__repeat-yearmonths button:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.task-modal__repeat-yearmonths button:nth-child(4) {
+  border-top-right-radius: var(--radius-md);
+}
+
+.task-modal__repeat-yearmonths button:nth-child(9) {
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.task-modal__repeat-yearmonths button:nth-child(12) {
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.task-modal__repeat-yearmonths button:hover,
+.task-modal__repeat-yearmonths button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: none;
+  background: color-mix(in srgb, var(--c-surface-soft) 72%, transparent);
+  color: var(--c-text-primary);
+}
+
+.task-modal__repeat-yearmonths button[aria-pressed="true"] {
+  position: relative;
+  z-index: 2;
+  background: var(--c-accent-gradient);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 44%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--c-accent) 68%, transparent);
+}
+
+.task-modal__repeat-month-overflow {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-top: 0;
+  align-self: start;
+}
+
+.task-modal__repeat-month-overflow-header {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-modal__repeat-month-overflow-header h4 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1.15 var(--planner-font);
+  letter-spacing: 0.04em;
+}
+
+.task-modal__repeat-month-overflow-header p {
+  margin: var(--space-2) 0 0;
+  color: var(--c-text-secondary);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1.35 var(--font-base);
+}
+
+.task-modal__repeat-month-overflow-info {
+  width: var(--space-5);
+  height: var(--space-5);
+  display: inline-grid;
+  place-items: center;
+  color: var(--c-text-secondary);
+}
+
+.task-modal__repeat-month-overflow-info svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-modal__repeat-month-overflow-option-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-modal__repeat-month-overflow-options {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.task-modal__repeat-month-overflow-options button {
+  width: 100%;
+  min-height: calc(var(--space-10) + var(--space-7));
+  display: grid;
+  grid-template-columns: var(--space-9) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__repeat-month-overflow-options button:hover,
+.task-modal__repeat-month-overflow-options button:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
+  color: var(--c-text-primary);
+}
+
+.task-modal__repeat-month-overflow-options button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--c-accent) 62%, var(--c-border));
+  background: color-mix(in srgb, var(--c-accent) 10%, var(--c-surface-elevated));
+  color: var(--c-text-primary);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 54%, transparent),
+    0 8px 16px -14px color-mix(in srgb, var(--c-accent) 54%, transparent);
+}
+
+.task-modal__repeat-month-overflow-option-icon {
+  width: var(--space-9);
+  height: var(--space-9);
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--c-surface-soft) 72%, transparent);
+  color: var(--c-text-secondary);
+}
+
+.task-modal__repeat-month-overflow-options button[aria-pressed="true"] .task-modal__repeat-month-overflow-option-icon {
+  color: var(--c-accent);
+}
+
+.task-modal__repeat-month-overflow-option-copy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.task-modal__repeat-month-overflow-option-copy strong {
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1.15 var(--planner-font);
+}
+
+.task-modal__repeat-month-overflow-option-copy span {
+  color: var(--c-text-secondary);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1.25 var(--font-base);
+}
+
+.task-modal__repeat-custom {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--space-8);
+  color: var(--c-text-secondary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1 var(--planner-font);
+  letter-spacing: 0.06em;
+}
+
+.task-modal__repeat-custom .checkbox-wrapper {
+  --size: var(--space-6);
+}
+
+.task-modal__repeat-custom > label {
+  cursor: pointer;
+}
+
+.task-modal__repeat-select {
+  position: relative;
+  min-width: 0;
+}
+
 .task-modal__title-input:hover,
 .task-modal__date-picker .goal-date-picker__trigger:hover,
 .task-modal__time-trigger:hover,
@@ -1487,6 +2118,7 @@
 .task-modal__duration-input:hover,
 .task-modal__meta-row input:hover,
 .task-modal__meta-row select:hover,
+.task-modal__repeat-interval-field input:hover,
 .task-modal__dropdown-trigger:hover {
   border-color: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
   background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
@@ -1501,6 +2133,7 @@
 .task-modal__duration-input:focus-visible,
 .task-modal__meta-row input:focus-visible,
 .task-modal__meta-row select:focus-visible,
+.task-modal__repeat-interval-field input:focus-visible,
 .task-modal__dropdown-trigger:focus-visible,
 .task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input)[aria-expanded="true"] {
   border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
@@ -2054,12 +2687,36 @@
 
 .task-modal__footer {
   grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-2) var(--space-2);
+}
+
+.task-modal__repeat-summary {
+  min-width: 0;
+  max-width: min(calc(var(--space-10) * 12), 72%);
+  margin: 0;
+  color: var(--c-text-secondary);
+  font: var(--text-body-weight) var(--text-body-small-size) / 1.3 var(--font-base);
+  text-align: left;
+}
+
+.task-modal__footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.task-modal__footer-main-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
-  padding: var(--space-3) var(--space-2) var(--space-2);
+  margin-left: auto;
 }
 
 .task-modal__footer .task-add {
@@ -2067,16 +2724,22 @@
   min-width: 150px;
   height: 38px;
   padding: 0 18px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 24%, transparent);
 }
 
 .task-modal__footer .task-add:hover,
-.task-modal__footer .task-add:focus-visible {
-  box-shadow: var(--shadow-soft);
+.task-modal__footer .task-add:focus-visible,
+:root[data-theme="forest"] .task-modal__footer .task-add,
+:root[data-theme="forest"] .task-modal__footer .task-add:hover,
+:root[data-theme="forest"] .task-modal__footer .task-add:focus-visible {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 28%, transparent);
 }
 
+:root[data-theme="forest"] .task-modal__footer .task-add:focus-visible,
 .task-modal__footer .task-add:focus-visible {
-  box-shadow: var(--shadow-soft), var(--shadow-focus-ring);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 28%, transparent),
+    var(--shadow-focus-ring);
 }
 
 .task-modal__footer .pomodoro-btn--ghost-text {
@@ -2084,10 +2747,129 @@
   padding: 0 16px;
 }
 
+.task-modal__recurrence-confirm {
+  z-index: 20;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--c-background-soft) 18%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme="forest"] .task-modal__recurrence-confirm {
+  background: color-mix(in srgb, var(--c-background-soft) 18%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.task-modal__recurrence-confirm-card,
+.task-modal__recurrence-confirm .pomodoro-confirm__card.task-modal__recurrence-confirm-card {
+  width: min(100%, calc(var(--space-10) * 9));
+  display: grid;
+  gap: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--c-border) 78%, var(--c-text-on-accent));
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  background: var(--c-sidebar-surface-solid);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 0 1px color-mix(in srgb, var(--c-text-on-accent) 62%, transparent);
+  text-align: center;
+}
+
+.task-modal__recurrence-confirm-card--wide {
+  width: min(100%, calc(var(--space-10) * 11));
+}
+
+.task-modal__recurrence-confirm .pomodoro-confirm__card.task-modal__recurrence-confirm-card--delete {
+  border: 1px solid color-mix(in srgb, var(--c-border) 78%, var(--c-text-on-accent));
+  background: var(--c-sidebar-surface-solid);
+  box-shadow:
+    var(--shadow-medium),
+    0 0 0 1px color-mix(in srgb, var(--c-text-on-accent) 62%, transparent);
+}
+
+.task-modal__recurrence-confirm-icon svg {
+  width: var(--space-6);
+  height: var(--space-6);
+}
+
+.task-modal__recurrence-confirm .task-modal__recurrence-confirm-icon,
+.task-modal__recurrence-confirm-card--delete .task-modal__recurrence-confirm-icon {
+  background: var(--c-danger);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -16px color-mix(in srgb, var(--c-danger) 54%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--c-danger) 20%, transparent);
+}
+
+:root[data-theme="forest"] .task-modal__recurrence-confirm .task-modal__recurrence-confirm-icon,
+:root[data-theme="forest"] .task-modal__recurrence-confirm-card--delete .task-modal__recurrence-confirm-icon {
+  background: var(--c-danger);
+  color: var(--c-text-on-accent);
+}
+
+.task-modal__recurrence-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-width: 0;
+  margin-top: var(--space-1);
+}
+
+.task-modal__recurrence-choice-list {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-top: var(--space-1);
+}
+
+.task-modal__recurrence-choice-list button {
+  width: 100%;
+  display: grid;
+  gap: var(--space-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-elevated));
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 74%, transparent);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.task-modal__recurrence-choice-list button:hover,
+.task-modal__recurrence-choice-list button:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--c-border) 78%, var(--c-text-secondary));
+  background: color-mix(in srgb, var(--c-border) 24%, var(--c-surface-elevated));
+  color: var(--c-text-primary);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 78%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--c-border) 34%, transparent);
+  transform: translateY(-1px);
+}
+
+.task-modal__recurrence-choice-list strong {
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1.2 var(--planner-font);
+}
+
+.task-modal__recurrence-choice-list span {
+  font: var(--text-body-weight) var(--text-caption-size) / 1.35 var(--font-base);
+}
+
 /* Edit mode: destructive "Delete task" sits on the left; Cancel / Save stay
    on the right (footer is justify-content: flex-end). */
 .task-modal__footer .task-modal__delete {
-  margin-right: auto;
+  flex: 0 0 auto;
   min-height: 38px;
   height: 38px;
   letter-spacing: 0;
