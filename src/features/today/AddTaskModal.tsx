@@ -213,6 +213,28 @@ function normalizeRepeatYearMonths(values: number[]) {
   return [...unique].sort((a, b) => a - b);
 }
 
+function hasCustomRepeatValues({
+  frequency,
+  interval,
+  weekdays,
+  monthDays,
+  yearMonths,
+}: {
+  frequency?: RepeatFrequency | null;
+  interval?: number;
+  weekdays?: number[];
+  monthDays?: number[];
+  yearMonths?: number[];
+}) {
+  return Boolean(
+    frequency &&
+      (Math.max(1, Math.trunc(interval ?? 1)) > 1 ||
+        weekdays?.length ||
+        monthDays?.length ||
+        yearMonths?.length),
+  );
+}
+
 function formatWeekdayList(values: number[]) {
   const weekdays = normalizeRepeatWeekdays(values);
   if (!weekdays.length) return "";
@@ -567,29 +589,39 @@ export function AddTaskModal({
   const getInitialTime = () => editingTask?.time ?? initialTask?.time ?? "";
   const getInitialCategory = () => editingTask?.category ?? initialTask?.category ?? "";
   const getInitialDuration = () => normalizeTaskDurationValue(editingTask?.duration ?? initialTask?.duration);
+  const sourceRepeatFrequency = editingTask?.repeatFrequency ?? initialTask?.repeatFrequency ?? null;
+  const sourceRepeatInterval = editingTask?.repeatInterval ?? initialTask?.repeatInterval ?? 1;
+  const sourceRepeatWeekdays = editingTask?.repeatWeekdays ?? initialTask?.repeatWeekdays;
+  const sourceRepeatMonthDays = editingTask?.repeatMonthDays ?? initialTask?.repeatMonthDays;
+  const sourceRepeatYearMonths = editingTask?.repeatYearMonths ?? initialTask?.repeatYearMonths;
+  const sourceHasCustomRepeat = hasCustomRepeatValues({
+    frequency: sourceRepeatFrequency,
+    interval: sourceRepeatInterval,
+    weekdays: sourceRepeatWeekdays,
+    monthDays: sourceRepeatMonthDays,
+    yearMonths: sourceRepeatYearMonths,
+  });
   const [draftTitle, setDraftTitle] = useState(getInitialTitle);
   const [draftDate, setDraftDate] = useState(getInitialDate);
   const [draftTime, setDraftTime] = useState(getInitialTime);
   const [draftCategory, setDraftCategory] = useState(getInitialCategory);
   const [draftDuration, setDraftDuration] = useState(getInitialDuration);
-  const initialRepeatFrequency = editingTask?.repeatFrequency ?? "weekly";
-  const initialRepeatInterval = Math.max(1, Math.trunc(editingTask?.repeatInterval ?? 1));
-  const [draftRepeatEnabled, setDraftRepeatEnabled] = useState(Boolean(editingTask?.repeatFrequency));
+  const initialRepeatFrequency = sourceRepeatFrequency ?? "weekly";
+  const initialRepeatInterval = Math.max(1, Math.trunc(sourceRepeatInterval));
+  const [draftRepeatEnabled, setDraftRepeatEnabled] = useState(Boolean(sourceRepeatFrequency));
   const [draftRepeatFrequency, setDraftRepeatFrequency] = useState<RepeatFrequency>(initialRepeatFrequency);
-  const [draftRepeatEndDate, setDraftRepeatEndDate] = useState(editingTask?.repeatEndDate ?? "");
-  const [draftRepeatCustom, setDraftRepeatCustom] = useState(
-    Boolean(editingTask?.repeatFrequency && (initialRepeatInterval > 1 || editingTask.repeatWeekdays?.length || editingTask.repeatMonthDays?.length || editingTask.repeatYearMonths?.length)),
-  );
+  const [draftRepeatEndDate, setDraftRepeatEndDate] = useState(editingTask?.repeatEndDate ?? initialTask?.repeatEndDate ?? "");
+  const [draftRepeatCustom, setDraftRepeatCustom] = useState(sourceHasCustomRepeat);
   const [draftRepeatInterval, setDraftRepeatInterval] = useState(String(initialRepeatInterval));
   const [draftRepeatWeekdays, setDraftRepeatWeekdays] = useState<number[]>(() =>
-    editingTask?.repeatWeekdays?.length ? editingTask.repeatWeekdays : [dateKeyToPlannerWeekday(editingDate ?? today)],
+    sourceRepeatWeekdays?.length ? normalizeRepeatWeekdays(sourceRepeatWeekdays) : [dateKeyToPlannerWeekday(getInitialDate())],
   );
   const [draftRepeatMonthDays, setDraftRepeatMonthDays] = useState<number[]>(() =>
-    editingTask?.repeatMonthDays?.length ? editingTask.repeatMonthDays : [dateKeyToMonthDay(editingDate ?? today)],
+    sourceRepeatMonthDays?.length ? normalizeRepeatMonthDays(sourceRepeatMonthDays) : [dateKeyToMonthDay(getInitialDate())],
   );
-  const [draftRepeatMonthOverflow, setDraftRepeatMonthOverflow] = useState<"last-day" | "skip">(editingTask?.repeatMonthOverflow ?? "skip");
+  const [draftRepeatMonthOverflow, setDraftRepeatMonthOverflow] = useState<"last-day" | "skip">(editingTask?.repeatMonthOverflow ?? initialTask?.repeatMonthOverflow ?? "skip");
   const [draftRepeatYearMonths, setDraftRepeatYearMonths] = useState<number[]>(() =>
-    editingTask?.repeatYearMonths?.length ? editingTask.repeatYearMonths : [dateKeyToMonthIndex(editingDate ?? today)],
+    sourceRepeatYearMonths?.length ? normalizeRepeatYearMonths(sourceRepeatYearMonths) : [dateKeyToMonthIndex(getInitialDate())],
   );
   const [draftSaveToDefault, setDraftSaveToDefault] = useState(false);
   const [queuedTasks, setQueuedTasks] = useState<QueuedTask[]>([]);
@@ -668,13 +700,13 @@ export function AddTaskModal({
     setDraftRepeatFrequency(editingTask.repeatFrequency ?? "weekly");
     setDraftRepeatEndDate(editingTask.repeatEndDate ?? "");
     setDraftRepeatCustom(
-      Boolean(
-        editingTask.repeatFrequency &&
-          ((editingTask.repeatInterval ?? 1) > 1 ||
-            editingTask.repeatWeekdays?.length ||
-            editingTask.repeatMonthDays?.length ||
-            editingTask.repeatYearMonths?.length),
-      ),
+      hasCustomRepeatValues({
+        frequency: editingTask.repeatFrequency,
+        interval: editingTask.repeatInterval,
+        weekdays: editingTask.repeatWeekdays,
+        monthDays: editingTask.repeatMonthDays,
+        yearMonths: editingTask.repeatYearMonths,
+      }),
     );
     setDraftRepeatInterval(String(Math.max(1, Math.trunc(editingTask.repeatInterval ?? 1))));
     setDraftRepeatWeekdays(
@@ -708,13 +740,13 @@ export function AddTaskModal({
     setDraftRepeatFrequency(initialRepeatFrequencyValue ?? "weekly");
     setDraftRepeatEndDate(initialTask?.repeatEndDate ?? "");
     setDraftRepeatCustom(
-      Boolean(
-        initialRepeatFrequencyValue &&
-          (initialRepeatIntervalValue > 1 ||
-            initialTask?.repeatWeekdays?.length ||
-            initialTask?.repeatMonthDays?.length ||
-            initialTask?.repeatYearMonths?.length),
-      ),
+      hasCustomRepeatValues({
+        frequency: initialRepeatFrequencyValue,
+        interval: initialRepeatIntervalValue,
+        weekdays: initialTask?.repeatWeekdays,
+        monthDays: initialTask?.repeatMonthDays,
+        yearMonths: initialTask?.repeatYearMonths,
+      }),
     );
     setDraftRepeatInterval(String(initialRepeatIntervalValue));
     setDraftRepeatWeekdays(
@@ -766,7 +798,7 @@ export function AddTaskModal({
   };
 
   useEffect(() => {
-    if (!draftRepeatEnabled) {
+    if (!draftRepeatEnabled && !sourceRepeatFrequency) {
       setDraftRepeatCustom(false);
       setDraftRepeatInterval("1");
       setDraftRepeatWeekdays([dateKeyToPlannerWeekday(draftDate)]);
@@ -774,17 +806,17 @@ export function AddTaskModal({
       setDraftRepeatMonthOverflow("skip");
       setDraftRepeatYearMonths([dateKeyToMonthIndex(draftDate)]);
     }
-  }, [draftDate, draftRepeatEnabled]);
+  }, [draftDate, draftRepeatEnabled, sourceRepeatFrequency]);
 
   useEffect(() => {
-    if (!draftRepeatCustom) {
+    if (!draftRepeatCustom && !sourceHasCustomRepeat) {
       setDraftRepeatInterval("1");
       setDraftRepeatWeekdays([dateKeyToPlannerWeekday(draftDate)]);
       setDraftRepeatMonthDays([dateKeyToMonthDay(draftDate)]);
       setDraftRepeatMonthOverflow("skip");
       setDraftRepeatYearMonths([dateKeyToMonthIndex(draftDate)]);
     }
-  }, [draftDate, draftRepeatCustom]);
+  }, [draftDate, draftRepeatCustom, sourceHasCustomRepeat]);
 
   useEffect(() => {
     if (showRepeatWeekdays && !draftRepeatWeekdays.length) {
