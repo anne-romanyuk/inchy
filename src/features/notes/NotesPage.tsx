@@ -7,6 +7,7 @@ import { MAX_CATEGORY_LENGTH, MAX_NOTE_TITLE_LENGTH } from "../../../shared/cons
 import { fallbackCategoryColor } from "../../../shared/categoryPalette";
 import { GoalDatePicker } from "../goals/GoalDatePicker";
 import { categoryStyle } from "../today/categoryColor";
+import { DeleteActionButton } from "../../shared/ui/DeleteActionButton";
 import { useNotes, useSaveNotes } from "./useNotes";
 import { NoteCategoryPicker } from "./NoteCategoryPicker";
 
@@ -1365,20 +1366,20 @@ export function NotesPage() {
 
               {deleteTargetId !== null && (
                 <div
-                  className="pomodoro-confirm-overlay notes-delete-confirm"
+                  className="pomodoro-confirm-overlay task-modal__recurrence-confirm notes-delete-confirm"
                   role="dialog"
                   aria-modal="true"
                   aria-label="Confirm note deletion"
                 >
-                  <div className="pomodoro-confirm__card">
-                    <div className="pomodoro-confirm__icon" aria-hidden="true">
+                  <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--delete notes-delete-confirm__card">
+                    <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
                       <Icon name="Trash" />
                     </div>
                     <div className="pomodoro-confirm__content">
                       <h3>Delete note?</h3>
                       <p>This will remove the note from the list. This can't be undone.</p>
                     </div>
-                    <div className="pomodoro-confirm__actions">
+                    <div className="pomodoro-confirm__actions task-modal__recurrence-confirm-actions">
                       <button
                         type="button"
                         className="pomodoro-btn pomodoro-btn--ghost-text"
@@ -1387,34 +1388,29 @@ export function NotesPage() {
                       >
                         Cancel
                       </button>
-                      <button
-                        type="button"
-                        className="goal-ghost-button goal-ghost-button--danger"
-                        onClick={confirmDeleteNote}
-                        disabled={saving}
-                      >
+                      <DeleteActionButton onClick={confirmDeleteNote} disabled={saving}>
                         {saving ? "Deleting..." : "Delete"}
-                      </button>
+                      </DeleteActionButton>
                     </div>
                   </div>
                 </div>
               )}
               {unsavedDialogOpen && (
                 <div
-                  className="pomodoro-confirm-overlay notes-unsaved-confirm"
+                  className="pomodoro-confirm-overlay task-modal__recurrence-confirm notes-unsaved-confirm"
                   role="dialog"
                   aria-modal="true"
                   aria-label="Unsaved changes"
                 >
-                  <div className="pomodoro-confirm__card">
-                    <div className="pomodoro-confirm__icon" aria-hidden="true">
+                  <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card notes-unsaved-confirm__card">
+                    <div className="pomodoro-confirm__icon notes-unsaved-confirm__icon" aria-hidden="true">
                       <Icon name="Note" />
                     </div>
                     <div className="pomodoro-confirm__content">
                       <h3>Unsaved changes</h3>
                       <p>{pendingActionText} Save them before leaving, or discard the changes?</p>
                     </div>
-                    <div className="pomodoro-confirm__actions">
+                    <div className="pomodoro-confirm__actions task-modal__recurrence-confirm-actions">
                       <button
                         type="button"
                         className="pomodoro-btn pomodoro-btn--ghost-text"

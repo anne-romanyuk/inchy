@@ -311,6 +311,19 @@ export const GoalTaskInputSchema = z.object({
   subtasks: z.array(GoalSubtaskInputSchema).max(_MAX_GOAL_SUBTASKS).optional(),
 });
 
+export const goalOccurrenceDeleteActionValues = ["delete-all", "delete-future", "detach"] as const;
+export const GoalOccurrenceDeleteActionSchema = z
+  .enum(goalOccurrenceDeleteActionValues)
+  .openapi("GoalOccurrenceDeleteAction");
+export type GoalOccurrenceDeleteAction = z.infer<typeof GoalOccurrenceDeleteActionSchema>;
+
+export const GoalOccurrenceDeleteDecisionSchema = z.object({
+  kind: z.enum(["goal_task", "goal_subtask"]),
+  id: z.string().min(1),
+  action: GoalOccurrenceDeleteActionSchema,
+});
+export type GoalOccurrenceDeleteDecision = z.infer<typeof GoalOccurrenceDeleteDecisionSchema>;
+
 export const GoalCreateInputSchema = z
   .object({
     title: TitleSchema,
@@ -326,6 +339,7 @@ export const GoalUpdateInputSchema = z
     deadline: z.string().trim().max(10).nullable().optional(),
     iconId: z.string().trim().max(48).nullable().optional(),
     tasks: z.array(GoalTaskInputSchema).max(_MAX_GOAL_TASKS).optional(),
+    occurrenceDeleteDecisions: z.array(GoalOccurrenceDeleteDecisionSchema).optional().default([]),
   })
   .openapi("GoalUpdateInput");
 
@@ -489,16 +503,33 @@ export const OccurrenceStandaloneCreateSchema = z.object({
   repeatEndDate: OccurrenceDateSchema.nullable().optional().default(null),
 });
 
+const OccurrenceCreateRepeatFields = {
+  repeatFrequency: RepeatFrequencySchema.nullable().optional().default(null),
+  repeatInterval: z.number().int().min(1).max(999).optional().default(1),
+  repeatWeekdays: z.array(z.number().int().min(0).max(6)).max(7).optional().default([]),
+  repeatMonthDay: z.number().int().min(1).max(31).nullable().optional().default(null),
+  repeatMonthDays: z.array(z.number().int().min(1).max(31)).max(31).optional().default([]),
+  repeatMonthOverflow: RepeatMonthOverflowSchema.optional().default("skip"),
+  repeatYearMonths: z.array(z.number().int().min(0).max(11)).max(12).optional().default([]),
+  repeatEndDate: OccurrenceDateSchema.nullable().optional().default(null),
+};
+
 export const OccurrenceFromGoalTaskCreateSchema = z.object({
   sourceKind: z.literal("goal_task"),
   occurrenceDate: OccurrenceDateSchema,
   goalTaskId: z.string().min(1),
+  duration: DurationSchema.optional().default(""),
+  time: TaskTimeSchema.optional().default(""),
+  ...OccurrenceCreateRepeatFields,
 });
 
 export const OccurrenceFromGoalSubtaskCreateSchema = z.object({
   sourceKind: z.literal("goal_subtask"),
   occurrenceDate: OccurrenceDateSchema,
   goalSubtaskId: z.string().min(1),
+  duration: DurationSchema.optional().default(""),
+  time: TaskTimeSchema.optional().default(""),
+  ...OccurrenceCreateRepeatFields,
 });
 
 export const OccurrenceCreateInputSchema = z
@@ -542,6 +573,42 @@ export const OccurrenceDeleteInputSchema = z
     recurrenceDeleteScope: RecurrenceDeleteScopeSchema.optional().default("single"),
   })
   .openapi("OccurrenceDeleteInput");
+
+export const GoalLinkedRecurringScheduleSchema = z
+  .object({
+    id: z.string(),
+    startsOn: OccurrenceDateSchema,
+    repeatFrequency: RepeatFrequencySchema,
+    repeatInterval: z.number().int().min(1).max(999),
+    repeatWeekdays: z.array(z.number().int().min(0).max(6)).max(7),
+    repeatMonthDays: z.array(z.number().int().min(1).max(31)).max(31),
+    repeatMonthOverflow: RepeatMonthOverflowSchema,
+    repeatYearMonths: z.array(z.number().int().min(0).max(11)).max(12),
+    repeatEndDate: OccurrenceDateSchema.nullable(),
+    duration: DurationSchema,
+    time: TaskTimeSchema,
+    nextDates: z.array(OccurrenceDateSchema).max(5),
+  })
+  .openapi("GoalLinkedRecurringSchedule");
+export type GoalLinkedRecurringSchedule = z.infer<typeof GoalLinkedRecurringScheduleSchema>;
+
+export const GoalLinkedOneOffScheduleSchema = z
+  .object({
+    id: z.string(),
+    occurrenceDate: OccurrenceDateSchema,
+    duration: DurationSchema,
+    time: TaskTimeSchema,
+  })
+  .openapi("GoalLinkedOneOffSchedule");
+export type GoalLinkedOneOffSchedule = z.infer<typeof GoalLinkedOneOffScheduleSchema>;
+
+export const GoalLinkedScheduleEnvelopeSchema = z
+  .object({
+    recurring: GoalLinkedRecurringScheduleSchema.nullable(),
+    oneOffOccurrences: z.array(GoalLinkedOneOffScheduleSchema),
+  })
+  .openapi("GoalLinkedScheduleEnvelope");
+export type GoalLinkedScheduleEnvelope = z.infer<typeof GoalLinkedScheduleEnvelopeSchema>;
 
 export const OccurrenceReorderInputSchema = z
   .object({

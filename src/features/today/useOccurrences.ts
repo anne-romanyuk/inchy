@@ -19,6 +19,17 @@ export function useOccurrences(date: string) {
   });
 }
 
+export function useGoalLinkedSchedule(input: { sourceKind: "goal_task" | "goal_subtask"; id: string; enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.goalLinkedSchedule(input.sourceKind, input.id),
+    queryFn: () =>
+      api.fetchGoalLinkedSchedule(
+        input.sourceKind === "goal_task" ? { goalTaskId: input.id } : { goalSubtaskId: input.id },
+      ),
+    enabled: input.enabled ?? true,
+  });
+}
+
 export function useCreateOccurrence() {
   const client = useQueryClient();
   return useMutation({
@@ -28,7 +39,7 @@ export function useCreateOccurrence() {
         queryKeys.occurrences(occurrence.occurrenceDate),
         (current = []) => [occurrence, ...current.filter((o) => o.id !== occurrence.id)],
       );
-      if (variables.sourceKind === "standalone" && variables.repeatFrequency) {
+      if (variables.repeatFrequency) {
         void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
       }
     },
@@ -131,6 +142,18 @@ export function useUpdateOccurrence() {
       if (variables.updates.repeatFrequency !== undefined || variables.updates.recurrenceUpdateScope) {
         void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
       }
+    },
+  });
+}
+
+export function useUpdateGoalLinkedSchedule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: api.UpdateOccurrenceInput }) =>
+      api.updateGoalLinkedSchedule(id, updates),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.occurrencesRoot });
+      void client.invalidateQueries({ queryKey: ["goalLinkedSchedule"] });
     },
   });
 }

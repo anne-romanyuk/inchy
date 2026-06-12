@@ -866,7 +866,7 @@
   min-width: 1em;
 }
 .notes-format-icon--bold {
-  font-weight: 900;
+  font-weight: 600;
 }
 .notes-format-icon--italic {
   font-style: italic;
@@ -966,14 +966,50 @@
   position: absolute;
   border-radius: var(--notes-widget-radius);
 }
-.notes-delete-confirm .pomodoro-confirm__card,
-.notes-unsaved-confirm .pomodoro-confirm__card {
-  width: min(100%, 360px);
+
+.notes-delete-confirm {
+  background: color-mix(in srgb, var(--c-text-primary) 10%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
+
+.notes-unsaved-confirm {
+  background: color-mix(in srgb, var(--c-text-primary) 16%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.notes-delete-confirm .notes-delete-confirm__card {
+  background: var(--c-sidebar-surface-solid);
+}
+
 .notes-unsaved-confirm .pomodoro-confirm__card {
   width: min(100%, 440px);
+  background: var(--c-sidebar-surface-solid);
 }
-.notes-delete-confirm .goal-ghost-button--danger,
+
+:root[data-theme="forest"] .notes-unsaved-confirm.pomodoro-confirm-overlay {
+  background: color-mix(in srgb, var(--c-text-primary) 16%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme="forest"] .notes-unsaved-confirm .notes-unsaved-confirm__card {
+  background: var(--c-sidebar-surface-solid);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme="forest"] .notes-unsaved-confirm .notes-unsaved-confirm__icon {
+  background: var(--c-warning);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -16px color-mix(in srgb, var(--c-warning) 54%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--c-warning) 20%, transparent);
+}
+
 .notes-unsaved-confirm .goal-ghost-button--danger,
 .notes-unsaved-confirm .task-add {
   height: 40px;

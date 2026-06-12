@@ -194,6 +194,7 @@ export default function PomodoroPanel({
   const [settings, setSettings] = useState<PomodoroSettings>(loadSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState<ResetConfirmation>(null);
+  const [pendingModeSwitch, setPendingModeSwitch] = useState<Mode | null>(null);
   const [taskName, setTaskName] = useState<string>(() => cachedSession?.label || loadTaskName());
   const [mode, setMode] = useState<Mode>(initialMode);
   const [isRunning, setIsRunning] = useState(Boolean(cachedSession && remainingFromSession(cachedSession) > 0));
@@ -473,6 +474,11 @@ export default function PomodoroPanel({
   };
 
   const reset = () => {
+    if (mode !== "focus") {
+      commitReset();
+      return;
+    }
+
     const totalSeconds = modePlanned(mode, settings);
     const currentRemaining = getLiveRemaining();
     const elapsedSeconds = Math.max(0, totalSeconds - currentRemaining);
@@ -511,7 +517,30 @@ export default function PomodoroPanel({
     }
   };
 
+  const requestModeChange = (next: Mode) => {
+    if (next === modeRef.current) return;
+    const isLeavingActiveFocus =
+      modeRef.current === "focus" &&
+      next !== "focus" &&
+      (Boolean(activeSessionIdRef.current) || isRunning);
+
+    if (isLeavingActiveFocus) {
+      setPendingModeSwitch(next);
+      return;
+    }
+
+    changeMode(next);
+  };
+
+  const confirmModeSwitch = () => {
+    const next = pendingModeSwitch;
+    if (!next) return;
+    setPendingModeSwitch(null);
+    changeMode(next);
+  };
+
   const changeMode = (next: Mode) => {
+    if (next === modeRef.current) return;
     const sessionId = activeSessionIdRef.current;
     const currentRemaining = getLiveRemaining();
     const elapsedSeconds = Math.max(0, modePlanned(mode, settings) - currentRemaining);
@@ -548,6 +577,7 @@ export default function PomodoroPanel({
     0,
     MODES.findIndex((m) => m.key === mode),
   );
+  const pendingSwitchHasTaskFocus = hasTrackedTaskFocus();
 
   return (
     <motion.section
@@ -593,7 +623,7 @@ export default function PomodoroPanel({
                   role="tab"
                   aria-selected={i === activeIndex}
                   className={`category-toggle__option ${i === activeIndex ? "is-active" : ""}`.trim()}
-                  onClick={() => changeMode(m.key)}
+                  onClick={() => requestModeChange(m.key)}
                 >
                   {m.label}
                 </button>
@@ -656,6 +686,15 @@ export default function PomodoroPanel({
             variant={resetConfirmation}
             onCancel={() => setResetConfirmation(null)}
             onConfirm={commitReset}
+          />
+        ) : null}
+        {pendingModeSwitch ? (
+          <PomodoroResetConfirmModal
+            variant={pendingSwitchHasTaskFocus ? "assigned-focus" : "unassigned-progress"}
+            title="Switch to break?"
+            confirmLabel={pendingSwitchHasTaskFocus ? "Save & switch" : "Reset & switch"}
+            onCancel={() => setPendingModeSwitch(null)}
+            onConfirm={confirmModeSwitch}
           />
         ) : null}
         {settingsOpen ? (
@@ -839,10 +878,14 @@ function PomodoroRing({
 
 function PomodoroResetConfirmModal({
   variant,
+  title = "Reset timer?",
+  confirmLabel,
   onCancel,
   onConfirm,
 }: {
   variant: Exclude<ResetConfirmation, null>;
+  title?: string;
+  confirmLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -864,7 +907,7 @@ function PomodoroResetConfirmModal({
           <ResetIcon />
         </div>
         <div className="pomodoro-confirm__content">
-          <h3>Reset timer?</h3>
+          <h3>{title}</h3>
           <p>
             {isAssignedFocus
               ? "Time spent will be saved to focused tasks. This Pomodoro won’t count as completed."
@@ -876,7 +919,7 @@ function PomodoroResetConfirmModal({
             Cancel
           </button>
           <button type="button" className="task-add" onClick={onConfirm}>
-            {isAssignedFocus ? "Save & reset" : "Reset timer"}
+            {confirmLabel ?? (isAssignedFocus ? "Save & reset" : "Reset timer")}
           </button>
         </div>
       </div>

@@ -8,6 +8,8 @@ import {
   ErrorResponseSchema,
   GoalCreateInputSchema,
   GoalEnvelopeSchema,
+  type GoalOccurrenceDeleteAction,
+  type GoalOccurrenceDeleteDecision,
   GoalsEnvelopeSchema,
   GoalUpdateInputSchema,
   OkResponseSchema,
@@ -22,6 +24,31 @@ type GoalTaskInput = {
   note?: string | null;
   subtasks?: Array<{ id?: string; title: string; completed?: boolean }>;
 };
+
+type GoalOccurrenceDeleteKind = GoalOccurrenceDeleteDecision["kind"];
+type GoalOccurrenceDeleteColumn = "goal_task_id" | "goal_subtask_id" | "goal_id";
+type GoalOccurrenceDeleteDecisionMap = Map<string, GoalOccurrenceDeleteAction>;
+
+class GoalOccurrencesDecisionRequiredError extends Error {
+  target: { kind: GoalOccurrenceDeleteKind; id: string };
+
+  constructor(kind: GoalOccurrenceDeleteKind, id: string) {
+    super("Goal occurrence delete decision required.");
+    this.target = { kind, id };
+  }
+}
+
+function decisionKey(kind: GoalOccurrenceDeleteKind, id: string) {
+  return `${kind}:${id}`;
+}
+
+function buildOccurrenceDeleteDecisionMap(decisions: GoalOccurrenceDeleteDecision[] | undefined) {
+  const map: GoalOccurrenceDeleteDecisionMap = new Map();
+  for (const decision of decisions ?? []) {
+    map.set(decisionKey(decision.kind, decision.id), decision.action);
+  }
+  return map;
+}
 
 function loadSubtasksByTask(goalId: string): Map<string, GoalSubtaskRow[]> {
   const rows = db
@@ -58,6 +85,13 @@ function readGoal(userId: string, id: string) {
   return toGoal(goal, tasks, subtasks);
 }
 
+function todayDateKey(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 /**
  * Detach (rather than cascade-delete) any task_occurrences tied to goal items
  * that are about to be removed: flip them to `standalone`, drop the goal links,
@@ -75,12 +109,24 @@ function readGoal(userId: string, id: string) {
  */
 function detachOccurrencesByColumn(
   userId: string,
-  column: "goal_task_id" | "goal_subtask_id" | "goal_id",
+  column: GoalOccurrenceDeleteColumn,
   ids: string[],
   now: string,
+  options: { beforeDate?: string; completedOnDate?: string; clearRecurringTaskId?: boolean } = {},
 ) {
   if (ids.length === 0) return;
   const placeholders = ids.map(() => "?").join(",");
+  const datePredicates: string[] = [];
+  const dateParams: string[] = [];
+  if (options.beforeDate) {
+    datePredicates.push("occurrence_date < ?");
+    dateParams.push(options.beforeDate);
+  }
+  if (options.completedOnDate) {
+    datePredicates.push("(occurrence_date = ? AND completed = 1)");
+    dateParams.push(options.completedOnDate);
+  }
+  const dateClause = datePredicates.length ? ` AND (${datePredicates.join(" OR ")})` : "";
   db.prepare(
     `UPDATE task_occurrences
      SET title = CASE source_kind
@@ -88,6 +134,33 @@ function detachOccurrencesByColumn(
                    WHEN 'goal_task'    THEN COALESCE((SELECT title FROM goal_tasks    WHERE id = task_occurrences.goal_task_id),    title)
                    ELSE title
                  END,
+         category = COALESCE((SELECT title FROM goals WHERE id = task_occurrences.goal_id), category),
+         source_kind = 'standalone',
+         goal_id = NULL,
+         goal_task_id = NULL,
+         goal_subtask_id = NULL,
+         recurring_task_id = CASE WHEN ? THEN NULL ELSE recurring_task_id END,
+         updated_at = ?
+     WHERE ${column} IN (${placeholders}) AND user_id = ?${dateClause}`,
+  ).run(options.clearRecurringTaskId ? 1 : 0, now, ...ids, userId, ...dateParams);
+}
+
+function detachRecurringTasksByColumn(
+  userId: string,
+  column: GoalOccurrenceDeleteColumn,
+  ids: string[],
+  now: string,
+) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  db.prepare(
+    `UPDATE recurring_tasks
+     SET title = CASE source_kind
+                   WHEN 'goal_subtask' THEN COALESCE((SELECT title FROM goal_subtasks WHERE id = recurring_tasks.goal_subtask_id), title)
+                   WHEN 'goal_task'    THEN COALESCE((SELECT title FROM goal_tasks    WHERE id = recurring_tasks.goal_task_id),    title)
+                   ELSE title
+                 END,
+         category = COALESCE((SELECT title FROM goals WHERE id = recurring_tasks.goal_id), category),
          source_kind = 'standalone',
          goal_id = NULL,
          goal_task_id = NULL,
@@ -95,6 +168,129 @@ function detachOccurrencesByColumn(
          updated_at = ?
      WHERE ${column} IN (${placeholders}) AND user_id = ?`,
   ).run(now, ...ids, userId);
+}
+
+function countGoalItemOccurrences(
+  userId: string,
+  column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
+  id: string,
+) {
+  const occurrenceRow = db
+    .prepare(`SELECT COUNT(*) AS n FROM task_occurrences WHERE user_id = ? AND ${column} = ?`)
+    .get(userId, id) as { n: number };
+  const recurringRow = db
+    .prepare(`SELECT COUNT(*) AS n FROM recurring_tasks WHERE user_id = ? AND ${column} = ?`)
+    .get(userId, id) as { n: number };
+  return occurrenceRow.n + recurringRow.n;
+}
+
+function deleteGoalLinkedOccurrencesByColumn(
+  userId: string,
+  column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
+  ids: string[],
+  dateClause: "all" | "future",
+  today: string,
+) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  const occurrenceDateClause = dateClause === "future" ? " AND (occurrence_date > ? OR (occurrence_date = ? AND completed = 0))" : "";
+  db.prepare(
+    `DELETE FROM task_occurrences
+     WHERE user_id = ? AND ${column} IN (${placeholders})${occurrenceDateClause}`,
+  ).run(userId, ...ids, ...(dateClause === "future" ? [today, today] : []));
+}
+
+function deleteRecurringTasksByColumn(
+  userId: string,
+  column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
+  ids: string[],
+) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  db.prepare(`DELETE FROM recurring_tasks WHERE user_id = ? AND ${column} IN (${placeholders})`).run(userId, ...ids);
+}
+
+function applyGoalItemOccurrenceDeleteAction(
+  userId: string,
+  column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
+  ids: string[],
+  action: GoalOccurrenceDeleteAction,
+  now: string,
+  today: string,
+) {
+  if (ids.length === 0) return;
+  if (action === "detach") {
+    detachOccurrencesByColumn(userId, column, ids, now);
+    detachRecurringTasksByColumn(userId, column, ids, now);
+    return;
+  }
+  if (action === "delete-future") {
+    detachOccurrencesByColumn(userId, column, ids, now, {
+      beforeDate: today,
+      completedOnDate: today,
+      clearRecurringTaskId: true,
+    });
+    deleteGoalLinkedOccurrencesByColumn(userId, column, ids, "future", today);
+    deleteRecurringTasksByColumn(userId, column, ids);
+    return;
+  }
+  deleteGoalLinkedOccurrencesByColumn(userId, column, ids, "all", today);
+  deleteRecurringTasksByColumn(userId, column, ids);
+}
+
+function requireOrApplyGoalItemOccurrenceAction(
+  userId: string,
+  kind: GoalOccurrenceDeleteKind,
+  column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
+  id: string,
+  decisions: GoalOccurrenceDeleteDecisionMap,
+  now: string,
+  today: string,
+) {
+  if (countGoalItemOccurrences(userId, column, id) === 0) return;
+  const action = decisions.get(decisionKey(kind, id));
+  if (!action) throw new GoalOccurrencesDecisionRequiredError(kind, id);
+  applyGoalItemOccurrenceDeleteAction(userId, column, [id], action, now, today);
+}
+
+function goalOccurrenceDecisionColumn(kind: GoalOccurrenceDeleteKind): Exclude<GoalOccurrenceDeleteColumn, "goal_id"> {
+  return kind === "goal_task" ? "goal_task_id" : "goal_subtask_id";
+}
+
+function goalOccurrenceDecisionBelongsToGoal(goalId: string, decision: GoalOccurrenceDeleteDecision) {
+  if (decision.kind === "goal_task") {
+    const row = db.prepare("SELECT id FROM goal_tasks WHERE id = ? AND goal_id = ?").get(decision.id, goalId);
+    return Boolean(row);
+  }
+  const row = db
+    .prepare(
+      `SELECT goal_subtasks.id
+       FROM goal_subtasks
+       JOIN goal_tasks ON goal_tasks.id = goal_subtasks.goal_task_id
+       WHERE goal_subtasks.id = ? AND goal_tasks.goal_id = ?`,
+    )
+    .get(decision.id, goalId);
+  return Boolean(row);
+}
+
+function applyExplicitGoalOccurrenceDeleteDecisions(
+  userId: string,
+  goalId: string,
+  decisions: GoalOccurrenceDeleteDecision[] | undefined,
+  now: string,
+  today: string,
+) {
+  for (const decision of decisions ?? []) {
+    if (!goalOccurrenceDecisionBelongsToGoal(goalId, decision)) continue;
+    applyGoalItemOccurrenceDeleteAction(
+      userId,
+      goalOccurrenceDecisionColumn(decision.kind),
+      [decision.id],
+      decision.action,
+      now,
+      today,
+    );
+  }
 }
 
 /**
@@ -115,7 +311,14 @@ function detachOccurrencesByColumn(
  * the first new subtask. This matches the UI rule that a task with subtasks
  * cannot be carried to Today directly.
  */
-function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[], now: string) {
+function replaceGoalTasks(
+  userId: string,
+  goalId: string,
+  tasks: GoalTaskInput[],
+  now: string,
+  occurrenceDeleteDecisions: GoalOccurrenceDeleteDecisionMap = new Map(),
+) {
+  const today = todayDateKey();
   const existingTasks = db
     .prepare("SELECT id FROM goal_tasks WHERE goal_id = ?")
     .all(goalId) as Array<{ id: string }>;
@@ -140,7 +343,17 @@ function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[]
   // occurrences (and their subtasks' occurrences) so history isn't cascaded away.
   const toDelete = [...existingTaskIds].filter((id) => !seenTaskIds.has(id));
   if (toDelete.length > 0) {
-    detachOccurrencesByColumn(userId, "goal_task_id", toDelete, now);
+    for (const taskId of toDelete) {
+      requireOrApplyGoalItemOccurrenceAction(
+        userId,
+        "goal_task",
+        "goal_task_id",
+        taskId,
+        occurrenceDeleteDecisions,
+        now,
+        today,
+      );
+    }
     const placeholders = toDelete.map(() => "?").join(",");
     db.prepare(`DELETE FROM goal_tasks WHERE id IN (${placeholders})`).run(...toDelete);
   }
@@ -223,7 +436,17 @@ function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[]
 
     const subsToDelete = [...existingSubIds].filter((sid) => !seenSubIds.has(sid));
     if (subsToDelete.length > 0) {
-      detachOccurrencesByColumn(userId, "goal_subtask_id", subsToDelete, now);
+      for (const subtaskId of subsToDelete) {
+        requireOrApplyGoalItemOccurrenceAction(
+          userId,
+          "goal_subtask",
+          "goal_subtask_id",
+          subtaskId,
+          occurrenceDeleteDecisions,
+          now,
+          today,
+        );
+      }
       const placeholders = subsToDelete.map(() => "?").join(",");
       db.prepare(`DELETE FROM goal_subtasks WHERE id IN (${placeholders})`).run(...subsToDelete);
     }
@@ -247,6 +470,17 @@ function replaceGoalTasks(userId: string, goalId: string, tasks: GoalTaskInput[]
       ).run(firstSubId, subRow?.title ?? task.title, now, userId, taskId);
     }
   }
+
+  applyExplicitGoalOccurrenceDeleteDecisions(
+    userId,
+    goalId,
+    [...occurrenceDeleteDecisions].map(([key, action]) => {
+      const [kind, id] = key.split(":") as [GoalOccurrenceDeleteKind, string];
+      return { kind, id, action };
+    }),
+    now,
+    today,
+  );
 }
 
 const listGoalsRoute = createRoute({
@@ -333,6 +567,7 @@ const updateGoalRoute = createRoute({
   responses: {
     200: { description: "Updated", content: { "application/json": { schema: GoalEnvelopeSchema } } },
     404: { description: "Goal not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+    409: { description: "Occurrence delete decision required", content: { "application/json": { schema: ErrorResponseSchema } } },
     422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
   },
 });
@@ -344,17 +579,33 @@ goalRoutes.openapi(updateGoalRoute, (c) => {
   const existing = db.prepare("SELECT * FROM goals WHERE id = ? AND user_id = ?").get(id, userId) as GoalRow | undefined;
   if (!existing) return c.json({ message: "Goal not found." }, 404);
   const now = new Date().toISOString();
-  db.transaction(() => {
-    db.prepare("UPDATE goals SET title = ?, deadline = ?, icon_id = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(
-      input.title ?? existing.title,
-      input.deadline !== undefined ? input.deadline : existing.deadline,
-      input.iconId !== undefined ? input.iconId : existing.icon_id ?? null,
-      now,
-      id,
-      userId,
-    );
-    if (input.tasks) replaceGoalTasks(userId, id, input.tasks, now);
-  })();
+  try {
+    db.transaction(() => {
+      db.prepare("UPDATE goals SET title = ?, deadline = ?, icon_id = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(
+        input.title ?? existing.title,
+        input.deadline !== undefined ? input.deadline : existing.deadline,
+        input.iconId !== undefined ? input.iconId : existing.icon_id ?? null,
+        now,
+        id,
+        userId,
+      );
+      if (input.tasks) {
+        replaceGoalTasks(userId, id, input.tasks, now, buildOccurrenceDeleteDecisionMap(input.occurrenceDeleteDecisions));
+      }
+    })();
+  } catch (error) {
+    if (error instanceof GoalOccurrencesDecisionRequiredError) {
+      return c.json(
+        {
+          message: "Choose what to do with scheduled occurrences before deleting this goal item.",
+          code: "goal_occurrence_delete_decision_required",
+          target: error.target,
+        },
+        409,
+      );
+    }
+    throw error;
+  }
   checkpointDatabase();
   return c.json({ goal: readGoal(userId, id)! }, 200);
 });
@@ -381,6 +632,7 @@ goalRoutes.openapi(deleteGoalRoute, (c) => {
     // doesn't cascade away the user's Today entries / past-day history. All
     // goal-linked occurrences carry goal_id, so this one pass covers them.
     detachOccurrencesByColumn(userId, "goal_id", [id], now);
+    detachRecurringTasksByColumn(userId, "goal_id", [id], now);
     const info = db.prepare("DELETE FROM goals WHERE id = ? AND user_id = ?").run(id, userId);
     deleted = info.changes > 0;
   })();

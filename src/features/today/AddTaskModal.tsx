@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 import type {
@@ -66,6 +66,24 @@ type EditTaskUpdates = {
   repeatEndDate?: string | null;
   recurrenceUpdateScope?: RecurrenceUpdateScope;
 };
+
+export type AddTaskModalCreateInput = {
+  title: string;
+  occurrenceDate: string;
+  category: string;
+  duration: string;
+  time: string;
+  saveToDefault: boolean;
+  repeatFrequency: RepeatFrequency | null;
+  repeatInterval: number;
+  repeatWeekdays: number[];
+  repeatMonthDays: number[];
+  repeatMonthOverflow: "last-day" | "skip";
+  repeatYearMonths: number[];
+  repeatEndDate: string | null;
+};
+
+type InitialTaskDraft = Partial<AddTaskModalCreateInput>;
 
 const REPEAT_OPTIONS: Array<{ value: RepeatFrequency; label: string }> = [
   { value: "daily", label: "Daily" },
@@ -501,6 +519,14 @@ export function AddTaskModal({
   onClose,
   categories,
   defaultTasks,
+  initialTask,
+  lockedFields,
+  modalTitle,
+  submitLabel,
+  pendingLabel,
+  scheduleNotice,
+  confirmDisableRepeatOnCreate,
+  onCreateTask,
   editingTask,
   editingDate,
   onSaveEdit,
@@ -511,6 +537,17 @@ export function AddTaskModal({
   onClose: () => void;
   categories: CategoryInfo[];
   defaultTasks: DefaultTask[];
+  initialTask?: InitialTaskDraft;
+  lockedFields?: {
+    title?: boolean;
+    category?: boolean;
+  };
+  modalTitle?: string;
+  submitLabel?: string;
+  pendingLabel?: string;
+  scheduleNotice?: ReactNode;
+  confirmDisableRepeatOnCreate?: boolean;
+  onCreateTask?: (input: AddTaskModalCreateInput) => Promise<unknown> | unknown;
   editingTask?: EditableTask;
   // When provided (edit mode), the date field is shown and its value is passed
   // back via onSaveEdit so the caller can move the task to another day.
@@ -525,11 +562,16 @@ export function AddTaskModal({
   const isEditMode = Boolean(editingTask);
   const today = todayDateKey();
   const tomorrow = addDaysToDateKey(today, 1);
-  const [draftTitle, setDraftTitle] = useState(editingTask?.title ?? "");
-  const [draftDate, setDraftDate] = useState(editingDate ?? today);
-  const [draftTime, setDraftTime] = useState(editingTask?.time ?? "");
-  const [draftCategory, setDraftCategory] = useState(editingTask?.category ?? "");
-  const [draftDuration, setDraftDuration] = useState(() => normalizeTaskDurationValue(editingTask?.duration));
+  const getInitialTitle = () => editingTask?.title ?? initialTask?.title ?? "";
+  const getInitialDate = () => editingDate ?? initialTask?.occurrenceDate ?? today;
+  const getInitialTime = () => editingTask?.time ?? initialTask?.time ?? "";
+  const getInitialCategory = () => editingTask?.category ?? initialTask?.category ?? "";
+  const getInitialDuration = () => normalizeTaskDurationValue(editingTask?.duration ?? initialTask?.duration);
+  const [draftTitle, setDraftTitle] = useState(getInitialTitle);
+  const [draftDate, setDraftDate] = useState(getInitialDate);
+  const [draftTime, setDraftTime] = useState(getInitialTime);
+  const [draftCategory, setDraftCategory] = useState(getInitialCategory);
+  const [draftDuration, setDraftDuration] = useState(getInitialDuration);
   const initialRepeatFrequency = editingTask?.repeatFrequency ?? "weekly";
   const initialRepeatInterval = Math.max(1, Math.trunc(editingTask?.repeatInterval ?? 1));
   const [draftRepeatEnabled, setDraftRepeatEnabled] = useState(Boolean(editingTask?.repeatFrequency));
@@ -553,6 +595,7 @@ export function AddTaskModal({
   const [queuedTasks, setQueuedTasks] = useState<QueuedTask[]>([]);
   const [addTaskError, setAddTaskError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
   const [confirmDisableRepeat, setConfirmDisableRepeat] = useState(false);
   const [confirmDeleteRepeat, setConfirmDeleteRepeat] = useState(false);
   const poolScrollRef = useRef<HTMLDivElement>(null);
@@ -581,12 +624,14 @@ export function AddTaskModal({
   );
   const submitTaskCount = queuedTasks.length + (draftTitle.trim() ? 1 : 0);
   const submitTaskLabel =
-    context === "plan"
+    submitLabel ??
+    (context === "plan"
       ? "Add task"
       : submitTaskCount > 0
       ? `Add ${submitTaskCount} ${submitTaskCount === 1 ? "task" : "tasks"}`
-      : "Add task";
+      : "Add task");
   const showRepeatControls = context === "plan";
+  const createPending = createTask.isPending || createSaving;
   const isEditingRecurring = Boolean(editingTask?.recurringTaskId || editingTask?.repeatFrequency);
   const repeatIntervalNumber = normalizeRepeatInterval(draftRepeatInterval);
   const repeatIntervalUnit = formatRepeatUnit(draftRepeatFrequency, repeatIntervalNumber);
@@ -650,12 +695,64 @@ export function AddTaskModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingTask, editingDate]);
 
+  useEffect(() => {
+    if (editingTask) return;
+    const initialRepeatFrequencyValue = initialTask?.repeatFrequency ?? null;
+    const initialRepeatIntervalValue = Math.max(1, Math.trunc(initialTask?.repeatInterval ?? 1));
+    setDraftTitle(initialTask?.title ?? "");
+    setDraftDate(initialTask?.occurrenceDate ?? today);
+    setDraftTime(initialTask?.time ?? "");
+    setDraftCategory(initialTask?.category ?? "");
+    setDraftDuration(normalizeTaskDurationValue(initialTask?.duration));
+    setDraftRepeatEnabled(Boolean(initialRepeatFrequencyValue));
+    setDraftRepeatFrequency(initialRepeatFrequencyValue ?? "weekly");
+    setDraftRepeatEndDate(initialTask?.repeatEndDate ?? "");
+    setDraftRepeatCustom(
+      Boolean(
+        initialRepeatFrequencyValue &&
+          (initialRepeatIntervalValue > 1 ||
+            initialTask?.repeatWeekdays?.length ||
+            initialTask?.repeatMonthDays?.length ||
+            initialTask?.repeatYearMonths?.length),
+      ),
+    );
+    setDraftRepeatInterval(String(initialRepeatIntervalValue));
+    setDraftRepeatWeekdays(
+      initialTask?.repeatWeekdays?.length ? normalizeRepeatWeekdays(initialTask.repeatWeekdays) : [dateKeyToPlannerWeekday(initialTask?.occurrenceDate ?? today)],
+    );
+    setDraftRepeatMonthDays(
+      initialTask?.repeatMonthDays?.length ? normalizeRepeatMonthDays(initialTask.repeatMonthDays) : [dateKeyToMonthDay(initialTask?.occurrenceDate ?? today)],
+    );
+    setDraftRepeatMonthOverflow(initialTask?.repeatMonthOverflow ?? "skip");
+    setDraftRepeatYearMonths(
+      initialTask?.repeatYearMonths?.length ? normalizeRepeatYearMonths(initialTask.repeatYearMonths) : [dateKeyToMonthIndex(initialTask?.occurrenceDate ?? today)],
+    );
+    setDraftSaveToDefault(false);
+    setQueuedTasks([]);
+    setAddTaskError("");
+  }, [
+    editingTask,
+    initialTask?.title,
+    initialTask?.occurrenceDate,
+    initialTask?.time,
+    initialTask?.category,
+    initialTask?.duration,
+    initialTask?.repeatFrequency,
+    initialTask?.repeatInterval,
+    initialTask?.repeatWeekdays,
+    initialTask?.repeatMonthDays,
+    initialTask?.repeatMonthOverflow,
+    initialTask?.repeatYearMonths,
+    initialTask?.repeatEndDate,
+    today,
+  ]);
+
   const resetDraft = () => {
-    setDraftTitle("");
-    setDraftDate(todayDateKey());
-    setDraftTime("");
-    setDraftCategory("");
-    setDraftDuration("");
+    setDraftTitle(initialTask?.title ?? "");
+    setDraftDate(initialTask?.occurrenceDate ?? todayDateKey());
+    setDraftTime(initialTask?.time ?? "");
+    setDraftCategory(initialTask?.category ?? "");
+    setDraftDuration(normalizeTaskDurationValue(initialTask?.duration));
     setDraftRepeatEnabled(false);
     setDraftRepeatFrequency("weekly");
     setDraftRepeatEndDate("");
@@ -850,14 +947,11 @@ export function AddTaskModal({
     }
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isEditMode) {
-      await saveEdit();
+  const saveCreate = async (options: { confirmedDisableRepeat?: boolean } = {}) => {
+    if (confirmDisableRepeatOnCreate && !draftRepeatEnabled && !options.confirmedDisableRepeat) {
+      setConfirmDisableRepeat(true);
       return;
     }
-
     const items = [...queuedTasks];
     const pendingDraft = draftTitle.trim();
     if (draftRepeatEnabled && draftRepeatEndDate && draftRepeatEndDate < draftDate) {
@@ -893,7 +987,7 @@ export function AddTaskModal({
 
     try {
       for (const item of items) {
-        await createTask.mutateAsync({
+        const input: AddTaskModalCreateInput = {
           title: item.title,
           occurrenceDate: item.occurrenceDate,
           time: item.time,
@@ -907,16 +1001,33 @@ export function AddTaskModal({
           repeatMonthOverflow: item.repeatMonthOverflow,
           repeatYearMonths: item.repeatYearMonths,
           repeatEndDate: item.repeatEndDate || null,
-        });
+        };
+        setCreateSaving(true);
+        if (onCreateTask) await onCreateTask(input);
+        else await createTask.mutateAsync(input);
       }
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        setAddTaskError(error.payload?.errors?.title ?? error.payload?.message ?? error.message);
+        setAddTaskError(error.payload?.errors?.title ?? error.payload?.errors?.repeatEndDate ?? error.payload?.message ?? error.message);
       } else {
         setAddTaskError("Could not reach the task server.");
       }
+    } finally {
+      setCreateSaving(false);
+      setConfirmDisableRepeat(false);
     }
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isEditMode) {
+      await saveEdit();
+      return;
+    }
+
+    await saveCreate();
   };
 
   const modal = (
@@ -924,7 +1035,7 @@ export function AddTaskModal({
       className={`task-modal-overlay ${variant === "dialog" ? "task-modal-overlay--dialog" : ""} ${
         context === "plan" ? "task-modal-overlay--plan" : ""
       }`.trim()}
-      aria-label={isEditMode ? "Edit task" : "Add task"}
+      aria-label={modalTitle ?? (isEditMode ? "Edit task" : "Add task")}
       role="dialog"
       aria-modal="true"
       initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
@@ -933,7 +1044,7 @@ export function AddTaskModal({
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
     >
       <header className="task-modal__header">
-        <h2>{isEditMode ? draftTitle.trim() || "Edit task" : "Add task"}</h2>
+        <h2>{modalTitle ?? (isEditMode ? draftTitle.trim() || "Edit task" : "Add task")}</h2>
         <button className="task-modal__close" type="button" aria-label={isEditMode ? "Close edit task" : "Close add task"} onClick={onClose}>
           x
         </button>
@@ -941,18 +1052,25 @@ export function AddTaskModal({
 
       <form className="task-modal__content task-modal__content--compact" onSubmit={submit} noValidate>
         <div className="task-modal__main">
+          {scheduleNotice ? (
+            <div className="task-modal__schedule-state">
+              {scheduleNotice}
+            </div>
+          ) : null}
           <div className="task-modal__draft">
             <div className={`task-modal__draft-row task-modal__draft-row--inline ${isEditMode ? "task-modal__draft-row--edit" : ""}`.trim()}>
               <div className="task-modal__draft-line task-modal__draft-line--primary">
                 <div className="task-modal__field-shell">
                   <span className="task-modal__field-label">Task name</span>
                   <input
-                    className="task-modal__title-input"
+                    className={`task-modal__title-input ${lockedFields?.title ? "task-modal__locked-input" : ""}`.trim()}
                     type="text"
                     maxLength={120}
                     placeholder="Task name"
+                    aria-label="Task name"
                     value={draftTitle}
-                    autoFocus
+                    autoFocus={!lockedFields?.title}
+                    disabled={lockedFields?.title}
                     onChange={(event) => setDraftTitle(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
@@ -965,15 +1083,26 @@ export function AddTaskModal({
                 </div>
                 <div className="task-modal__field-shell">
                   <span className="task-modal__field-label">Category</span>
-                  <TaskCategoryPicker
-                    mode="select"
-                    ariaLabel="Category"
-                    placeholder="Category"
-                    value={draftCategory}
-                    onChange={setDraftCategory}
-                    allowCreate
-                    extraCategoryNames={extraCategoryNames}
-                  />
+                  {lockedFields?.category ? (
+                    <input
+                      className="task-modal__title-input task-modal__locked-input"
+                      type="text"
+                      value={draftCategory}
+                      aria-label="Category"
+                      disabled
+                      readOnly
+                    />
+                  ) : (
+                    <TaskCategoryPicker
+                      mode="select"
+                      ariaLabel="Category"
+                      placeholder="Category"
+                      value={draftCategory}
+                      onChange={setDraftCategory}
+                      allowCreate
+                      extraCategoryNames={extraCategoryNames}
+                    />
+                  )}
                 </div>
               </div>
               <div className="task-modal__draft-line task-modal__draft-line--secondary">
@@ -1197,7 +1326,7 @@ export function AddTaskModal({
                       </div>
                     ) : null}
                     <div className="task-modal__field-shell task-modal__repeat-end-field">
-                      <span className="task-modal__field-label">Repeat until</span>
+                      <span className="task-modal__field-label">End after</span>
                       <GoalDatePicker
                         className="task-modal__date-picker task-modal__repeat-end"
                         value={draftRepeatEndDate}
@@ -1205,7 +1334,7 @@ export function AddTaskModal({
                         allowClear
                         showTodayShortcut={false}
                         minDate={draftDate}
-                        ariaLabel="Repeat until"
+                        ariaLabel="End after"
                         emptyDisplayValue="Never"
                         formatDisplayValue={formatTaskDate}
                       />
@@ -1410,13 +1539,13 @@ export function AddTaskModal({
               <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onClose}>
                 Cancel
               </button>
-              <button className="task-add" type="submit" disabled={isEditMode ? editSaving : createTask.isPending}>
+              <button className="task-add" type="submit" disabled={isEditMode ? editSaving : createPending}>
                 {isEditMode
                   ? editSaving
                     ? "Saving..."
                     : "Save changes"
-                  : createTask.isPending
-                    ? "Adding..."
+                  : createPending
+                    ? pendingLabel ?? "Adding..."
                     : submitTaskLabel}
               </button>
             </div>
@@ -1426,8 +1555,11 @@ export function AddTaskModal({
       {confirmDisableRepeat ? (
         <RepeatDisableConfirm
           onCancel={() => setConfirmDisableRepeat(false)}
-          onConfirm={() => void saveEdit({ confirmedDisableRepeat: true })}
-          disabled={editSaving}
+          onConfirm={() => {
+            if (isEditMode) void saveEdit({ confirmedDisableRepeat: true });
+            else void saveCreate({ confirmedDisableRepeat: true });
+          }}
+          disabled={isEditMode ? editSaving : createPending}
         />
       ) : null}
       {confirmDeleteRepeat && onDelete ? (

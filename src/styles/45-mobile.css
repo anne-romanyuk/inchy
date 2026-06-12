@@ -238,7 +238,7 @@
 .today-mobile__ring-label {
   position: absolute;
   font-size: var(--text-body-small-size);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--c-text-secondary);
 }
 

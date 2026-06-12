@@ -431,7 +431,7 @@
   }
 
   .dashboard-title {
-    font-size: 32px;
+    font-size: 29px;
   }
 
   .dashboard-grid--modal-open,
@@ -624,7 +624,7 @@
 
   .pomodoro-panel--full .pomodoro-ring__time,
   .pomodoro-panel--full:not(.has-focus-task) .pomodoro-ring__time {
-    font-size: clamp(54px, 14vmin, 78px);
+    font-size: clamp(50px, 14vmin, 74px);
   }
 
   .pomodoro-panel--full .pomodoro-ring__kicker {

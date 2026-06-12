@@ -223,7 +223,7 @@
   background: rgba(255, 255, 255, 0.55);
   color: #4a3a64;
   cursor: pointer;
-  font: 600 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   text-align: left;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -281,7 +281,7 @@
 
 .avatar-preview span {
   color: rgba(57, 57, 92, 0.62);
-  font: 700 17px/1 "Quattrocento Sans", system-ui, sans-serif;
+  font: 600 15px/1 var(--planner-font);
 }
 
 

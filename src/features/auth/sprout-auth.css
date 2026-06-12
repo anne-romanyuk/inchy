@@ -66,7 +66,7 @@
   right: clamp(40px, 13vw, 220px);
   margin: 0;
   color: var(--sprout-ink);
-  font: 400 clamp(40px, 5vw, 68px)/1.08 var(--sprout-serif);
+  font: 400 clamp(36px, 5vw, 64px)/1.08 var(--sprout-serif);
   letter-spacing: -0.01em;
   text-align: right;
 }
@@ -149,7 +149,7 @@
 .sprout-auth .soft-modal__title {
   margin: 0 0 4px;
   color: var(--sprout-ink);
-  font: 700 38px/1.05 var(--sprout-serif);
+  font: 700 35px/1.05 var(--sprout-serif);
   text-align: left;
 }
 
@@ -157,7 +157,7 @@
 .sprout-auth .soft-modal__subtitle {
   margin: 0 0 22px;
   color: var(--sprout-ink-soft);
-  font: 400 15px/1.4 var(--planner-font);
+  font: 400 13px/1.4 var(--planner-font);
 }
 
 .sprout-auth .soft-modal__form {
@@ -281,7 +281,7 @@
   background: var(--sprout-ink);
   color: #f7f8f1;
   box-shadow: var(--soft-button-raised-shadow);
-  font: 700 16px/1 var(--planner-font);
+  font: 600 14px/1 var(--planner-font);
 }
 
 .sprout-auth .soft-modal__submit:hover,
@@ -301,7 +301,7 @@
 }
 
 .sprout-auth .soft-modal__submit .soft-button__label {
-  font: 700 16px/1 var(--planner-font);
+  font: 600 14px/1 var(--planner-font);
 }
 
 .sprout-auth .soft-modal__divider {
@@ -328,7 +328,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.7);
   color: var(--sprout-ink);
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   cursor: pointer;
   transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -360,7 +360,7 @@
 
 .sprout-auth .soft-modal__auth-link {
   color: var(--sprout-ink);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sprout-auth .soft-modal__auth-link:hover,

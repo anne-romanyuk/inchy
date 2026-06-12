@@ -100,12 +100,12 @@
 }
 
 .pomodoro-panel--full .pomodoro-ring__kicker {
-  font-size: clamp(var(--text-body-size), 2.1vmin, 22px);
+  font-size: clamp(var(--text-body-size), 2.1vmin, 20px);
 }
 
 .pomodoro-panel--full .pomodoro-ring__time,
 .pomodoro-panel--full:not(.has-focus-task) .pomodoro-ring__time {
-  font-size: clamp(72px, 10.8vmin, 112px);
+  font-size: clamp(68px, 10.8vmin, 108px);
 }
 
 .pomodoro-panel--full .pomodoro-focus-slot {
@@ -152,7 +152,7 @@
   background: transparent;
   box-shadow: none;
   color: rgba(57, 57, 92, 0.82);
-  font: 800 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   text-align: center;
 }
 
@@ -267,7 +267,7 @@
 .pomodoro-ring__kicker {
   margin: 0;
   color: rgba(57, 57, 92, 0.6);
-  font: 800 13px/1 var(--planner-font);
+  font: 600 12px/1 var(--planner-font);
   letter-spacing: 0.28em;
 }
 
@@ -277,13 +277,13 @@
   justify-content: center;
   margin: 0;
   color: rgb(57, 57, 92);
-  font: 300 36px/1 "Quattrocento Sans", system-ui, sans-serif;
+  font: 300 33px/1 var(--planner-font);
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 .pomodoro-panel:not(.has-focus-task) .pomodoro-ring__time {
-  font-size: 41px;
+  font-size: 37px;
 }
 
 .pomodoro-ring__time-slot {
@@ -344,7 +344,7 @@
   display: block;
   margin-bottom: 2px;
   color: rgba(57, 57, 92, 0.6);
-  font: 800 10px/1 var(--planner-font);
+  font: 600 10px/1 var(--planner-font);
   letter-spacing: 0.22em;
 }
 
@@ -355,7 +355,7 @@
   overflow: hidden;
   color: rgb(57, 57, 92);
   text-align: center;
-  font: 700 15px/1.15 var(--planner-font);
+  font: 600 13px/1.15 var(--planner-font);
   letter-spacing: 0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -417,7 +417,7 @@
 .pomodoro-settings__header h3 {
   margin: 0;
   color: rgb(57, 57, 92);
-  font: 700 18px/1 "Quattrocento Sans", system-ui, sans-serif;
+  font: 600 16px/1 var(--planner-font);
 }
 
 .pomodoro-settings__body {
@@ -443,14 +443,14 @@
 
 .pomodoro-settings__label {
   color: rgba(57, 57, 92, 0.68);
-  font: 800 12px/1 var(--planner-font);
+  font: 600 11px/1 var(--planner-font);
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .pomodoro-settings__value {
   color: rgb(57, 57, 92);
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   font-variant-numeric: tabular-nums;
 }
 

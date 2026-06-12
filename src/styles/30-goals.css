@@ -19,7 +19,7 @@
 .goal-kicker {
   margin: 0 0 6px;
   color: rgba(82, 70, 132, 0.62);
-  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -28,7 +28,7 @@
   max-width: 640px;
   margin: 10px 0 0;
   color: rgba(57, 57, 92, 0.62);
-  font: 600 14px/1.45 var(--planner-font);
+  font: 600 13px/1.45 var(--planner-font);
 }
 
 .goals-stat {
@@ -45,13 +45,13 @@
 
 .goals-stat strong {
   color: rgb(57, 57, 92);
-  font: var(--planner-value-weight) 14px/1 var(--planner-font);
+  font: var(--planner-value-weight) 13px/1 var(--planner-font);
 }
 
 .goals-stat span {
   margin-top: 4px;
   color: rgba(57, 57, 92, 0.54);
-  font: var(--planner-label-weight) 11px/1 var(--planner-font);
+  font: var(--planner-label-weight) 10px/1 var(--planner-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -93,14 +93,14 @@
 .goal-card__header h2 {
   margin: 0;
   color: rgb(57, 57, 92);
-  font: var(--planner-heading-weight) 21px/1.05 var(--planner-font);
+  font: var(--planner-heading-weight) 19px/1.05 var(--planner-font);
   letter-spacing: -0.02em;
 }
 
 .goal-card__header p {
   margin: 8px 0 0;
   color: rgba(57, 57, 92, 0.58);
-  font: 600 15px/1.35 var(--planner-font);
+  font: 600 13px/1.35 var(--planner-font);
 }
 
 .goal-pill,
@@ -112,7 +112,7 @@
   padding: 0 10px;
   background: rgba(255, 255, 255, 0.24);
   color: rgba(57, 57, 92, 0.68);
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -132,7 +132,7 @@
   background: rgba(255, 255, 255, 0.22);
   color: rgba(57, 57, 92, 0.72);
   cursor: pointer;
-  font: 800 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 6px rgba(255, 255, 255, 0.28),
     inset 2px 2px 7px rgba(80, 75, 104, 0.08);
@@ -197,7 +197,7 @@
   background: rgba(255, 255, 255, 0.28);
   color: rgb(82, 70, 132);
   cursor: pointer;
-  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 5px rgba(255, 255, 255, 0.28),
     inset 2px 2px 6px rgba(80, 75, 104, 0.08);
@@ -219,13 +219,13 @@
 
 .goal-steps strong {
   color: rgb(57, 57, 92);
-  font: 700 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
 }
 
 .goal-steps span {
   margin-top: 3px;
   color: rgba(57, 57, 92, 0.52);
-  font: var(--planner-label-weight) 12px/1.2 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1.2 var(--planner-font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -353,7 +353,7 @@
 }
 
 .goal-modal__header h2 {
-  font-size: 32px;
+  font-size: 29px;
 }
 
 .goal-form-grid {
@@ -372,7 +372,7 @@
 
 .goal-field span {
   color: rgba(57, 57, 92, 0.6);
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -386,7 +386,7 @@
   padding: 0 13px;
   background: rgba(255, 255, 255, 0.24);
   color: rgb(57, 57, 92);
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     inset 2px 2px 7px rgba(80, 75, 104, 0.08),
     inset -2px -2px 8px rgba(255, 255, 255, 0.34);
@@ -395,7 +395,7 @@
 .goal-input--large {
   height: 48px;
   border-radius: 20px;
-  font-size: 17px;
+  font-size: 15px;
 }
 
 .goal-input::placeholder {
@@ -724,7 +724,7 @@
   border-radius: var(--radius-md);
   padding: 0 16px;
   cursor: pointer;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -796,7 +796,7 @@
 .goal-task-editor__remove {
   cursor: pointer;
   color: rgb(190, 76, 93);
-  font: 800 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .goal-task-editor__remove:disabled {
@@ -810,7 +810,7 @@
   min-height: 18px;
   margin: 12px 0;
   color: rgb(142, 65, 75);
-  font: 700 14px/1.35 var(--planner-font);
+  font: 600 13px/1.35 var(--planner-font);
 }
 
 /* Goals fixes: scroll, stable summary card height, optional deadline, theme polish */
@@ -1182,7 +1182,7 @@
   width: auto;
   height: auto;
   background: transparent;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
 }
 
@@ -1316,14 +1316,14 @@
 .goal-journey__header h2 {
   margin: 0;
   color: rgb(57, 57, 92);
-  font: var(--planner-heading-weight) 24px/1.1 var(--planner-font);
+  font: var(--planner-heading-weight) 22px/1.1 var(--planner-font);
   letter-spacing: -0.03em;
 }
 
 .goal-journey__header p {
   margin: 5px 0 0;
   color: rgba(57, 57, 92, 0.54);
-  font: 650 14px/1.35 var(--planner-font);
+  font: 650 13px/1.35 var(--planner-font);
 }
 
 .goal-journey__meta {
@@ -1344,7 +1344,7 @@
   padding: 0 12px;
   background: rgba(255, 255, 255, 0.2);
   color: rgba(57, 57, 92, 0.72);
-  font: 800 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 7px rgba(255, 255, 255, 0.22),
     inset 2px 2px 7px rgba(80, 75, 104, 0.07);
@@ -1362,7 +1362,7 @@
   align-items: center;
   gap: 8px;
   color: rgb(57, 57, 92);
-  font: 900 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .goal-journey__progress i {
@@ -1548,7 +1548,7 @@
   translate: 0 0;
   background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
   color: #fff;
-  font: 900 13px/1 var(--planner-font);
+  font: 600 12px/1 var(--planner-font);
   text-align: center;
   box-shadow: 0 8px 16px rgba(130, 84, 160, 0.22);
 }
@@ -1593,7 +1593,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: rgb(57, 57, 92);
-  font: 800 14px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
 }
 
 .goal-journey-step > span:not(.goal-journey-step__badge) {
@@ -1602,14 +1602,14 @@
   padding: 2px 10px;
   border-radius: 999px;
   color: rgba(82, 70, 132, 0.7);
-  font: 800 11px/1.2 var(--planner-font);
+  font: 600 10px/1.2 var(--planner-font);
   letter-spacing: 0.01em;
 }
 
 .goal-journey-step.is-completed > span:not(.goal-journey-step__badge) {
   background: linear-gradient(135deg, rgba(198, 220, 203, 0.85), rgba(164, 196, 173, 0.85));
   color: #4a6b54;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   box-shadow: 0 4px 10px rgba(140, 175, 150, 0.25);
@@ -1618,8 +1618,8 @@
 .goal-journey-step.is-in-progress > span:not(.goal-journey-step__badge) {
   background: linear-gradient(135deg, rgba(248, 222, 152, 0.9), rgba(240, 196, 120, 0.9));
   color: #7a5a1f;
-  font-weight: 900;
-  font-size: 11px;
+  font-weight: 600;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   box-shadow: 0 4px 10px rgba(220, 180, 110, 0.28);
@@ -1628,7 +1628,7 @@
 .goal-journey-step.is-upcoming > span:not(.goal-journey-step__badge) {
   background: linear-gradient(135deg, rgba(226, 226, 216, 0.9), rgba(205, 210, 198, 0.86));
   color: rgba(82, 90, 76, 0.72);
-  font-weight: 900;
+  font-weight: 600;
   box-shadow: 0 4px 10px rgba(120, 126, 112, 0.14);
 }
 
@@ -1696,7 +1696,7 @@
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-grad-start), var(--accent-grad-mid) 55%, var(--accent-grad-end));
   color: #fff;
-  font: 900 12px/1 var(--planner-font);
+  font: 600 11px/1 var(--planner-font);
   box-shadow: 0 6px 12px rgba(190, 76, 128, 0.25);
 }
 
@@ -1706,7 +1706,7 @@
 
 .goal-editor-hint {
   color: rgba(57, 57, 92, 0.52);
-  font: 700 14px/1.25 var(--planner-font);
+  font: 600 13px/1.25 var(--planner-font);
 }
 
 .goal-task-editor {
@@ -2208,7 +2208,7 @@
 
 .goal-journey__selector-check {
   color: var(--c-accent);
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .goal-task-add-row__icon-wrap {
@@ -2313,14 +2313,14 @@
 .goal-list-card h2 {
   margin: 0;
   color: rgb(57, 57, 92);
-  font: var(--planner-heading-weight) 23px/1.05 var(--planner-font);
+  font: var(--planner-heading-weight) 21px/1.05 var(--planner-font);
   letter-spacing: -0.02em;
 }
 
 .goal-list-card p {
   margin: 7px 0 14px;
   color: rgba(57, 57, 92, 0.58);
-  font: 650 15px/1.35 var(--planner-font);
+  font: 650 13px/1.35 var(--planner-font);
 }
 
 .goal-list-card__progress-row {
@@ -2331,14 +2331,14 @@
 .goal-list-card__progress-row strong {
   min-width: 44px;
   color: rgb(57, 57, 92);
-  font: 900 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   text-align: right;
 }
 
 .goal-list-card__meta {
   margin-top: 10px;
   color: rgba(57, 57, 92, 0.54);
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -2357,7 +2357,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.22);
   color: rgba(82, 70, 132, 0.66);
-  font: 900 26px/1 var(--planner-font);
+  font: 600 24px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 6px rgba(255, 255, 255, 0.28),
     inset 2px 2px 7px rgba(80, 75, 104, 0.08);
@@ -2375,7 +2375,7 @@
   padding: 0 12px;
   background: var(--c-success);
   color: var(--c-text-on-accent);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   box-sizing: border-box;
@@ -2440,7 +2440,7 @@
   padding: 0 10px;
   color: rgba(57, 57, 92, 0.72);
   text-decoration: none;
-  font: 800 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .goal-back-link:hover,
@@ -2502,7 +2502,7 @@
 }
 
 .goal-detail-hero__title-row h1 {
-  font: var(--planner-display-weight) 32px/1.05 var(--planner-font);
+  font: var(--planner-display-weight) 29px/1.05 var(--planner-font);
 }
 
 .goal-detail-hero__title-line {
@@ -2528,7 +2528,7 @@
   min-height: 28px;
   border-radius: 999px;
   padding: 0 12px;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.02em;
   box-sizing: border-box;
   white-space: nowrap;
@@ -2562,7 +2562,7 @@
 
 .goal-detail-section-header h2,
 .goal-detail-editor__header h2 {
-  font: var(--planner-heading-weight) 22px/1.08 var(--planner-font);
+  font: var(--planner-heading-weight) 20px/1.08 var(--planner-font);
 }
 
 .goal-detail-hero__actions {
@@ -2575,19 +2575,19 @@
 .goal-detail-hero__description {
   margin: 8px 0 18px;
   color: rgba(57, 57, 92, 0.58);
-  font: 650 14px/1.4 var(--planner-font);
+  font: 650 13px/1.4 var(--planner-font);
 }
 
 .goal-detail-hero__progress-row {
   align-items: center;
   margin-bottom: 9px;
   color: rgba(57, 57, 92, 0.68);
-  font: 800 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .goal-detail-hero__progress-row strong {
   color: rgb(57, 57, 92);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .goal-detail-hero__stats {
@@ -2605,7 +2605,7 @@
   padding: 0 12px;
   background: rgba(255, 255, 255, 0.2);
   color: rgba(57, 57, 92, 0.72);
-  font: 800 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 7px rgba(255, 255, 255, 0.22),
     inset 2px 2px 7px rgba(80, 75, 104, 0.07);
@@ -2710,7 +2710,7 @@
 }
 
 .goal-task-expand__note-state {
-  font: 800 13px/1 var(--planner-font);
+  font: 600 12px/1 var(--planner-font);
   letter-spacing: 0.04em;
 }
 .goal-task-expand__note-state.is-saved {
@@ -2736,15 +2736,15 @@
   justify-content: space-between;
   align-items: baseline;
   color: rgba(57, 57, 92, 0.6);
-  font: 800 12px/1 var(--planner-font);
+  font: 600 11px/1 var(--planner-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .goal-task-expand__label em {
   font-style: normal;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: rgba(82, 70, 132, 0.5);
   letter-spacing: 0.04em;
   text-transform: none;
@@ -2760,7 +2760,7 @@
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.45);
   color: rgb(57, 57, 92);
-  font: 700 15px/1.4 var(--planner-font);
+  font: 600 13px/1.4 var(--planner-font);
   box-shadow:
     inset 1px 1px 4px rgba(80, 75, 104, 0.08),
     inset -1px -1px 4px rgba(255, 255, 255, 0.4);
@@ -2809,24 +2809,33 @@
 }
 
 .goal-subtask__drag {
-  display: grid;
-  place-items: center;
-  gap: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 24px;
   border: 0;
   background: transparent;
+  color: color-mix(in srgb, var(--c-text-primary) 32%, transparent);
   cursor: grab;
+  opacity: 0.72;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  touch-action: none;
 }
 .goal-subtask__drag:active {
   cursor: grabbing;
 }
-.goal-subtask__drag span {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(82, 70, 132, 0.36);
-  box-shadow: 0 6px 0 rgba(82, 70, 132, 0.36);
+.goal-subtask__drag svg {
+  width: 14px;
+  height: 18px;
+  fill: currentColor;
+}
+.goal-subtask:hover .goal-subtask__drag,
+.goal-subtask:focus-within .goal-subtask__drag {
+  opacity: 1;
+}
+.goal-subtask__drag:hover {
+  color: color-mix(in srgb, var(--c-text-primary) 58%, transparent);
 }
 
 .goal-subtask__check {
@@ -2850,7 +2859,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.3);
   color: rgb(57, 57, 92);
-  font: 700 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   outline: none;
   min-width: 0;
   padding: 8px 12px;
@@ -2876,7 +2885,7 @@
   border: 0;
   background: rgba(255, 255, 255, 0.4);
   color: rgba(160, 58, 82, 0.7);
-  font: 900 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -2907,7 +2916,7 @@
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.3);
   color: rgb(57, 57, 92);
-  font: 700 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   outline: none;
   transition: border-color 160ms ease, background 160ms ease;
 }
@@ -2961,7 +2970,7 @@
 
 .goal-detail-task--add .goal-detail-task__check--add {
   color: var(--c-accent);
-  font-size: 18px;
+  font-size: 16px;
   cursor: default;
 }
 
@@ -2974,7 +2983,7 @@
 }
 
 .goal-detail-task--add .goal-detail-task__add-submit span {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -3004,17 +3013,25 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
-  color: rgb(82, 70, 132);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  background: color-mix(in srgb, var(--c-surface-soft) 44%, transparent);
+  color: color-mix(in srgb, var(--c-accent) 44%, var(--c-text-muted));
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   box-shadow:
-    inset -1px -1px 5px rgba(255, 255, 255, 0.28),
-    inset 2px 2px 6px rgba(80, 75, 104, 0.08);
+    inset -1px -1px 5px color-mix(in srgb, var(--c-text-on-accent) 28%, transparent),
+    inset 2px 2px 6px color-mix(in srgb, var(--c-success) 8%, transparent);
+}
+
+.goal-detail-task__check-mark {
+  opacity: 0.5;
 }
 
 .goal-detail-task.is-complete .goal-detail-task__check {
   background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
-  color: #fff;
+  color: var(--c-text-on-accent);
+}
+
+.goal-detail-task.is-complete .goal-detail-task__check-mark {
+  opacity: 1;
 }
 
 .goal-detail-task__main {
@@ -3044,13 +3061,13 @@
 
 .goal-detail-task__main strong {
   color: rgb(57, 57, 92);
-  font: 800 16px/1.2 var(--planner-font);
+  font: 600 14px/1.2 var(--planner-font);
 }
 
 .goal-detail-task__main small {
   margin-top: 4px;
   color: rgba(57, 57, 92, 0.52);
-  font: var(--planner-label-weight) 14px/1.2 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1.2 var(--planner-font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3210,13 +3227,13 @@
 
 .goal-detail-editor__icon-wrap strong {
   color: rgb(57, 57, 92);
-  font: 800 14px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
 }
 
 .goal-detail-editor__icon-wrap span {
   margin-top: 5px;
   color: rgba(57, 57, 92, 0.56);
-  font: 650 14px/1.35 var(--planner-font);
+  font: 650 13px/1.35 var(--planner-font);
 }
 
 .goal-detail-editor__popover {
@@ -3261,7 +3278,7 @@
   align-items: center;
   gap: 10px;
   color: rgba(57, 57, 92, 0.68);
-  font: 800 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .goal-detail-editor__status input {
@@ -3394,28 +3411,63 @@
 }
 
 .goal-detail-task__drag {
-  display: grid;
-  place-items: center;
-  gap: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 42px;
   border: 0;
   border-radius: 12px;
   background: transparent;
+  color: color-mix(in srgb, var(--c-text-primary) 32%, transparent);
   cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  touch-action: none;
 }
 
 .goal-detail-task__drag:active {
   cursor: grabbing;
 }
 
-.goal-detail-task__drag span {
-  display: block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(82, 70, 132, 0.38);
-  box-shadow: 0 7px 0 rgba(82, 70, 132, 0.38);
+.goal-detail-task__drag svg {
+  width: 14px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.goal-detail-task:hover .goal-detail-task__drag,
+.goal-detail-task:focus-within .goal-detail-task__drag {
+  opacity: 1;
+}
+
+.goal-detail-task__drag:hover {
+  color: color-mix(in srgb, var(--c-text-primary) 58%, transparent);
+}
+
+.goal-detail-task__drag:disabled {
+  cursor: default;
+  opacity: 0;
+}
+
+:root[data-theme="forest"] .pomodoro-confirm-overlay.task-modal__recurrence-confirm.goal-occurrence-delete-confirm {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  border-radius: 0;
+  padding: clamp(var(--space-5), 3vh, var(--space-8));
+  background: color-mix(in srgb, var(--c-text-primary) 18%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme="forest"] .task-modal__recurrence-confirm.goal-completion-schedule-confirm .task-modal__recurrence-confirm-icon.goal-completion-schedule-confirm__icon {
+  background: var(--c-success);
+  color: var(--c-text-on-accent);
+  box-shadow:
+    0 12px 24px -16px color-mix(in srgb, var(--c-success) 54%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--c-success) 20%, transparent);
 }
 
 .goal-detail-task__deadline,
@@ -3436,7 +3488,7 @@
 
 .goal-detail-task__deadline strong {
   color: rgba(57, 57, 92, 0.72);
-  font: 800 14px/1.15 var(--planner-font);
+  font: 600 13px/1.15 var(--planner-font);
   white-space: nowrap;
   /* Inset to match the editing date-picker's right border (1px) + padding (8px)
      so the date text right edge lines up across read-only and editing rows. */
@@ -3445,7 +3497,7 @@
 
 .goal-detail-task__deadline strong.is-empty {
   color: rgba(57, 57, 92, 0.4);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .goal-detail-task__deadline strong.is-overdue {
@@ -3484,7 +3536,7 @@
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 6px;
   padding: 0 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .goal-detail-task.is-editing .goal-detail-task__date-picker .goal-date-picker__icon svg {
@@ -3506,7 +3558,7 @@
   min-height: 28px;
   border-radius: 999px;
   padding: 0 12px;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -3557,7 +3609,7 @@
   padding: 0 12px;
   background: rgba(255, 255, 255, 0.25);
   color: rgba(57, 57, 92, 0.72);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -3565,8 +3617,14 @@
 .goal-task-status > span {
   width: 8px;
   height: 8px;
+  flex: 0 0 8px;
   border-radius: 50%;
   background: rgba(82, 70, 132, 0.38);
+}
+
+.goal-task-status.is-pending > span {
+  background: color-mix(in srgb, var(--c-text-secondary) 62%, var(--c-surface-soft));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-text-secondary) 12%, transparent);
 }
 
 .goal-task-status.is-complete {
@@ -3612,7 +3670,7 @@
   min-height: 28px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   white-space: nowrap;
   flex: 0 0 auto;

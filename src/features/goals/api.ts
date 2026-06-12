@@ -1,5 +1,11 @@
-import type { Goal } from "../../../shared/schemas";
+import type { Goal, GoalOccurrenceDeleteDecision } from "../../../shared/schemas";
 import { apiFetch } from "../../shared/api/client";
+
+export type GoalSubtaskInput = {
+  id?: string;
+  title: string;
+  completed?: boolean;
+};
 
 export type GoalTaskInput = {
   id?: string;
@@ -7,6 +13,8 @@ export type GoalTaskInput = {
   deadline?: string | null;
   completed?: boolean;
   iconId?: string | null;
+  note?: string | null;
+  subtasks?: GoalSubtaskInput[];
 };
 
 export type GoalCreateInput = {
@@ -16,7 +24,9 @@ export type GoalCreateInput = {
   tasks: GoalTaskInput[];
 };
 
-export type GoalUpdateInput = Partial<GoalCreateInput>;
+export type GoalUpdateInput = Partial<GoalCreateInput> & {
+  occurrenceDeleteDecisions?: GoalOccurrenceDeleteDecision[];
+};
 
 export function fetchGoals() {
   return apiFetch<{ goals: Goal[] }>("/api/goals");

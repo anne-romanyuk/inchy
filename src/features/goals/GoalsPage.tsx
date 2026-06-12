@@ -10,7 +10,7 @@ import {
   useMotionValue,
   useTransform,
 } from "motion/react";
-import type { Goal, GoalTask, GoalSubtask } from "../../../shared/schemas";
+import type { Goal, GoalTask, GoalSubtask, GoalOccurrenceDeleteAction, GoalOccurrenceDeleteDecision, GoalLinkedScheduleEnvelope } from "../../../shared/schemas";
 import {
   MAX_GOAL_TASK_NOTE,
   MAX_GOAL_SUBTASK_TITLE,
@@ -25,9 +25,11 @@ import {
   useUpdateGoal,
 } from "./useGoals";
 import { defaultGoalIcon, forestGoalIcons, getForestGoalIconId, getGoalIconSrc } from "./goalIcons";
-import { AddToTodayButton } from "./AddToTodayButton";
+import { ScheduleGoalTaskButton } from "./ScheduleGoalTaskButton";
 import { GoalDatePicker } from "./GoalDatePicker";
 import { useIsMobile } from "../../shared/hooks/useIsMobile";
+import { ApiError } from "../../shared/api/client";
+import { fetchGoalLinkedSchedule } from "../today/occurrencesApi";
 
 const MOBILE_SWIPE_TRIGGER = 112;
 const MOBILE_SWIPE_LIMIT = 128;
@@ -1469,10 +1471,135 @@ function TaskStatusPill({ completed }: { completed: boolean }) {
   );
 }
 
+function RepeatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M17.5 3.8L20.2 6.5L17.5 9.2" />
+      <path d="M4 11V9.5C4 7.8 5.3 6.5 7 6.5H20" />
+      <path d="M6.5 20.2L3.8 17.5L6.5 14.8" />
+      <path d="M20 13V14.5C20 16.2 18.7 17.5 17 17.5H4" />
+    </svg>
+  );
+}
+
+function CompleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M5 12.5L10 17.5L19 7" />
+    </svg>
+  );
+}
+
+function isGoalOccurrenceDeleteDecisionRequired(error: unknown) {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.payload?.code === "goal_occurrence_delete_decision_required"
+  );
+}
+
+function hasGoalLinkedFutureSchedule(schedule: GoalLinkedScheduleEnvelope) {
+  return Boolean(schedule.recurring || schedule.oneOffOccurrences.length > 0);
+}
+
+async function hasGoalItemFutureSchedule(kind: GoalOccurrenceDeleteDecision["kind"], id: string) {
+  const schedule = await fetchGoalLinkedSchedule(
+    kind === "goal_task" ? { goalTaskId: id } : { goalSubtaskId: id },
+  );
+  return hasGoalLinkedFutureSchedule(schedule);
+}
+
+function GoalCompletionScheduleConfirm({
+  itemLabel,
+  pending,
+  onCancel,
+  onKeep,
+  onDeleteFuture,
+}: {
+  itemLabel: string;
+  pending: boolean;
+  onCancel: () => void;
+  onKeep: () => void;
+  onDeleteFuture: () => void;
+}) {
+  return (
+    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm goal-completion-schedule-confirm" role="dialog" aria-modal="true" aria-label="Complete scheduled goal item">
+      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide">
+        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon goal-completion-schedule-confirm__icon" aria-hidden="true">
+          <CompleteIcon />
+        </div>
+        <div className="pomodoro-confirm__content">
+          <h3>Complete task?</h3>
+          <p>“{itemLabel}” has calendar occurrences. Remove future scheduled tasks?</p>
+        </div>
+        <div className="task-modal__recurrence-choice-list">
+          <button type="button" onClick={onDeleteFuture} disabled={pending}>
+            <strong>Delete future occurrences</strong>
+            <span>Keep earlier occurrences and completed tasks from today as history.</span>
+          </button>
+          <button type="button" onClick={onKeep} disabled={pending}>
+            <strong>Keep scheduled tasks</strong>
+            <span>Only mark this goal item as complete.</span>
+          </button>
+        </div>
+        <div className="task-modal__recurrence-confirm-actions">
+          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GoalOccurrenceDeleteConfirm({
+  itemLabel,
+  pending,
+  onCancel,
+  onPick,
+}: {
+  itemLabel: string;
+  pending: boolean;
+  onCancel: () => void;
+  onPick: (action: GoalOccurrenceDeleteAction) => void;
+}) {
+  return (
+    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm" role="dialog" aria-modal="true" aria-label="Delete goal item occurrences">
+      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide task-modal__recurrence-confirm-card--delete">
+        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
+          <RepeatIcon />
+        </div>
+        <div className="pomodoro-confirm__content">
+          <h3>Delete scheduled goal task?</h3>
+          <p>“{itemLabel}” has calendar occurrences. Choose what should happen to them.</p>
+        </div>
+        <div className="task-modal__recurrence-choice-list">
+          <button type="button" onClick={() => onPick("delete-all")} disabled={pending}>
+            <strong>Delete all occurrences</strong>
+            <span>Remove every calendar task linked to this goal item.</span>
+          </button>
+          <button type="button" onClick={() => onPick("delete-future")} disabled={pending}>
+            <strong>Delete future occurrences</strong>
+            <span>Keep earlier occurrences and completed tasks from today as history.</span>
+          </button>
+          <button type="button" onClick={() => onPick("detach")} disabled={pending}>
+            <strong>Keep and unlink occurrences</strong>
+            <span>Turn them into regular calendar tasks.</span>
+          </button>
+        </div>
+        <div className="task-modal__recurrence-confirm-actions">
+          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GoalDetailTaskRow({
   goal,
   task,
-  index,
   expanded,
   onToggleExpand,
   onDelete,
@@ -1481,7 +1608,6 @@ function GoalDetailTaskRow({
 }: {
   goal: Goal;
   task: GoalTask;
-  index: number;
   expanded: boolean;
   onToggleExpand: () => void;
   onDelete: () => void;
@@ -1494,6 +1620,8 @@ function GoalDetailTaskRow({
   const [draft, setDraft] = useState<DetailTaskDraft>(() => toDetailTaskDraft(task));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState("");
+  const [pendingCompletionCleanup, setPendingCompletionCleanup] = useState(false);
+  const [completionCleanupPending, setCompletionCleanupPending] = useState(false);
   const iconButtonRef = useRef<HTMLButtonElement | null>(null);
   const subtaskCount = task.subtasks?.length ?? 0;
   const doneSubtasks = task.subtasks?.filter((s) => s.completed).length ?? 0;
@@ -1508,17 +1636,46 @@ function GoalDetailTaskRow({
     }
   }, [isEditing, task]);
 
-  const saveTask = async (draft: DetailTaskDraft) => {
+  const saveTask = async (draft: DetailTaskDraft, occurrenceDeleteDecisions?: GoalOccurrenceDeleteDecision[]) => {
     await updateGoal.mutateAsync({
       id: goal.id,
-      input: { tasks: serializeTasks(goal.tasks, draft) },
+      input: { tasks: serializeTasks(goal.tasks, draft), occurrenceDeleteDecisions },
     });
   };
 
   const toggleTask = async () => {
     // Manual toggle only meaningful when there are no subtasks — otherwise completion is derived.
     if (subtaskCount > 0) return;
-    await saveTask({ ...toDetailTaskDraft(task), completed: !task.completed });
+    const nextCompleted = !task.completed;
+    const nextDraft = { ...toDetailTaskDraft(task), completed: nextCompleted };
+    if (!nextCompleted) {
+      await saveTask(nextDraft);
+      return;
+    }
+
+    setError("");
+    try {
+      if (await hasGoalItemFutureSchedule("goal_task", task.id)) {
+        setPendingCompletionCleanup(true);
+        return;
+      }
+      await saveTask(nextDraft);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not check scheduled tasks.");
+    }
+  };
+
+  const completeTask = async (deleteFuture: boolean) => {
+    setCompletionCleanupPending(true);
+    try {
+      await saveTask(
+        { ...toDetailTaskDraft(task), completed: true },
+        deleteFuture ? [{ kind: "goal_task", id: task.id, action: "delete-future" }] : undefined,
+      );
+      setPendingCompletionCleanup(false);
+    } finally {
+      setCompletionCleanupPending(false);
+    }
   };
 
   const startEditing = () => {
@@ -1567,9 +1724,14 @@ function GoalDetailTaskRow({
           disabled={isEditing}
           title="Drag to reorder"
         >
-          <span />
-          <span />
-          <span />
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <circle cx="6" cy="4" r="1.2" />
+            <circle cx="10" cy="4" r="1.2" />
+            <circle cx="6" cy="8" r="1.2" />
+            <circle cx="10" cy="8" r="1.2" />
+            <circle cx="6" cy="12" r="1.2" />
+            <circle cx="10" cy="12" r="1.2" />
+          </svg>
         </button>
         <button
           type="button"
@@ -1579,7 +1741,7 @@ function GoalDetailTaskRow({
           aria-label={subtaskCount > 0 ? "Completion follows subtasks" : "Toggle goal task completion"}
           title={subtaskCount > 0 ? `${doneSubtasks}/${subtaskCount} subtasks done` : undefined}
         >
-          {complete ? "✓" : index + 1}
+          <span className="goal-detail-task__check-mark" aria-hidden="true">✓</span>
         </button>
         {isEditing ? (
           <div className="goal-detail-task__main goal-detail-task__main--editing">
@@ -1677,12 +1839,12 @@ function GoalDetailTaskRow({
           <span>Status</span>
           <TaskStatusPill completed={complete} />
         </div>
-        <div className="goal-detail-task__today" aria-label="Add to today">
+        <div className="goal-detail-task__today" aria-label="Schedule task">
           {subtaskCount === 0 && !complete && !isEditing ? (
-            // Only allow carrying the task itself to Today when:
+            // Only allow scheduling the task itself when:
             //  - it has no subtasks (otherwise user picks a subtask instead);
             //  - it is not already complete (nothing left to schedule).
-            <AddToTodayButton goalTaskId={task.id} size="sm" />
+            <ScheduleGoalTaskButton goalTitle={goal.title} sourceTitle={task.title} goalTaskId={task.id} size="sm" />
           ) : null}
         </div>
         <div className="goal-detail-task__actions">
@@ -1732,6 +1894,17 @@ function GoalDetailTaskRow({
           </motion.div>
         ) : null}
       </AnimatePresence>
+      <AnimatePresence>
+        {pendingCompletionCleanup ? (
+          <GoalCompletionScheduleConfirm
+            itemLabel={task.title}
+            pending={completionCleanupPending}
+            onCancel={() => setPendingCompletionCleanup(false)}
+            onKeep={() => void completeTask(false)}
+            onDeleteFuture={() => void completeTask(true)}
+          />
+        ) : null}
+      </AnimatePresence>
     </Reorder.Item>
   );
 }
@@ -1743,13 +1916,17 @@ function GoalTaskNoteAndSubtasks({
 }: {
   goal: Goal;
   task: GoalTask;
-  onSave: (draft: DetailTaskDraft) => Promise<void>;
+  onSave: (draft: DetailTaskDraft, occurrenceDeleteDecisions?: GoalOccurrenceDeleteDecision[]) => Promise<void>;
 }) {
   const [note, setNote] = useState<string>(task.note ?? "");
   const [subtaskDraftIds, setSubtaskDraftIds] = useState<string[]>(
     (task.subtasks ?? []).map((s) => s.id),
   );
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [pendingSubtaskDelete, setPendingSubtaskDelete] = useState<GoalSubtask | null>(null);
+  const [subtaskDeletePending, setSubtaskDeletePending] = useState(false);
+  const [pendingSubtaskCompletionCleanup, setPendingSubtaskCompletionCleanup] = useState<GoalSubtask | null>(null);
+  const [subtaskCompletionCleanupPending, setSubtaskCompletionCleanupPending] = useState(false);
 
   useEffect(() => {
     setNote(task.note ?? "");
@@ -1807,15 +1984,42 @@ function GoalTaskNoteAndSubtasks({
 
   const saveSubtasks = async (
     nextSubtasks: Array<{ id?: string; title: string; completed: boolean }>,
+    occurrenceDeleteDecisions?: GoalOccurrenceDeleteDecision[],
   ) => {
-    await onSave({ ...baseDraft(), subtasks: nextSubtasks });
+    await onSave({ ...baseDraft(), subtasks: nextSubtasks }, occurrenceDeleteDecisions);
+  };
+
+  const completeSubtask = async (subtask: GoalSubtask, deleteFuture: boolean) => {
+    const next = (task.subtasks ?? []).map((s) =>
+      s.id === subtask.id ? { id: s.id, title: s.title, completed: true } : { id: s.id, title: s.title, completed: s.completed },
+    );
+    setSubtaskCompletionCleanupPending(true);
+    try {
+      await saveSubtasks(
+        next,
+        deleteFuture ? [{ kind: "goal_subtask", id: subtask.id, action: "delete-future" }] : undefined,
+      );
+      setPendingSubtaskCompletionCleanup(null);
+    } finally {
+      setSubtaskCompletionCleanupPending(false);
+    }
   };
 
   const toggleSubtask = async (id: string) => {
-    const next = (task.subtasks ?? []).map((s) =>
-      s.id === id ? { id: s.id, title: s.title, completed: !s.completed } : { id: s.id, title: s.title, completed: s.completed },
-    );
-    await saveSubtasks(next);
+    const target = (task.subtasks ?? []).find((s) => s.id === id);
+    if (!target) return;
+    if (target.completed) {
+      const next = (task.subtasks ?? []).map((s) =>
+        s.id === id ? { id: s.id, title: s.title, completed: false } : { id: s.id, title: s.title, completed: s.completed },
+      );
+      await saveSubtasks(next);
+      return;
+    }
+    if (await hasGoalItemFutureSchedule("goal_subtask", id)) {
+      setPendingSubtaskCompletionCleanup(target);
+      return;
+    }
+    await completeSubtask(target, false);
   };
 
   const renameSubtask = async (id: string, title: string) => {
@@ -1826,11 +2030,26 @@ function GoalTaskNoteAndSubtasks({
     await saveSubtasks(next);
   };
 
-  const deleteSubtask = async (id: string) => {
+  const deleteSubtask = async (id: string, action?: GoalOccurrenceDeleteAction) => {
     const next = (task.subtasks ?? [])
       .filter((s) => s.id !== id)
       .map((s) => ({ id: s.id, title: s.title, completed: s.completed }));
-    await saveSubtasks(next);
+    try {
+      setSubtaskDeletePending(true);
+      await saveSubtasks(
+        next,
+        action ? [{ kind: "goal_subtask", id, action }] : undefined,
+      );
+      setPendingSubtaskDelete(null);
+    } catch (error) {
+      if (isGoalOccurrenceDeleteDecisionRequired(error)) {
+        setPendingSubtaskDelete((task.subtasks ?? []).find((s) => s.id === id) ?? null);
+        return;
+      }
+      throw error;
+    } finally {
+      setSubtaskDeletePending(false);
+    }
   };
 
   const addSubtask = async () => {
@@ -1872,9 +2091,10 @@ function GoalTaskNoteAndSubtasks({
               <SubtaskRow
                 key={sub.id}
                 subtask={sub}
+                goalTitle={goal.title}
                 onToggle={() => toggleSubtask(sub.id)}
                 onRename={(title) => renameSubtask(sub.id, title)}
-                onDelete={() => deleteSubtask(sub.id)}
+                onDelete={() => void deleteSubtask(sub.id)}
               />
             ))}
           </Reorder.Group>
@@ -1929,17 +2149,38 @@ function GoalTaskNoteAndSubtasks({
           </button>
         </div>
       </div>
+      <AnimatePresence>
+        {pendingSubtaskDelete ? (
+          <GoalOccurrenceDeleteConfirm
+            itemLabel={pendingSubtaskDelete.title}
+            pending={subtaskDeletePending}
+            onCancel={() => setPendingSubtaskDelete(null)}
+            onPick={(action) => void deleteSubtask(pendingSubtaskDelete.id, action)}
+          />
+        ) : null}
+        {pendingSubtaskCompletionCleanup ? (
+          <GoalCompletionScheduleConfirm
+            itemLabel={pendingSubtaskCompletionCleanup.title}
+            pending={subtaskCompletionCleanupPending}
+            onCancel={() => setPendingSubtaskCompletionCleanup(null)}
+            onKeep={() => void completeSubtask(pendingSubtaskCompletionCleanup, false)}
+            onDeleteFuture={() => void completeSubtask(pendingSubtaskCompletionCleanup, true)}
+          />
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
 
 function SubtaskRow({
   subtask,
+  goalTitle,
   onToggle,
   onRename,
   onDelete,
 }: {
   subtask: GoalSubtask;
+  goalTitle: string;
   onToggle: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
@@ -1974,8 +2215,14 @@ function SubtaskRow({
         aria-label="Drag to reorder subtask"
         onPointerDown={(event) => dragControls.start(event)}
       >
-        <span />
-        <span />
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="6" cy="4" r="1.2" />
+          <circle cx="10" cy="4" r="1.2" />
+          <circle cx="6" cy="8" r="1.2" />
+          <circle cx="10" cy="8" r="1.2" />
+          <circle cx="6" cy="12" r="1.2" />
+          <circle cx="10" cy="12" r="1.2" />
+        </svg>
       </button>
       <div className="checkbox-wrapper goal-subtask__check">
         <input
@@ -2009,7 +2256,7 @@ function SubtaskRow({
       />
       <span className="goal-subtask__today">
         {!subtask.completed ? (
-          <AddToTodayButton goalSubtaskId={subtask.id} size="sm" />
+          <ScheduleGoalTaskButton goalTitle={goalTitle} sourceTitle={subtask.title} goalSubtaskId={subtask.id} size="sm" />
         ) : null}
       </span>
       <button
@@ -2177,6 +2424,8 @@ export function GoalDetailPage() {
   const [orderedTaskIds, setOrderedTaskIds] = useState<string[]>([]);
   const [editorGoal, setEditorGoal] = useState<Goal | null | undefined>(undefined);
   const [pendingAddRowScroll, setPendingAddRowScroll] = useState(false);
+  const [pendingTaskDelete, setPendingTaskDelete] = useState<GoalTask | null>(null);
+  const [taskDeletePending, setTaskDeletePending] = useState(false);
   const addRowRef = useRef<HTMLLIElement | null>(null);
   const addTitleInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -2238,12 +2487,27 @@ export function GoalDetailPage() {
     });
   };
 
-  const deleteTask = async (taskId: string) => {
-    await updateGoal.mutateAsync({
-      id: goal.id,
-      input: { tasks: serializeTasks(goal.tasks, undefined, taskId) },
-    });
-    if (expandedTaskId === taskId) setExpandedTaskId(null);
+  const deleteTask = async (task: GoalTask, action?: GoalOccurrenceDeleteAction) => {
+    try {
+      setTaskDeletePending(true);
+      await updateGoal.mutateAsync({
+        id: goal.id,
+        input: {
+          tasks: serializeTasks(goal.tasks, undefined, task.id),
+          occurrenceDeleteDecisions: action ? [{ kind: "goal_task", id: task.id, action }] : undefined,
+        },
+      });
+      if (expandedTaskId === task.id) setExpandedTaskId(null);
+      setPendingTaskDelete(null);
+    } catch (error) {
+      if (isGoalOccurrenceDeleteDecisionRequired(error)) {
+        setPendingTaskDelete(task);
+        return;
+      }
+      throw error;
+    } finally {
+      setTaskDeletePending(false);
+    }
   };
 
 
@@ -2360,17 +2624,16 @@ export function GoalDetailPage() {
               className="goal-detail-task-list"
             >
               <AnimatePresence initial={false}>
-                {orderedTasks.map((task, index) => (
+                {orderedTasks.map((task) => (
                   <GoalDetailTaskRow
                     key={task.id}
                     goal={goal}
                     task={task}
-                    index={index}
                     expanded={expandedTaskId === task.id}
                     onToggleExpand={() =>
                       setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
                     }
-                    onDelete={() => deleteTask(task.id)}
+                    onDelete={() => void deleteTask(task)}
                     onPersistOrder={persistTaskOrder}
                     onStartEdit={() => undefined}
                   />
@@ -2391,6 +2654,14 @@ export function GoalDetailPage() {
       </motion.section>
 
       <AnimatePresence>
+        {pendingTaskDelete ? (
+          <GoalOccurrenceDeleteConfirm
+            itemLabel={pendingTaskDelete.title}
+            pending={taskDeletePending}
+            onCancel={() => setPendingTaskDelete(null)}
+            onPick={(action) => void deleteTask(pendingTaskDelete, action)}
+          />
+        ) : null}
         {editorGoal !== undefined ? (
           <GoalEditorModal goal={editorGoal} onClose={() => setEditorGoal(undefined)} />
         ) : null}

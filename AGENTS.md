@@ -89,3 +89,52 @@ If a change consumes a raw hex, an arbitrary px value, or a custom card box-shad
   into **`archive/legacy-themes.css`** (a reference snapshot — NOT imported, NOT part of the build,
   do not read/edit it for normal work). Don't restore or extend them. Forest values live in
   `src/styles/design-tokens.css` (+ the `--pomodoro-grad-*` block at the top of `src/styles.css`).
+
+## Desktop / Mobile Feature Tracking
+
+Use the Claude guard prompt at **`.claude/agents/mobile-desktop-guard.md`** as the
+project checklist for desktop/mobile separation and parity. Treat it as read-only
+review guidance: inspect and report/act on violations, but do not blindly edit from
+that prompt alone.
+
+For any change that adds or changes a screen, modal, confirmation, route, shared
+component, data hook, API contract, or mobile/desktop behavior:
+
+1. Check whether both desktop and mobile are affected.
+2. Update **`docs/desktop-mobile-parity.md`** in the same change when feature status,
+   modal inventory, or verification status changes.
+3. Respect the guard's separation rules:
+   - `useIsMobile` belongs only at sanctioned shell/router branch points.
+   - Mobile markup/styles stay in mobile-only files and `src/styles/45-mobile.css`.
+   - Desktop modules must not statically import mobile modules, and vice versa.
+   - Shared hooks/API/schema changes must stay platform-neutral and require both
+     desktop and mobile verification notes.
+4. Before finishing a relevant change, review the diff using the guard's report
+   mindset: classify files as desktop-only, mobile-only, shared component, shared
+   contract, route/shell seam, or unrelated; then call out any remaining parity or
+   Capacitor-readiness risks.
+
+## QA Testing Agent
+
+Use the Claude QA prompt at **`.claude/agents/qa-tester.md`** as the project
+checklist for full QA/regression passes. The full QA workflow is **on-demand
+only**: use it when the user explicitly asks to test something ("протестируй",
+"прогони QA", "проверь регрессию", "use qa-tester"). Normal implementation
+verification (`tsc`, build, targeted smoke checks) still applies after code
+changes, but do not launch a full QA sweep unless requested.
+
+When running that QA workflow:
+
+1. Act as a tester, not a fixer: do not edit app code, commit, or patch around
+   blockers during the QA pass.
+2. Create dedicated QA users/data through the API; never read, mutate, or delete
+   another user's data. Use read-only SQLite queries only for integrity checks.
+3. Test proportionately to the scope: API happy paths, auth/validation/error
+   cases, UI flows, reload persistence, console/network errors, and adjacent
+   regressions from the QA regression map.
+4. For destructive or migration-heavy scenarios, use an isolated database
+   (`PLANNER_DB=/tmp/qa-planner.db`) instead of the development database.
+5. Include mobile-width checks when the touched feature has mobile parity or is
+   listed in `docs/desktop-mobile-parity.md`.
+6. End with the QA report shape from the prompt: TL;DR, issues table, repro
+   steps/evidence, coverage, and untested risks with severity and priority.

@@ -18,14 +18,12 @@ import {
   useTasks,
   useUpdateTask,
 } from "./useTasks";
-import { CompletionScopeModal } from "./CompletionScopeModal";
-import { ParentTaskCompletionModal } from "./ParentTaskCompletionModal";
 import { AddTaskModal } from "./AddTaskModal";
 import { NeedsAttentionWidget } from "./NeedsAttentionWidget";
 import { ActionIcon, FocusIcon } from "./taskIcons";
 import PomodoroPanel from "../focus/Pomodoro";
 import { GoalJourney } from "../goals/GoalsPage";
-import { useGoals, useUpdateGoal } from "../goals/useGoals";
+import { useGoals } from "../goals/useGoals";
 import { todayDateKey } from "./useOccurrences";
 
 function formatFocusDuration(seconds: number): string {
@@ -331,73 +329,6 @@ export function TodayPage() {
     return map;
   }, [goals]);
 
-  // When ticking a goal-linked occurrence done, we open a modal to ask
-  // whether they meant "for today" or "for the whole goal task/subtask".
-  const [scopeModalFor, setScopeModalFor] = useState<Occurrence | null>(null);
-
-  // After a "whole" completion of a subtask occurrence, we may need to ask
-  // the user "close the parent goal task too?". We record the parent task
-  // here and let an effect react once the refreshed goals data arrives.
-  const [parentCheck, setParentCheck] = useState<{ goalId: string; goalTaskId: string } | null>(null);
-  const [parentPromptTask, setParentPromptTask] = useState<{ goalId: string; goalTaskId: string; title: string } | null>(null);
-  const updateGoal = useUpdateGoal();
-
-  // Watch refreshed goals data: if the recorded parent task now has ALL
-  // subtasks completed and is itself not yet marked done, prompt the user.
-  // We consume the trigger so the prompt only fires once per "whole" event.
-  useEffect(() => {
-    if (!parentCheck) return;
-    const goal = goals.find((g) => g.id === parentCheck.goalId);
-    if (!goal) return;
-    const target = goal.tasks.find((t) => t.id === parentCheck.goalTaskId);
-    if (!target) {
-      setParentCheck(null);
-      return;
-    }
-    const subs = target.subtasks ?? [];
-    if (subs.length === 0) {
-      setParentCheck(null);
-      return;
-    }
-    const allDone = subs.every((s) => s.completed);
-    if (allDone && !target.completed) {
-      setParentPromptTask({
-        goalId: goal.id,
-        goalTaskId: target.id,
-        title: target.title,
-      });
-    }
-    setParentCheck(null);
-  }, [goals, parentCheck]);
-
-  const confirmCloseParentTask = async () => {
-    if (!parentPromptTask) return;
-    const goal = goals.find((g) => g.id === parentPromptTask.goalId);
-    if (!goal) {
-      setParentPromptTask(null);
-      return;
-    }
-    // Echo the whole goal back with the target task flipped to completed.
-    // replaceGoalTasks will also derive `completed` from subtasks anyway, so
-    // this is belt-and-suspenders: it makes the intent explicit and works
-    // even if a subtask gets un-checked between events.
-    const tasksPayload = goal.tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      deadline: t.deadline,
-      iconId: t.iconId,
-      note: t.note,
-      completed: t.id === parentPromptTask.goalTaskId ? true : t.completed,
-      subtasks: (t.subtasks ?? []).map((s) => ({
-        id: s.id,
-        title: s.title,
-        completed: s.completed,
-      })),
-    }));
-    await updateGoal.mutateAsync({ id: goal.id, input: { tasks: tasksPayload } });
-    setParentPromptTask(null);
-  };
-
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [flyer, setFlyer] = useState<{
@@ -512,13 +443,6 @@ export function TodayPage() {
   };
 
   const toggleCompleted = (task: Task, completed: boolean) => {
-    // Goal-linked occurrences open the scope modal on completion so the
-    // user can pick "for today" vs "finish whole goal item". Un-ticking
-    // (and standalone ticking) sails straight through.
-    if (completed && task.sourceKind !== "standalone") {
-      setScopeModalFor(task);
-      return;
-    }
     scheduleCompletionReorder(task.id, completed);
     updateTask.mutate({
       id: task.id,
@@ -772,47 +696,6 @@ export function TodayPage() {
             ) : null}
           </AnimatePresence>
 
-          {/* In-panel overlays. Anchored to `.tasks-panel--today`
-              (position: relative) so they sit on top of just the Today
-              widget — same UX pattern as the pomodoro reset confirm. */}
-          <AnimatePresence>
-            {scopeModalFor ? (
-              <CompletionScopeModal
-                occurrence={scopeModalFor}
-                onClose={() => setScopeModalFor(null)}
-                onPick={(scope) => {
-                  if (!scopeModalFor) return;
-                  updateTask.mutate({
-                    id: scopeModalFor.id,
-                    updates: { completed: true, completionScope: scope },
-                  });
-                  if (
-                    scope === "whole" &&
-                    scopeModalFor.sourceKind === "goal_subtask" &&
-                    scopeModalFor.goalId &&
-                    scopeModalFor.goalTaskId
-                  ) {
-                    setParentCheck({
-                      goalId: scopeModalFor.goalId,
-                      goalTaskId: scopeModalFor.goalTaskId,
-                    });
-                  }
-                  setScopeModalFor(null);
-                }}
-              />
-            ) : null}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {parentPromptTask !== null ? (
-              <ParentTaskCompletionModal
-                open
-                taskTitle={parentPromptTask.title}
-                onClose={() => setParentPromptTask(null)}
-                onConfirm={confirmCloseParentTask}
-              />
-            ) : null}
-          </AnimatePresence>
         </motion.section>
 
         {showGoalsWidget ? (

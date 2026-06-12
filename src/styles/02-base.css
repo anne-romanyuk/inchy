@@ -61,8 +61,8 @@ select {
   --app-popup-border: var(--app-widget-border);
   --app-popup-shadow: var(--shadow-elevated);
   --app-empty-text: var(--c-text-muted);
-  --app-empty-title-font: 700 var(--text-card-title-size) / 1.4 var(--font-base);
-  --app-empty-body-font: 700 14px / 1.45 var(--font-base);
+  --app-empty-title-font: 600 var(--text-card-title-size) / 1.4 var(--font-base);
+  --app-empty-body-font: 600 12px / 1.45 var(--font-base);
 }
 
 .fluid-gradient {
@@ -173,7 +173,7 @@ select {
   backdrop-filter: blur(26px) saturate(1.18);
   -webkit-backdrop-filter: blur(26px) saturate(1.18);
   color: rgba(57, 57, 92, 0.72);
-  font: 700 15px/1.4 var(--planner-font);
+  font: 600 13px/1.4 var(--planner-font);
   box-shadow:
     18px 20px 32px -12px rgba(0, 0, 0, 0.22),
     -8px -8px 34px -12px rgba(255, 255, 255, 0.54),
@@ -305,7 +305,7 @@ select {
   background: rgba(243, 235, 245, 0.76);
   color: rgba(82, 70, 132, 0.82);
   cursor: pointer;
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   text-align: left;
   box-shadow:
     5px 6px 12px rgba(58, 58, 105, 0.1),
@@ -353,7 +353,7 @@ select {
   background: rgba(243, 235, 245, 0.76);
   color: rgba(82, 70, 132, 0.82);
   cursor: pointer;
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     5px 6px 12px rgba(58, 58, 105, 0.1),
     inset -2px -2px 7px rgba(255, 255, 255, 0.52),
@@ -395,7 +395,7 @@ select {
   place-items: center;
   height: 100%;
   color: rgba(82, 70, 132, 0.72);
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.08em;
   transition: color 220ms ease;
 }
@@ -481,7 +481,7 @@ select {
     linear-gradient(135deg, rgba(241, 148, 194, 0.88), rgba(129, 129, 190, 0.76));
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: 700 16px/1 "Quattrocento Sans", system-ui, sans-serif;
+  font: 600 14px/1 var(--planner-font);
   box-shadow:
     7px 9px 18px rgba(58, 58, 105, 0.18),
     inset -2px -2px 8px rgba(255, 255, 255, 0.28),
@@ -574,7 +574,7 @@ select {
 .dashboard-title {
   margin: 0;
   color: rgb(57, 57, 92);
-  font: var(--planner-display-weight) 34px/1 var(--planner-font);
+  font: var(--planner-display-weight) 31px/1 var(--planner-font);
   letter-spacing: var(--planner-display-tracking);
 }
 
@@ -591,7 +591,7 @@ select {
   background: rgb(129 129 190 / 51%);
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: var(--planner-label-weight) 15px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.08em;
   box-shadow:
     7px 6px 10px 0 rgb(58 58 105 / 22%),
@@ -625,7 +625,7 @@ select {
   height: 18px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.34);
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .fade-scroll {
@@ -1178,13 +1178,13 @@ select {
 .pomodoro-confirm__content h3 {
   margin: 0 0 8px;
   color: rgb(57, 57, 92);
-  font: 700 19px/1.1 "Quattrocento Sans", system-ui, sans-serif;
+  font: 600 17px/1.1 var(--planner-font);
 }
 
 .pomodoro-confirm__content p {
   margin: 0;
   color: rgba(57, 57, 92, 0.72);
-  font: 600 15px/1.45 var(--planner-font);
+  font: 600 13px/1.45 var(--planner-font);
 }
 
 .pomodoro-confirm__actions {
@@ -1200,7 +1200,7 @@ select {
   border-radius: var(--radius-md);
   padding: 0 16px;
   cursor: pointer;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.05em;
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
 }
@@ -1235,7 +1235,7 @@ select {
   background: transparent;
   color: rgba(57, 57, 92, 0.7);
   box-shadow: none;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.08em;
   transition: color 160ms ease, background 160ms ease, transform 180ms ease;
 }
@@ -1330,7 +1330,7 @@ select {
   background: transparent;
   color: rgba(82, 70, 132, 0.72);
   cursor: pointer;
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.08em;
   transition: color 220ms ease, transform 180ms ease;
 }
@@ -1882,39 +1882,6 @@ select {
   right: -2px;
 }
 
-/* Completion-scope confirm (Today widget): close X (top-right), the two scope
-   choices on a single row, and a standard ghost-text Cancel at the bottom-left.
-   Scoped to `.scope-confirm` so the other confirm dialogs are unaffected. */
-.pomodoro-confirm__card.scope-confirm {
-  position: relative;
-  width: min(100%, 400px);
-  padding-top: 30px;
-}
-.scope-confirm__close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.scope-confirm .pomodoro-confirm__actions {
-  flex-wrap: nowrap;
-  gap: 8px;
-}
-.scope-confirm .pomodoro-confirm__actions .task-add {
-  min-width: 0;
-  white-space: nowrap;
-}
-.scope-confirm .pomodoro-confirm__actions .pomodoro-btn--ghost-text {
-  height: 34px;
-  padding: 0 10px;
-  white-space: nowrap;
-}
-/* Cancel: standard ghost-text, shrunk to content and pinned bottom-left. */
-.scope-confirm__cancel.pomodoro-btn--ghost-text {
-  width: fit-content;
-  height: auto;
-  margin-top: 14px;
-  padding: 4px 2px;
-}
 @keyframes notes-emoji-rise {
   from {
     opacity: 0;
@@ -1952,7 +1919,7 @@ select {
   background: linear-gradient(135deg, var(--accent-grad-start) 0%, var(--accent-grad-mid) 55%, var(--accent-grad-end) 100%);
   color: #fff;
   cursor: pointer;
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.04em;
   white-space: nowrap;
   box-shadow:
@@ -1971,22 +1938,36 @@ select {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.26);
   color: #fff;
-  font: 700 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .add-to-today__btn--sm {
   height: 28px;
-  font-size: 14px;
+  font-size: 13px;
 }
 .add-to-today__btn--md {
   height: 32px;
-  font-size: 15px;
+  font-size: 13px;
   padding: 0 14px 0 8px;
 }
 .add-to-today__btn--md span[aria-hidden="true"] {
   width: 20px;
   height: 20px;
-  font-size: 15px;
+  font-size: 13px;
+}
+
+.schedule-goal-task__btn {
+  min-width: calc(var(--space-10) + var(--space-10) + var(--space-8));
+}
+
+.add-to-today__btn .schedule-goal-task__icon svg {
+  width: var(--space-6);
+  height: var(--space-6);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .add-to-today__btn-label {
@@ -2020,7 +2001,7 @@ select {
 }
 
 .add-to-today__hint {
-  font: 500 11px/1.2 var(--planner-font);
+  font: 500 10px/1.2 var(--planner-font);
   color: rgba(220, 67, 105, 0.92);
   max-width: 180px;
 }

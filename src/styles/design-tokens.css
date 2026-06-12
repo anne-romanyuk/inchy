@@ -89,39 +89,39 @@
   /* --- Typography roles -------------------------------------------------- */
   --font-base: var(--planner-font);
 
-  --text-page-title-size: 30px;
+  --text-page-title-size: 27px;
   --text-page-title-weight: var(--planner-display-weight, 300);
   --text-page-title-tracking: var(--planner-display-tracking, -0.03em);
 
-  --text-page-subtitle-size: 16px;
+  --text-page-subtitle-size: 13px;
   --text-page-subtitle-weight: 400;
 
-  --text-section-title-size: 20px;
-  --text-section-title-weight: var(--planner-heading-weight, 700);
+  --text-section-title-size: 17px;
+  --text-section-title-weight: var(--planner-heading-weight, 600);
   --text-section-title-tracking: var(--planner-heading-tracking, -0.01em);
 
-  --text-card-title-size: 17px;
-  --text-card-title-weight: 700;
+  --text-card-title-size: 14px;
+  --text-card-title-weight: 600;
 
-  --text-item-title-size: 15px;
-  --text-item-title-weight: 600;
+  --text-item-title-size: 13px;
+  --text-item-title-weight: 500;
 
-  --text-body-size: 15px;
+  --text-body-size: 13px;
   --text-body-weight: 400;
   --text-body-line: 1.5;
 
-  --text-body-small-size: 13px;
-  --text-caption-size: 12px;
+  --text-body-small-size: 11px;
+  --text-caption-size: 10px;
 
-  --text-label-size: 11px;
-  --text-label-weight: var(--planner-label-weight, 800);
+  --text-label-size: 10px;
+  --text-label-weight: var(--planner-label-weight, 600);
   --text-label-tracking: var(--planner-label-tracking, 0.16em);
 
-  --text-button-size: 14px;
-  --text-button-weight: 700;
+  --text-button-size: 12px;
+  --text-button-weight: 600;
 
-  --text-badge-size: 11px;
-  --text-badge-weight: 700;
+  --text-badge-size: 10px;
+  --text-badge-weight: 600;
   --text-badge-tracking: 0.04em;
 
   /* --- Elevation / shadows ----------------------------------------------- */

@@ -29,6 +29,8 @@ visual invention.**
 - `src/features/*` — Today, goals, focus (Pomodoro), today widgets/modals, auth, profile.
 - `server/` — Hono API + SQLite. `shared/` — zod schemas/constants.
 - Dev: `npm run go` (installs + runs server & client).
+- **Desktop↔mobile parity:** `docs/desktop-mobile-parity.md` — per-screen feature/modal/confirm
+  tables. Any PR touching a screen or modal must update its rows (add row first, implement second).
 
 ### CSS file map (open the ONE file for the UI you're touching — don't read the whole stylesheet)
 

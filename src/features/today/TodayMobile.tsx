@@ -12,10 +12,8 @@ import {
   useTasks,
   useUpdateTask,
 } from "./useTasks";
-import { useGoals, useUpdateGoal } from "../goals/useGoals";
+import { useGoals } from "../goals/useGoals";
 import { AddTaskModalMobile } from "./AddTaskModalMobile";
-import { CompletionScopeModal } from "./CompletionScopeModal";
-import { ParentTaskCompletionModal } from "./ParentTaskCompletionModal";
 
 const SWIPE_TRIGGER = 112;
 const SWIPE_LIMIT = 128;
@@ -317,7 +315,6 @@ export function TodayMobile() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const reorderTasks = useReorderTasks();
-  const updateGoal = useUpdateGoal();
 
   const tasks = tasksQuery.data ?? [];
   const categories = categoriesQuery.data ?? [];
@@ -325,10 +322,7 @@ export function TodayMobile() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [filter, setFilter] = useState<FilterValue>("");
-  const [scopeModalFor, setScopeModalFor] = useState<Occurrence | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [parentCheck, setParentCheck] = useState<{ goalId: string; goalTaskId: string } | null>(null);
-  const [parentPromptTask, setParentPromptTask] = useState<{ goalId: string; goalTaskId: string; title: string } | null>(null);
 
   const goalTitleById = useMemo(() => {
     const map = new Map<string, string>();
@@ -420,55 +414,6 @@ export function TodayMobile() {
     return items;
   }, [attention]);
 
-  useEffect(() => {
-    if (!parentCheck) return;
-    const goal = goals.find((g) => g.id === parentCheck.goalId);
-    if (!goal) return;
-    const target = goal.tasks.find((t) => t.id === parentCheck.goalTaskId);
-    if (!target) {
-      setParentCheck(null);
-      return;
-    }
-    const subtasks = target.subtasks ?? [];
-    if (!subtasks.length) {
-      setParentCheck(null);
-      return;
-    }
-    const allDone = subtasks.every((s) => s.completed);
-    if (allDone && !target.completed) {
-      setParentPromptTask({
-        goalId: goal.id,
-        goalTaskId: target.id,
-        title: target.title,
-      });
-    }
-    setParentCheck(null);
-  }, [goals, parentCheck]);
-
-  const confirmCloseParentTask = async () => {
-    if (!parentPromptTask) return;
-    const goal = goals.find((g) => g.id === parentPromptTask.goalId);
-    if (!goal) {
-      setParentPromptTask(null);
-      return;
-    }
-    const tasksPayload = goal.tasks.map((task) => ({
-      id: task.id,
-      title: task.title,
-      deadline: task.deadline,
-      iconId: task.iconId,
-      note: task.note,
-      completed: task.id === parentPromptTask.goalTaskId ? true : task.completed,
-      subtasks: (task.subtasks ?? []).map((subtask) => ({
-        id: subtask.id,
-        title: subtask.title,
-        completed: subtask.completed,
-      })),
-    }));
-    await updateGoal.mutateAsync({ id: goal.id, input: { tasks: tasksPayload } });
-    setParentPromptTask(null);
-  };
-
   const commitReorder = (previousSection: Occurrence[], nextSection: Occurrence[]) => {
     const visibleIds = new Set(previousSection.map((task) => task.id));
     const queue = [...nextSection];
@@ -480,10 +425,6 @@ export function TodayMobile() {
   };
 
   const toggleCompleted = (task: Occurrence, completed: boolean) => {
-    if (completed && task.sourceKind !== "standalone") {
-      setScopeModalFor(task);
-      return;
-    }
     updateTask.mutate({ id: task.id, updates: { completed, completionScope: "today" } });
   };
 
@@ -622,44 +563,6 @@ export function TodayMobile() {
         ) : null}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {scopeModalFor ? (
-          <CompletionScopeModal
-            occurrence={scopeModalFor}
-            onClose={() => setScopeModalFor(null)}
-            onPick={(scope) => {
-              if (!scopeModalFor) return;
-              updateTask.mutate({
-                id: scopeModalFor.id,
-                updates: { completed: true, completionScope: scope },
-              });
-              if (
-                scope === "whole" &&
-                scopeModalFor.sourceKind === "goal_subtask" &&
-                scopeModalFor.goalId &&
-                scopeModalFor.goalTaskId
-              ) {
-                setParentCheck({
-                  goalId: scopeModalFor.goalId,
-                  goalTaskId: scopeModalFor.goalTaskId,
-                });
-              }
-              setScopeModalFor(null);
-            }}
-          />
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {parentPromptTask !== null ? (
-          <ParentTaskCompletionModal
-            open
-            taskTitle={parentPromptTask.title}
-            onClose={() => setParentPromptTask(null)}
-            onConfirm={confirmCloseParentTask}
-          />
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 }

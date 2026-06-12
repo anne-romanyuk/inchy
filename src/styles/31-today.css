@@ -19,13 +19,13 @@
 .character-onboarding__kicker {
   margin: 0 0 8px;
   color: rgba(57, 57, 92, 0.68);
-  font: 700 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .character-onboarding__title {
   margin: 0 0 28px;
   max-width: min(920px, calc(100vw - 64px));
-  font: 700 clamp(32px, 5vw, 62px)/0.94 var(--planner-font);
+  font: 600 clamp(29px, 5vw, 58px)/0.94 var(--planner-font);
   letter-spacing: 0;
   text-shadow:
     0 2px 12px rgba(255, 255, 255, 0.38),
@@ -93,7 +93,7 @@
   position: absolute;
   inset: auto 0 16px;
   z-index: 0;
-  font: 700 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
 }
 
 .character-onboarding__option:hover,
@@ -117,7 +117,7 @@
 .character-onboarding__error {
   margin: -12px 0 14px;
   color: rgb(142, 65, 75);
-  font: 700 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
 }
 
 .character-onboarding__confirm {
@@ -125,7 +125,7 @@
   height: 48px;
   background: rgb(129 129 190 / 51%);
   color: rgb(57, 57, 92);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .tasks-shell {
@@ -152,7 +152,7 @@
 
 .tasks-title {
   margin: 0;
-  font: var(--planner-display-weight) 30px/1 var(--planner-font);
+  font: var(--planner-display-weight) 27px/1 var(--planner-font);
   letter-spacing: var(--planner-display-tracking);
 }
 
@@ -165,7 +165,7 @@
     inset -2px -2px 8px rgba(255, 255, 255, 0.42),
     inset 2px 2px 8px rgba(0, 0, 0, 0.06);
   color: rgba(57, 57, 92, 0.82);
-  font: var(--planner-value-weight) 14px/1 var(--planner-font);
+  font: var(--planner-value-weight) 13px/1 var(--planner-font);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -246,7 +246,7 @@
   min-height: 16px;
   margin: -8px 0 14px;
   color: rgb(142, 65, 75);
-  font: 400 14px/1.2 "Quattrocento Sans", system-ui, sans-serif;
+  font: 400 13px/1.2 var(--planner-font);
 }
 
 .category-toggle-wrap {
@@ -403,7 +403,7 @@
   background: transparent;
   color: rgba(82, 70, 132, 0.72);
   cursor: pointer;
-  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
   letter-spacing: 0.08em;
   text-align: center;
   /* Long labels (mostly goal titles) get truncated with ellipsis so a
@@ -504,7 +504,7 @@
 }
 
 .tasks-table-header__label {
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: var(--planner-label-tracking);
   color: rgba(57, 57, 92, 0.55);
   text-transform: uppercase;
@@ -666,7 +666,7 @@
   gap: 6px;
   min-width: 0;
   color: rgb(71, 71, 71);
-  font: 600 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   letter-spacing: 0.01em;
 }
 
@@ -683,7 +683,7 @@
   padding: 4px 8px;
   background: rgba(255, 255, 255, 0.2);
   color: rgba(57, 57, 92, 0.62);
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -760,7 +760,7 @@
   border-radius: 999px;
   padding: 4px 8px;
   text-align: center;
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -803,7 +803,7 @@
   padding: 0 10px;
   background: rgba(216, 216, 216, 0.52);
   color: rgb(71, 71, 71);
-  font: 600 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   outline: none;
   box-shadow:
     inset 3px 3px 7px rgba(115, 115, 115, 0.16),
@@ -814,7 +814,7 @@
 .task-edit-field .task-modal__dropdown-trigger {
   display: flex;
   padding: 0 10px;
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.05em;
 }
 
@@ -841,7 +841,7 @@
 
 .task-edit-field--category input:not(.category-picker__input),
 .task-edit-field--priority select {
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 10px/1 var(--planner-font);
   letter-spacing: 0.05em;
 }
 
@@ -872,7 +872,7 @@
 .task-edit-field .task-modal__combobox-list button {
   border-radius: 10px;
   padding: 7px 10px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .task-focus,
@@ -1157,7 +1157,7 @@
 .task-modal__header h2,
 .default-task-pool h3 {
   margin: 0;
-  font: var(--planner-display-weight) 22px/1 var(--planner-font);
+  font: var(--planner-display-weight) 20px/1 var(--planner-font);
   letter-spacing: var(--planner-display-tracking);
 }
 
@@ -1171,7 +1171,7 @@
   background: rgba(255, 255, 255, 0.18);
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: 700 16px/1 var(--planner-font);
+  font: 600 14px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 5px rgba(255, 255, 255, 0.32),
     inset 2px 2px 6px rgba(80, 75, 104, 0.08);
@@ -1212,6 +1212,28 @@
 .task-modal__draft {
   display: grid;
   gap: 10px;
+}
+
+.task-modal__schedule-state {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--c-border) 72%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--c-surface-soft) 48%, transparent);
+  color: var(--c-text-secondary);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 62%, transparent);
+}
+
+.task-modal__schedule-state strong {
+  color: var(--c-text-primary);
+  font: var(--planner-label-weight) var(--text-body-small-size) / 1.2 var(--planner-font);
+}
+
+.task-modal__schedule-state span,
+.task-modal__schedule-state small {
+  font: var(--text-body-weight) var(--text-caption-size) / 1.35 var(--font-base);
 }
 
 .task-modal__draft-row {
@@ -1284,13 +1306,13 @@
   background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
   color: var(--c-text-primary);
   outline: none;
-  font: 600 15px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   letter-spacing: 0.01em;
   box-shadow: none;
 }
 
 .task-modal__title-input {
-  font: var(--planner-display-weight) 16px/1 var(--planner-font);
+  font: var(--planner-display-weight) 14px/1 var(--planner-font);
   letter-spacing: var(--planner-display-tracking);
 }
 
@@ -1362,7 +1384,7 @@
 .task-modal__time-popover h3 {
   margin: 0 0 var(--space-2);
   color: var(--c-text-primary);
-  font: var(--planner-label-weight) 14px/1.1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1.1 var(--planner-font);
   letter-spacing: 0;
   text-align: center;
 }
@@ -1435,7 +1457,7 @@
   background: transparent;
   color: var(--c-text-muted);
   cursor: pointer;
-  font: var(--planner-label-weight) 13px/1 var(--planner-font);
+  font: var(--planner-label-weight) 12px/1 var(--planner-font);
   position: relative;
   z-index: 1;
   scroll-snap-align: center;
@@ -1457,7 +1479,7 @@
 .task-modal__time-separator {
   justify-self: stretch;
   color: var(--c-text-muted);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   text-align: center;
 }
 
@@ -1508,7 +1530,7 @@
   gap: var(--space-3);
   padding: 0 var(--space-1);
   color: var(--c-text-secondary);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.04em;
   transition: color var(--dur-fast) var(--ease-soft);
 }
@@ -2141,6 +2163,24 @@
   box-shadow: var(--shadow-focus-ring);
 }
 
+.task-modal__title-input:disabled,
+.task-modal__title-input:disabled:hover,
+.task-modal__title-input:disabled:focus,
+.task-modal__title-input:disabled:focus-visible,
+.task-modal__title-input.task-modal__locked-input:disabled,
+.task-modal__title-input.task-modal__locked-input:disabled:hover,
+.task-modal__title-input.task-modal__locked-input:disabled:focus,
+.task-modal__title-input.task-modal__locked-input:disabled:focus-visible {
+  cursor: not-allowed;
+  opacity: 1;
+  color: color-mix(in srgb, var(--c-text-muted) 82%, var(--c-text-secondary));
+  border-color: var(--c-border-soft);
+  background: color-mix(in srgb, var(--c-surface-soft) 64%, var(--c-sidebar-surface-solid));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 42%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--c-border-soft) 72%, transparent);
+}
+
 .task-modal__title-input::placeholder,
 .task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input)::placeholder,
 .task-modal__duration-input::placeholder,
@@ -2310,7 +2350,7 @@
   color: rgb(57, 57, 92);
   cursor: pointer;
   text-align: left;
-  font: 600 14px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   letter-spacing: 0.01em;
 }
 
@@ -2362,7 +2402,7 @@
 }
 
 .task-modal__combobox-list--pills .task-modal__category-pill--create span {
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -2411,7 +2451,7 @@
   background: rgb(129 129 190 / 51%);
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: 700 16px/1 var(--planner-font);
+  font: 600 14px/1 var(--planner-font);
   box-shadow:
     7px 6px 10px 0 rgb(58 58 105 / 18%),
     -1px -1px 6px rgb(255 255 255 / 34%);
@@ -2424,7 +2464,7 @@
   gap: 10px;
   min-height: 32px;
   color: rgba(57, 57, 92, 0.68);
-  font: var(--planner-label-weight) 14px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -2506,14 +2546,14 @@
 
 .task-modal__queue-item strong {
   color: rgb(57, 57, 92);
-  font: 600 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   letter-spacing: 0.01em;
 }
 
 .task-modal__queue-item span {
   margin: 3px 0 0;
   color: rgba(57, 57, 92, 0.58);
-  font: var(--planner-label-weight) 12px/1.2 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1.2 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -2526,7 +2566,7 @@
   background: rgba(255, 255, 255, 0.28);
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: 700 14px/1 var(--planner-font);
+  font: 600 13px/1 var(--planner-font);
   box-shadow:
     inset -1px -1px 5px rgba(255, 255, 255, 0.32),
     inset 2px 2px 6px rgba(80, 75, 104, 0.08);
@@ -2538,7 +2578,7 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.1);
   color: var(--app-empty-text);
-  font: 700 14px/1.4 var(--planner-font);
+  font: 600 13px/1.4 var(--planner-font);
   text-align: center;
 }
 
@@ -2552,7 +2592,7 @@
   min-height: 16px;
   margin: 0;
   color: rgb(142, 65, 75);
-  font: 700 14px/1.25 var(--planner-font);
+  font: 600 13px/1.25 var(--planner-font);
 }
 
 .task-modal__submit,
@@ -2563,7 +2603,7 @@
   background: rgb(129 129 190 / 51%);
   color: rgb(57, 57, 92);
   cursor: pointer;
-  font: var(--planner-label-weight) 15px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.08em;
   box-shadow:
     7px 6px 10px 0 rgb(58 58 105 / 18%),
@@ -2588,7 +2628,7 @@
 }
 
 .default-task-pool h3 {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .default-task-pool ul {
@@ -2625,7 +2665,7 @@
 
 .default-task-pool strong {
   color: rgb(57, 57, 92);
-  font: 600 15px/1.2 var(--planner-font);
+  font: 600 13px/1.2 var(--planner-font);
   letter-spacing: 0.01em;
 }
 
@@ -2633,7 +2673,7 @@
 .default-task-pool p {
   margin: 4px 0 0;
   color: rgba(57, 57, 92, 0.58);
-  font: var(--planner-label-weight) 12px/1.2 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1.2 var(--planner-font);
   letter-spacing: 0.08em;
 }
 
@@ -2642,7 +2682,7 @@
   height: 34px;
   min-width: 0;
   padding: 0;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .default-task-pool__pending button {
@@ -2665,7 +2705,7 @@
   border-radius: 50%;
   background: rgba(222, 193, 199, 0.32);
   color: rgb(190, 76, 93);
-  font: 800 11px/1 var(--planner-font);
+  font: 600 10px/1 var(--planner-font);
   letter-spacing: 0;
   box-shadow:
     0 3px 7px -6px rgba(142, 65, 75, 0.55),
@@ -2855,6 +2895,18 @@
     inset 0 1px 0 color-mix(in srgb, var(--c-text-on-accent) 78%, transparent),
     0 0 0 2px color-mix(in srgb, var(--c-border) 34%, transparent);
   transform: translateY(-1px);
+}
+
+.task-modal__recurrence-choice-list button:disabled,
+.task-modal__recurrence-choice-list button:disabled:hover,
+.task-modal__recurrence-choice-list button:disabled:focus-visible {
+  cursor: not-allowed;
+  opacity: 0.64;
+  border-color: var(--c-border-soft);
+  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-surface-soft));
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--c-text-on-accent) 64%, transparent);
+  color: var(--c-text-muted);
+  transform: none;
 }
 
 .task-modal__recurrence-choice-list strong {
@@ -3094,7 +3146,7 @@
   color: rgba(57, 57, 92, 0.62);
 }
 .today-side-widget__hint {
-  font: 600 13px/1 var(--planner-font);
+  font: 600 12px/1 var(--planner-font);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.72;
@@ -3142,12 +3194,12 @@
 }
 .needs-attention__title h2 {
   margin: 0;
-  font: var(--planner-heading-weight) 18px/1.1 var(--planner-font);
+  font: var(--planner-heading-weight) 16px/1.1 var(--planner-font);
   color: rgba(45, 45, 78, 0.96);
 }
 .needs-attention__title p {
   margin: 2px 0 0;
-  font: 500 12px/1.25 var(--planner-font);
+  font: 500 11px/1.25 var(--planner-font);
   color: rgba(57, 57, 92, 0.58);
   white-space: nowrap;
 }
@@ -3172,7 +3224,7 @@
   min-height: 20px;
   border-radius: 999px;
   padding: 0 7px;
-  font: var(--planner-label-weight) 12px/1 var(--planner-font);
+  font: var(--planner-label-weight) 11px/1 var(--planner-font);
   letter-spacing: 0.04em;
   white-space: nowrap;
   box-sizing: border-box;
@@ -3211,7 +3263,7 @@
 
 .needs-attention__group-label {
   margin: 0 0 3px;
-  font: 800 12px/1 var(--planner-font);
+  font: 600 11px/1 var(--planner-font);
   letter-spacing: 0.01em;
 }
 .needs-attention__group-label--overdue {
@@ -3278,14 +3330,14 @@
   font: inherit;
 }
 .needs-attention__item-title {
-  font: 700 13.5px/1.25 var(--planner-font);
+  font: 600 12.5px/1.25 var(--planner-font);
   color: rgba(45, 45, 78, 0.96);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .needs-attention__item-goal {
-  font: 500 11px/1.2 var(--planner-font);
+  font: 500 10px/1.2 var(--planner-font);
   color: rgba(57, 57, 92, 0.55);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3396,7 +3448,7 @@
 }
 
 .today-dashboard .dashboard-title {
-  font-size: clamp(30px, 3.25vh, 36px);
+  font-size: clamp(27px, 3.25vh, 33px);
 }
 
 .today-dashboard .dashboard-grid {
@@ -3424,7 +3476,7 @@
 }
 
 .today-dashboard .tasks-title {
-  font-size: clamp(29px, 3vh, 32px);
+  font-size: clamp(27px, 3vh, 29px);
 }
 
 .today-dashboard .category-toggle-wrap {
@@ -3514,7 +3566,7 @@
 }
 
 .today-dashboard .today-goal-widget .goal-journey__header h2 {
-  font-size: clamp(23px, 2.55vh, 26px);
+  font-size: clamp(21px, 2.55vh, 24px);
 }
 
 .today-dashboard .today-goal-widget .goal-journey__header p {
@@ -3539,22 +3591,22 @@
   white-space: normal;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.16;
 }
 
 .today-dashboard .today-goal-widget .goal-journey-step.is-in-progress strong {
-  font-size: 14px;
+  font-size: 13px;
   color: rgb(137, 87, 206);
 }
 
 .today-dashboard .today-goal-widget .goal-journey-step > span:not(.goal-journey-step__badge) {
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.15;
 }
 
 .today-dashboard .today-goal-widget .goal-journey-step.is-in-progress > span:not(.goal-journey-step__badge) {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .today-dashboard--modal-open {
@@ -3831,36 +3883,6 @@
   text-align: center;
   font: var(--app-empty-title-font);
   letter-spacing: 0;
-}
-
-/* -----------------------------------------------------------------
-   Tasks-panel-scoped confirm overlay. Layered on top of just the
-   Today widget's `.tasks-panel--today`, mirroring how the pomodoro
-   reset confirm overlays only the pomodoro panel. Reuses the full
-   `.pomodoro-confirm__*` visual language; this file only adds the
-   extra cancel-link affordance and bumps z-index above the in-panel
-   AddTaskModal overlay (which already uses z-index 5).
-   ----------------------------------------------------------------- */
-.tasks-confirm-overlay {
-  z-index: 7;
-}
-.tasks-confirm__cancel {
-  display: block;
-  width: 100%;
-  margin-top: 12px;
-  padding: 6px;
-  border: 0;
-  background: transparent;
-  color: rgba(57, 57, 92, 0.6);
-  font: 500 13px/1 var(--planner-font);
-  cursor: pointer;
-  border-radius: 8px;
-}
-.tasks-confirm__cancel:hover,
-.tasks-confirm__cancel:focus-visible {
-  outline: none;
-  color: rgba(57, 57, 92, 0.92);
-  background: rgba(132, 99, 188, 0.08);
 }
 
 /* ================================================================== */

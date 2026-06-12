@@ -74,7 +74,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--c-text-secondary);
-  font: 400 16px / 1.12 var(--font-base);
+  font: 400 14px / 1.12 var(--font-base);
 }
 
 .sidebar-brand__name {
@@ -83,7 +83,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--c-text-primary);
-  font: var(--text-section-title-weight) 20px / 1.08 var(--font-base);
+  font: var(--text-section-title-weight) 18px / 1.08 var(--font-base);
   letter-spacing: var(--text-section-title-tracking);
 }
 
@@ -146,7 +146,7 @@
   background: transparent;
   color: rgba(71, 71, 71, 0.66);
   cursor: pointer;
-  font: var(--planner-label-weight) 15px/1 var(--planner-font);
+  font: var(--planner-label-weight) 13px/1 var(--planner-font);
   letter-spacing: 0.06em;
   text-align: left;
 }

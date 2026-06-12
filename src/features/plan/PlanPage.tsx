@@ -33,9 +33,8 @@ type PlanEvent = {
   completed: boolean;
   alert: AlertKind;
   uncategorized?: boolean;
-  // Set only for standalone task occurrences — the ones that can be opened,
-  // edited and deleted from the calendar. Goal deadlines / goal-linked
-  // occurrences are read-only here.
+  // Set for real task occurrences. Goal deadline reminders are still read-only,
+  // but standalone and goal-linked occurrences can edit their schedule details.
   occurrenceId?: string;
 };
 
@@ -157,7 +156,7 @@ function buildOccurrenceEvents(occurrences: Occurrence[], goals: Goal[], categor
       completed: occurrence.completed,
       alert: null,
       uncategorized,
-      occurrenceId: occurrence.sourceKind === "standalone" ? occurrence.id : undefined,
+      occurrenceId: occurrence.id,
     };
   });
 }
@@ -286,10 +285,15 @@ export function PlanPage() {
     [categoryFilter, historyGoalLookup, occurrences],
   );
   const editingOccurrence = useMemo(
-    () => occurrences.find((o) => o.id === editingOccurrenceId && o.sourceKind === "standalone") ?? null,
+    () => occurrences.find((o) => o.id === editingOccurrenceId) ?? null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [editingOccurrenceId, occurrences],
   );
+  const editingOccurrenceGoalTitle = useMemo(
+    () => (editingOccurrence ? occurrenceGoalTitle(editingOccurrence, goals) : ""),
+    [editingOccurrence, goals],
+  );
+  const editingOccurrenceIsGoalLinked = Boolean(editingOccurrence && editingOccurrence.sourceKind !== "standalone");
   // Stable object so AddTaskModal's "reset drafts" effect doesn't fire on every
   // render (which would wipe what you're typing).
   const editingTaskData = useMemo(
@@ -297,7 +301,7 @@ export function PlanPage() {
       editingOccurrence
         ? {
             title: editingOccurrence.title,
-            category: editingOccurrence.category,
+            category: editingOccurrenceIsGoalLinked ? editingOccurrenceGoalTitle : editingOccurrence.category,
             duration: editingOccurrence.duration,
             time: editingOccurrence.time,
             recurringTaskId: editingOccurrence.recurringTaskId,
@@ -310,7 +314,7 @@ export function PlanPage() {
             repeatEndDate: editingOccurrence.repeatEndDate,
           }
         : undefined,
-    [editingOccurrence],
+    [editingOccurrence, editingOccurrenceGoalTitle, editingOccurrenceIsGoalLinked],
   );
   const openEvent = (event: PlanEvent) => {
     if (event.occurrenceId) setEditingOccurrenceId(event.occurrenceId);
@@ -707,15 +711,20 @@ export function PlanPage() {
             variant="dialog"
             editingTask={editingTaskData}
             editingDate={editingOccurrence.occurrenceDate}
+            lockedFields={editingOccurrenceIsGoalLinked ? { title: true, category: true } : undefined}
             onClose={() => setEditingOccurrenceId(null)}
-            onSaveEdit={async ({ date, ...fields }) => {
+            onSaveEdit={async ({ date, title, category, ...fields }) => {
               const fromDate = editingOccurrence.occurrenceDate;
               const toDate = date ?? fromDate;
+              const editableFields =
+                editingOccurrence.sourceKind === "standalone"
+                  ? { ...fields, title, category }
+                  : fields;
               await updateOccurrence.mutateAsync({
                 id: editingOccurrence.id,
                 occurrenceDate: fromDate,
                 updates: {
-                  ...fields,
+                  ...editableFields,
                   ...(toDate !== fromDate ? { occurrenceDate: toDate } : {}),
                 },
               });

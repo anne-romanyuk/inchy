@@ -22,4 +22,5 @@ export const queryKeys = {
   notes: ["notes"] as const,
   occurrencesRoot: ["occurrences"] as const,
   occurrences: (date: string) => ["occurrences", date] as const,
+  goalLinkedSchedule: (sourceKind: "goal_task" | "goal_subtask", id: string) => ["goalLinkedSchedule", sourceKind, id] as const,
 };

@@ -7,6 +7,7 @@ import { requireUser, type AuthEnv } from "../middleware/auth";
 import { createApp } from "../openapi/hono";
 import {
   ErrorResponseSchema,
+  GoalLinkedScheduleEnvelopeSchema,
   OccurrenceCreateInputSchema,
   OccurrenceDeleteInputSchema,
   OccurrenceEnvelopeSchema,
@@ -33,6 +34,19 @@ const DateQuerySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD.")
     .openapi({ param: { name: "date", in: "query" }, example: "2026-05-28" }),
+});
+
+const GoalLinkedScheduleQuerySchema = z
+  .object({
+    goalTaskId: z.string().min(1).optional(),
+    goalSubtaskId: z.string().min(1).optional(),
+  })
+  .refine((value) => Boolean(value.goalTaskId) !== Boolean(value.goalSubtaskId), {
+    message: "Provide exactly one goalTaskId or goalSubtaskId.",
+  });
+
+const RecurringTaskIdParamSchema = z.object({
+  id: z.string().min(1).openapi({ param: { name: "id", in: "path" }, example: "rec_123" }),
 });
 
 // SELECT helper that joins live goal_task / goal_subtask titles + focus
@@ -94,6 +108,10 @@ type RecurringTaskRow = {
   id: string;
   user_id: string;
   starts_on: string;
+  source_kind: "standalone" | "goal_task" | "goal_subtask";
+  goal_id: string | null;
+  goal_task_id: string | null;
+  goal_subtask_id: string | null;
   frequency: RepeatFrequency;
   interval_count: number;
   repeat_weekdays: string;
@@ -162,6 +180,13 @@ function addDaysToDateKey(value: string, days: number) {
   return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
+function todayDateKey(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function parseRepeatWeekdays(value: string | null | undefined) {
   if (!value) return [];
   const unique = new Set<number>();
@@ -207,12 +232,16 @@ function serializeRepeatYearMonths(values: number[] | null | undefined) {
   return parseRepeatYearMonths(values.join(",")).join(",");
 }
 
-function deleteFutureMaterializedOccurrences(recurringTaskId: string, userId: string, fromDate: string, includeCurrent: boolean) {
+// preserveCompleted keeps rows the user already checked off (their completion
+// history and cascading focus segments must survive schedule edits); the
+// unique index on (user_id, recurring_task_id, occurrence_date) stops
+// re-materialization from duplicating the preserved rows.
+function deleteFutureMaterializedOccurrences(recurringTaskId: string, userId: string, fromDate: string, includeCurrent: boolean, preserveCompleted = false) {
   db.prepare(
     `DELETE FROM task_occurrences
      WHERE user_id = ?
        AND recurring_task_id = ?
-       AND occurrence_date ${includeCurrent ? ">=" : ">"} ?`,
+       AND occurrence_date ${includeCurrent ? ">=" : ">"} ?${preserveCompleted ? " AND completed = 0" : ""}`,
   ).run(userId, recurringTaskId, fromDate);
 }
 
@@ -272,15 +301,41 @@ function materializeRecurringOccurrences(userId: string, date: string) {
     `INSERT OR IGNORE INTO task_occurrences
      (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
       recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
-     VALUES (?, ?, ?, 'standalone', NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
   );
 
   db.transaction(() => {
     for (const rule of matching) {
+      if (rule.source_kind === "goal_task" && rule.goal_task_id) {
+        const subtaskCount = db
+          .prepare("SELECT COUNT(*) AS n FROM goal_subtasks WHERE goal_task_id = ?")
+          .get(rule.goal_task_id) as { n: number };
+        if (subtaskCount.n > 0) continue;
+        const duplicate = db
+          .prepare(
+            `SELECT id FROM task_occurrences
+             WHERE user_id = ? AND occurrence_date = ? AND goal_task_id = ? AND completed = 0`,
+          )
+          .get(userId, date, rule.goal_task_id) as { id: string } | undefined;
+        if (duplicate) continue;
+      }
+      if (rule.source_kind === "goal_subtask" && rule.goal_subtask_id) {
+        const duplicate = db
+          .prepare(
+            `SELECT id FROM task_occurrences
+             WHERE user_id = ? AND occurrence_date = ? AND goal_subtask_id = ? AND completed = 0`,
+          )
+          .get(userId, date, rule.goal_subtask_id) as { id: string } | undefined;
+        if (duplicate) continue;
+      }
       insert.run(
         newId(),
         userId,
         date,
+        rule.source_kind,
+        rule.goal_id,
+        rule.goal_task_id,
+        rule.goal_subtask_id,
         rule.id,
         rule.title,
         rule.priority,
@@ -299,6 +354,104 @@ function materializeRecurringOccurrences(userId: string, date: string) {
 function materializeRecurringEndBoundary(userId: string, endDate: string | null | undefined) {
   if (!endDate) return;
   materializeRecurringOccurrences(userId, endDate);
+}
+
+function goalScheduleColumn(sourceKind: "goal_task" | "goal_subtask") {
+  return sourceKind === "goal_task" ? "goal_task_id" : "goal_subtask_id";
+}
+
+function nextRecurringDates(rule: RecurringTaskRow, fromDate: string, limit = 5) {
+  const dates: string[] = [];
+  let cursor = fromDate < rule.starts_on ? rule.starts_on : fromDate;
+  for (let i = 0; dates.length < limit && i < 730; i += 1) {
+    if (rule.ends_on && cursor > rule.ends_on) break;
+    if (recurrenceMatchesDate(rule, cursor)) dates.push(cursor);
+    cursor = addDaysToDateKey(cursor, 1);
+  }
+  return dates;
+}
+
+function toGoalLinkedRecurringSchedule(rule: RecurringTaskRow, fromDate: string) {
+  const repeatMonthDays = parseRepeatMonthDays(rule.repeat_month_days);
+  return {
+    id: rule.id,
+    startsOn: rule.starts_on,
+    repeatFrequency: rule.frequency,
+    repeatInterval: Math.max(1, Math.trunc(rule.interval_count || 1)),
+    repeatWeekdays: parseRepeatWeekdays(rule.repeat_weekdays),
+    repeatMonthDays: repeatMonthDays.length ? repeatMonthDays : rule.repeat_month_day ? [rule.repeat_month_day] : [],
+    repeatMonthOverflow: rule.repeat_month_overflow,
+    repeatYearMonths: parseRepeatYearMonths(rule.repeat_year_months),
+    repeatEndDate: rule.ends_on,
+    duration: normalizeTaskDurationValue(rule.duration),
+    time: normalizeTaskTimeValue(rule.time),
+    nextDates: nextRecurringDates(rule, fromDate),
+  };
+}
+
+function findActiveGoalRecurringRule(
+  userId: string,
+  sourceKind: "goal_task" | "goal_subtask",
+  sourceId: string,
+  today: string,
+  excludeId?: string,
+) {
+  const column = goalScheduleColumn(sourceKind);
+  return db
+    .prepare(
+      `SELECT * FROM recurring_tasks
+       WHERE user_id = ?
+         AND source_kind = ?
+         AND ${column} = ?
+         AND (ends_on IS NULL OR ends_on >= ?)
+         AND (? IS NULL OR id <> ?)
+       ORDER BY starts_on DESC, created_at DESC
+       LIMIT 1`,
+    )
+    .get(userId, sourceKind, sourceId, today, excludeId ?? null, excludeId ?? null) as RecurringTaskRow | undefined;
+}
+
+function loadGoalLinkedSchedule(
+  userId: string,
+  sourceKind: "goal_task" | "goal_subtask",
+  sourceId: string,
+) {
+  const today = todayDateKey();
+  const column = goalScheduleColumn(sourceKind);
+  const recurring = findActiveGoalRecurringRule(userId, sourceKind, sourceId, today);
+  const oneOffOccurrences = db
+    .prepare(
+      `SELECT id, occurrence_date, duration, time
+       FROM task_occurrences
+       WHERE user_id = ?
+         AND source_kind = ?
+         AND ${column} = ?
+         AND recurring_task_id IS NULL
+         AND occurrence_date >= ?
+       ORDER BY occurrence_date ASC, time = '', time ASC
+       LIMIT 12`,
+    )
+    .all(userId, sourceKind, sourceId, today) as Array<{ id: string; occurrence_date: string; duration: string; time: string }>;
+  return {
+    recurring: recurring ? toGoalLinkedRecurringSchedule(recurring, today) : null,
+    oneOffOccurrences: oneOffOccurrences.map((row) => ({
+      id: row.id,
+      occurrenceDate: row.occurrence_date,
+      duration: normalizeTaskDurationValue(row.duration),
+      time: normalizeTaskTimeValue(row.time),
+    })),
+  };
+}
+
+function ensureNoActiveGoalRecurringRule(
+  userId: string,
+  sourceKind: "goal_task" | "goal_subtask",
+  sourceId: string,
+  excludeId?: string,
+) {
+  const existing = findActiveGoalRecurringRule(userId, sourceKind, sourceId, todayDateKey(), excludeId);
+  if (!existing) return null;
+  return existing;
 }
 
 const listOccurrencesRoute = createRoute({
@@ -328,6 +481,162 @@ occurrenceRoutes.openapi(listOccurrencesRoute, (c) => {
   return c.json({ occurrences: rows.map(toOccurrence) }, 200);
 });
 
+const getGoalLinkedScheduleRoute = createRoute({
+  method: "get",
+  path: "/goal-schedule",
+  tags: ["Occurrences"],
+  summary: "Read the current schedule for a goal task or subtask.",
+  request: { query: GoalLinkedScheduleQuerySchema },
+  responses: {
+    200: { description: "Goal-linked schedule", content: { "application/json": { schema: GoalLinkedScheduleEnvelopeSchema } } },
+    401: { description: "Not authenticated", content: { "application/json": { schema: ErrorResponseSchema } } },
+    422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
+  },
+});
+
+occurrenceRoutes.openapi(getGoalLinkedScheduleRoute, (c) => {
+  const userId = c.get("userId");
+  const { goalTaskId, goalSubtaskId } = c.req.valid("query");
+  const sourceKind = goalTaskId ? "goal_task" : "goal_subtask";
+  const sourceId = goalTaskId ?? goalSubtaskId!;
+  return c.json(loadGoalLinkedSchedule(userId, sourceKind, sourceId), 200);
+});
+
+const updateGoalLinkedScheduleRoute = createRoute({
+  method: "patch",
+  path: "/goal-schedule/{id}",
+  tags: ["Occurrences"],
+  summary: "Update a goal-linked recurring schedule.",
+  request: {
+    params: RecurringTaskIdParamSchema,
+    body: { required: true, content: { "application/json": { schema: OccurrenceUpdateInputSchema } } },
+  },
+  responses: {
+    200: { description: "Goal-linked schedule", content: { "application/json": { schema: GoalLinkedScheduleEnvelopeSchema } } },
+    404: { description: "Recurring schedule not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+    409: { description: "Recurring schedule already exists", content: { "application/json": { schema: ErrorResponseSchema } } },
+    422: { description: "Validation failed", content: { "application/json": { schema: ErrorResponseSchema } } },
+  },
+});
+
+occurrenceRoutes.openapi(updateGoalLinkedScheduleRoute, (c) => {
+  const userId = c.get("userId");
+  const { id } = c.req.valid("param");
+  const updates = c.req.valid("json");
+  const rule = db
+    .prepare("SELECT * FROM recurring_tasks WHERE id = ? AND user_id = ?")
+    .get(id, userId) as RecurringTaskRow | undefined;
+  if (!rule || (rule.source_kind !== "goal_task" && rule.source_kind !== "goal_subtask")) {
+    return c.json({ message: "Recurring schedule not found." }, 404);
+  }
+  const sourceId = rule.source_kind === "goal_task" ? rule.goal_task_id : rule.goal_subtask_id;
+  if (!sourceId) return c.json({ message: "Recurring schedule not found." }, 404);
+  const goalSourceKind = rule.source_kind;
+
+  const nextOccurrenceDate = updates.occurrenceDate ?? rule.starts_on;
+  const nextRepeatFrequency = updates.repeatFrequency ?? null;
+  const nextDuration = normalizeTaskDurationValue(updates.duration ?? rule.duration);
+  const nextTime = normalizeTaskTimeValue(updates.time ?? rule.time);
+  const now = new Date().toISOString();
+
+  if (nextRepeatFrequency && updates.repeatEndDate && updates.repeatEndDate < nextOccurrenceDate) {
+    return c.json({ errors: { repeatEndDate: "End repeat must be on or after the start date." } }, 422);
+  }
+
+  const duplicate = nextRepeatFrequency
+    ? ensureNoActiveGoalRecurringRule(userId, rule.source_kind, sourceId, id)
+    : null;
+  if (duplicate) {
+    return c.json({ message: "This goal item already has a recurring schedule." }, 409);
+  }
+
+  db.transaction(() => {
+    if (nextRepeatFrequency) {
+      const nextRepeatInterval = Math.max(1, Math.trunc(updates.repeatInterval ?? rule.interval_count ?? 1));
+      const nextRepeatMonthDay =
+        nextRepeatFrequency === "monthly"
+          ? updates.repeatMonthDay ?? (updates.repeatMonthDays?.length ? updates.repeatMonthDays[0] : null)
+          : null;
+      db.prepare(
+        `UPDATE recurring_tasks
+         SET starts_on = ?, frequency = ?, interval_count = ?, repeat_weekdays = ?, repeat_month_day = ?,
+             repeat_month_days = ?, repeat_month_overflow = ?, repeat_year_months = ?, ends_on = ?,
+             duration = ?, time = ?, updated_at = ?
+         WHERE id = ? AND user_id = ?`,
+      ).run(
+        nextOccurrenceDate,
+        nextRepeatFrequency,
+        nextRepeatInterval,
+        nextRepeatFrequency === "weekly" ? serializeRepeatWeekdays(updates.repeatWeekdays) : "",
+        nextRepeatMonthDay,
+        nextRepeatFrequency === "monthly"
+          ? serializeRepeatMonthDays(updates.repeatMonthDays?.length ? updates.repeatMonthDays : nextRepeatMonthDay ? [nextRepeatMonthDay] : [])
+          : "",
+        nextRepeatFrequency === "monthly" ? updates.repeatMonthOverflow ?? "skip" : "skip",
+        nextRepeatFrequency === "yearly"
+          ? serializeRepeatYearMonths(updates.repeatYearMonths?.length ? updates.repeatYearMonths : [parseDateParts(nextOccurrenceDate).month - 1])
+          : "",
+        updates.repeatEndDate ?? null,
+        nextDuration,
+        nextTime,
+        now,
+        id,
+        userId,
+      );
+      deleteFutureMaterializedOccurrences(id, userId, todayDateKey(), true, true);
+      materializeRecurringEndBoundary(userId, updates.repeatEndDate);
+    } else {
+      const today = todayDateKey();
+      db.prepare(
+        `UPDATE recurring_tasks
+         SET ends_on = ?, updated_at = ?
+         WHERE id = ? AND user_id = ?`,
+      ).run(addDaysToDateKey(today, -1), now, id, userId);
+      deleteFutureMaterializedOccurrences(id, userId, today, true, true);
+
+      // No completed filter here: a preserved completed row on that date already
+      // represents the task — inserting another unchecked one-off would
+      // resurrect it as not done.
+      const duplicateOneOff = db
+        .prepare(
+          `SELECT id FROM task_occurrences
+           WHERE user_id = ? AND occurrence_date = ? AND source_kind = ? AND ${goalScheduleColumn(goalSourceKind)} = ?`,
+        )
+        .get(userId, nextOccurrenceDate, goalSourceKind, sourceId) as { id: string } | undefined;
+      if (!duplicateOneOff) {
+        const minPositionRow = db
+          .prepare("SELECT MIN(position) AS min_position FROM task_occurrences WHERE user_id = ? AND occurrence_date = ?")
+          .get(userId, nextOccurrenceDate) as { min_position: number | null };
+        db.prepare(
+          `INSERT INTO task_occurrences
+           (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
+            recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+        ).run(
+          newId(),
+          userId,
+          nextOccurrenceDate,
+          goalSourceKind,
+          rule.goal_id,
+          rule.goal_task_id,
+          rule.goal_subtask_id,
+          rule.title,
+          rule.priority,
+          rule.category,
+          nextDuration,
+          nextTime,
+          (minPositionRow.min_position ?? 1) - 1,
+          now,
+          now,
+        );
+      }
+    }
+  })();
+
+  checkpointDatabase();
+  return c.json(loadGoalLinkedSchedule(userId, goalSourceKind, sourceId), 200);
+});
+
 const createOccurrenceRoute = createRoute({
   method: "post",
   path: "/",
@@ -348,26 +657,26 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   const input = c.req.valid("json");
   const now = new Date().toISOString();
   const id = newId();
-  const repeatInterval =
-    input.sourceKind === "standalone" && input.repeatFrequency ? input.repeatInterval : 1;
+  const hasRepeat = Boolean(input.repeatFrequency);
+  const repeatInterval = hasRepeat ? input.repeatInterval : 1;
   const repeatWeekdays =
-    input.sourceKind === "standalone" && input.repeatFrequency === "weekly"
+    input.repeatFrequency === "weekly"
       ? serializeRepeatWeekdays(input.repeatWeekdays)
       : "";
   const repeatMonthDay =
-    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+    input.repeatFrequency === "monthly"
       ? input.repeatMonthDay
       : null;
   const repeatMonthDays =
-    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+    input.repeatFrequency === "monthly"
       ? serializeRepeatMonthDays(input.repeatMonthDays?.length ? input.repeatMonthDays : input.repeatMonthDay ? [input.repeatMonthDay] : [])
       : "";
   const repeatMonthOverflow =
-    input.sourceKind === "standalone" && input.repeatFrequency === "monthly"
+    input.repeatFrequency === "monthly"
       ? input.repeatMonthOverflow
       : "skip";
   const repeatYearMonths =
-    input.sourceKind === "standalone" && input.repeatFrequency === "yearly"
+    input.repeatFrequency === "yearly"
       ? serializeRepeatYearMonths(input.repeatYearMonths?.length ? input.repeatYearMonths : [parseDateParts(input.occurrenceDate).month - 1])
       : "";
 
@@ -381,11 +690,10 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   const position = (minPositionRow.min_position ?? 1) - 1;
 
   let row: OccurrenceRow;
+  let skipInitialOccurrence = false;
+  let responseOccurrenceId = id;
 
   if (input.sourceKind === "standalone") {
-    if (input.repeatEndDate && input.repeatEndDate < input.occurrenceDate) {
-      return c.json({ errors: { repeatEndDate: "End repeat must be on or after the start date." } }, 422);
-    }
     const recurringTaskId = input.repeatFrequency ? newId() : null;
     row = {
       id,
@@ -395,7 +703,7 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: null,
       goal_task_id: null,
       goal_subtask_id: null,
-      recurring_task_id: recurringTaskId,
+      recurring_task_id: hasRepeat ? recurringTaskId : null,
       title: input.title,
       priority: input.priority ?? null,
       category: input.category ?? "",
@@ -433,7 +741,11 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
          WHERE user_id = ? AND occurrence_date = ? AND goal_task_id = ? AND completed = 0`,
       )
       .get(userId, input.occurrenceDate, input.goalTaskId) as { id: string } | undefined;
-    if (existing) return c.json({ message: "Already added to this date." }, 409);
+    if (existing) {
+      if (!hasRepeat) return c.json({ message: "Already added to this date." }, 409);
+      skipInitialOccurrence = true;
+      responseOccurrenceId = existing.id;
+    }
 
     row = {
       id,
@@ -443,12 +755,12 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: gt.goal_id,
       goal_task_id: gt.id,
       goal_subtask_id: null,
-      recurring_task_id: null,
+      recurring_task_id: hasRepeat ? newId() : null,
       title: gt.title, // snapshot fallback
       priority: null,
       category: "",
-      duration: "",
-      time: "",
+      duration: normalizeTaskDurationValue(input.duration),
+      time: normalizeTaskTimeValue(input.time),
       completed: 0,
       position,
       created_at: now,
@@ -473,7 +785,11 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
          WHERE user_id = ? AND occurrence_date = ? AND goal_subtask_id = ? AND completed = 0`,
       )
       .get(userId, input.occurrenceDate, input.goalSubtaskId) as { id: string } | undefined;
-    if (existing) return c.json({ message: "Already added to this date." }, 409);
+    if (existing) {
+      if (!hasRepeat) return c.json({ message: "Already added to this date." }, 409);
+      skipInitialOccurrence = true;
+      responseOccurrenceId = existing.id;
+    }
 
     row = {
       id,
@@ -483,12 +799,12 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       goal_id: gs.parent_goal_id,
       goal_task_id: gs.goal_task_id,
       goal_subtask_id: gs.id,
-      recurring_task_id: null,
+      recurring_task_id: hasRepeat ? newId() : null,
       title: gs.title,
       priority: null,
       category: "",
-      duration: "",
-      time: "",
+      duration: normalizeTaskDurationValue(input.duration),
+      time: normalizeTaskTimeValue(input.time),
       completed: 0,
       position,
       created_at: now,
@@ -499,16 +815,35 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
   // For standalone occurrences we also persist the category to the user's
   // categories pool and optionally to the default_tasks templates pool —
   // these were features of the old /api/tasks endpoint and we keep them.
+  if (hasRepeat && input.repeatEndDate && input.repeatEndDate < input.occurrenceDate) {
+    return c.json({ errors: { repeatEndDate: "End repeat must be on or after the start date." } }, 422);
+  }
+
+  if (hasRepeat && input.repeatFrequency && input.sourceKind !== "standalone") {
+    const sourceId = input.sourceKind === "goal_task" ? input.goalTaskId : input.goalSubtaskId;
+    const existingRecurring = ensureNoActiveGoalRecurringRule(userId, input.sourceKind, sourceId);
+    if (existingRecurring) {
+      return c.json({ message: "This goal item already has a recurring schedule." }, 409);
+    }
+  }
+
   db.transaction(() => {
-    if (input.sourceKind === "standalone" && input.repeatFrequency && row.recurring_task_id) {
+    if (hasRepeat && input.repeatFrequency && row.recurring_task_id) {
       db.prepare(
         `INSERT INTO recurring_tasks
-         (id, user_id, starts_on, frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days, repeat_month_overflow, repeat_year_months, ends_on, title, priority, category, duration, time, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, user_id, starts_on, source_kind, goal_id, goal_task_id, goal_subtask_id,
+          frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days,
+          repeat_month_overflow, repeat_year_months, ends_on, title, priority, category,
+          duration, time, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         row.recurring_task_id,
         userId,
         input.occurrenceDate,
+        row.source_kind,
+        row.goal_id,
+        row.goal_task_id,
+        row.goal_subtask_id,
         input.repeatFrequency,
         repeatInterval,
         repeatWeekdays,
@@ -527,32 +862,34 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
       );
     }
 
-    db.prepare(
-      `INSERT INTO task_occurrences
-       (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
-        recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      row.id,
-      row.user_id,
-      row.occurrence_date,
-      row.source_kind,
-      row.goal_id,
-      row.goal_task_id,
-      row.goal_subtask_id,
-      row.recurring_task_id ?? null,
-      row.title,
-      row.priority,
-      row.category,
-      row.duration,
-      row.time,
-      row.completed,
-      row.position,
-      row.created_at,
-      row.updated_at,
-    );
+    if (!skipInitialOccurrence) {
+      db.prepare(
+        `INSERT INTO task_occurrences
+         (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
+          recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        row.id,
+        row.user_id,
+        row.occurrence_date,
+        row.source_kind,
+        row.goal_id,
+        row.goal_task_id,
+        row.goal_subtask_id,
+        row.recurring_task_id ?? null,
+        row.title,
+        row.priority,
+        row.category,
+        row.duration,
+        row.time,
+        row.completed,
+        row.position,
+        row.created_at,
+        row.updated_at,
+      );
+    }
 
-    if (input.sourceKind === "standalone") {
+    if (input.sourceKind === "standalone" && !skipInitialOccurrence) {
       saveTaskCategory(userId, row.category);
       if (input.saveToDefault) {
         db.prepare(
@@ -563,13 +900,13 @@ occurrenceRoutes.openapi(createOccurrenceRoute, (c) => {
     }
   })();
 
-  if (input.sourceKind === "standalone" && input.repeatFrequency) {
+  if (hasRepeat) {
     materializeRecurringEndBoundary(userId, input.repeatEndDate);
   }
 
   const fetched = db
     .prepare(`${SELECT_OCCURRENCES_WITH_RESOLVED} WHERE o.id = ? AND o.user_id = ?`)
-    .get(row.id, userId) as OccurrenceRow;
+    .get(responseOccurrenceId, userId) as OccurrenceRow;
   return c.json({ occurrence: toOccurrence(fetched) }, 201);
 });
 
@@ -604,7 +941,7 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
   const nextOccurrenceDate = updates.occurrenceDate ?? existing.occurrence_date;
   const nextTitle = !isGoalLinked && updates.title !== undefined ? updates.title : existing.title;
   const nextPriority = !isGoalLinked && updates.priority !== undefined ? updates.priority : existing.priority;
-  const nextCategory = updates.category !== undefined ? updates.category : existing.category;
+  const nextCategory = !isGoalLinked && updates.category !== undefined ? updates.category : existing.category;
   const nextDuration =
     updates.duration !== undefined
       ? normalizeTaskDurationValue(updates.duration)
@@ -675,7 +1012,7 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
 
     let nextRecurringTaskId = existing.recurring_task_id ?? null;
 
-    if (!isGoalLinked && hasRecurrenceUpdate) {
+    if (hasRecurrenceUpdate) {
       if (nextRepeatFrequency) {
         if (existing.recurring_task_id) {
           db.prepare(
@@ -704,19 +1041,24 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
             userId,
           );
           if (recurrenceScope === "series") {
-            deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false);
+            deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false, true);
           }
         } else {
           nextRecurringTaskId = newId();
           db.prepare(
             `INSERT INTO recurring_tasks
-             (id, user_id, starts_on, frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days,
+             (id, user_id, starts_on, source_kind, goal_id, goal_task_id, goal_subtask_id,
+              frequency, interval_count, repeat_weekdays, repeat_month_day, repeat_month_days,
               repeat_month_overflow, repeat_year_months, ends_on, title, priority, category, duration, time, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           ).run(
             nextRecurringTaskId,
             userId,
             nextOccurrenceDate,
+            existing.source_kind,
+            existing.goal_id,
+            existing.goal_task_id,
+            existing.goal_subtask_id,
             nextRepeatFrequency,
             nextRepeatInterval,
             nextRepeatWeekdays,
@@ -740,7 +1082,7 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
            SET ends_on = ?, updated_at = ?
            WHERE id = ? AND user_id = ?`,
         ).run(addDaysToDateKey(existing.occurrence_date, -1), now, existing.recurring_task_id, userId);
-        deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false);
+        deleteFutureMaterializedOccurrences(existing.recurring_task_id, userId, existing.occurrence_date, false, true);
         nextRecurringTaskId = null;
       } else if (existing.recurring_task_id) {
         db.prepare(
@@ -805,7 +1147,7 @@ occurrenceRoutes.openapi(updateOccurrenceRoute, (c) => {
     }
   })();
 
-  if (!isGoalLinked && hasRecurrenceUpdate && nextRepeatFrequency) {
+  if (hasRecurrenceUpdate && nextRepeatFrequency) {
     materializeRecurringEndBoundary(userId, updates.repeatEndDate);
   }
 
