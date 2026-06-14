@@ -18,18 +18,25 @@ export function FriendsPage() {
 
   return (
     <div className="friends-page">
-      <header className="ui-page-header">
+      <header className="friends-page__header">
         <div>
-          <h1 className="ui-page-header__title">Friends</h1>
-          <p className="ui-page-header__subtitle">Share goals and cheer each other on.</p>
+          <h1 className="tasks-title">Friends</h1>
+          <p className="friends-page__subtitle">Share goals and cheer each other on.</p>
         </div>
-        <div className="ui-page-header__actions">
+      </header>
+
+      <div className="friends-page__actions" aria-label="Friends summary actions">
+        <div className="friends-stat">
+          <strong>{list.length}</strong>
+          <span>{list.length === 1 ? "friend" : "friends"}</span>
+        </div>
+        {list.length > 0 ? (
           <button type="button" className="task-add" onClick={() => setShowAdd(true)}>
             <span aria-hidden="true">+</span>
             Add friend
           </button>
-        </div>
-      </header>
+        ) : null}
+      </div>
 
       {isEmpty ? (
         <div className="ui-empty friends-empty">
