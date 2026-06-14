@@ -26,7 +26,7 @@ export function FriendsPage() {
       </header>
 
       <div className="friends-page__actions" aria-label="Friends summary actions">
-        <div className="friends-stat">
+        <div className="goals-stat">
           <strong>{list.length}</strong>
           <span>{list.length === 1 ? "friend" : "friends"}</span>
         </div>

@@ -32,9 +32,9 @@
 }
 .friends-page__subtitle {
   max-width: 760px;
-  margin: var(--space-3) 0 0;
-  color: var(--c-text-secondary);
-  font: 600 var(--text-body-small-size) / var(--text-body-line) var(--font-base);
+  margin: 10px 0 0;
+  color: var(--app-empty-text);
+  font: 600 13px/1.45 var(--planner-font);
 }
 .friends-page__actions {
   display: flex;
@@ -42,25 +42,6 @@
   justify-content: space-between;
   gap: var(--space-3);
   margin: 0 0 var(--space-6);
-}
-.friends-stat {
-  display: grid;
-  place-items: center;
-  min-width: calc(var(--space-10) + var(--space-9));
-  height: calc(var(--space-10) + var(--space-3));
-  border-radius: var(--radius-lg);
-  background: var(--c-surface-soft);
-  box-shadow: var(--shadow-soft);
-}
-.friends-stat strong {
-  color: var(--c-text-primary);
-  font: 700 var(--text-section-title-size) / 1 var(--font-base);
-}
-.friends-stat span {
-  color: var(--c-text-muted);
-  font: var(--text-label-weight) var(--text-caption-size) / 1 var(--font-base);
-  letter-spacing: var(--text-label-tracking);
-  text-transform: uppercase;
 }
 .friends-list {
   list-style: none;

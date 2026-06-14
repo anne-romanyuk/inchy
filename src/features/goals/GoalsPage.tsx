@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -1183,6 +1183,10 @@ async function hasGoalItemFutureSchedule(kind: GoalOccurrenceDeleteDecision["kin
   return hasGoalLinkedFutureSchedule(schedule);
 }
 
+function GoalOccurrenceConfirmPortal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body);
+}
+
 function GoalCompletionScheduleConfirm({
   itemLabel,
   pending,
@@ -1197,32 +1201,34 @@ function GoalCompletionScheduleConfirm({
   onDeleteFuture: () => void;
 }) {
   return (
-    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm goal-completion-schedule-confirm" role="dialog" aria-modal="true" aria-label="Complete scheduled goal item">
-      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide">
-        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon goal-completion-schedule-confirm__icon" aria-hidden="true">
-          <CompleteIcon />
-        </div>
-        <div className="pomodoro-confirm__content">
-          <h3>Complete task?</h3>
-          <p>“{itemLabel}” has calendar occurrences. Remove future scheduled tasks?</p>
-        </div>
-        <div className="task-modal__recurrence-choice-list">
-          <button type="button" onClick={onDeleteFuture} disabled={pending}>
-            <strong>Delete future occurrences</strong>
-            <span>Keep earlier occurrences and completed tasks from today as history.</span>
-          </button>
-          <button type="button" onClick={onKeep} disabled={pending}>
-            <strong>Keep scheduled tasks</strong>
-            <span>Only mark this goal item as complete.</span>
-          </button>
-        </div>
-        <div className="task-modal__recurrence-confirm-actions">
-          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
-            Cancel
-          </button>
+    <GoalOccurrenceConfirmPortal>
+      <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm goal-completion-schedule-confirm" role="dialog" aria-modal="true" aria-label="Complete scheduled goal item">
+        <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide">
+          <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon goal-completion-schedule-confirm__icon" aria-hidden="true">
+            <CompleteIcon />
+          </div>
+          <div className="pomodoro-confirm__content">
+            <h3>Complete task?</h3>
+            <p>“{itemLabel}” has calendar occurrences. Remove future scheduled tasks?</p>
+          </div>
+          <div className="task-modal__recurrence-choice-list">
+            <button type="button" onClick={onDeleteFuture} disabled={pending}>
+              <strong>Delete future occurrences</strong>
+              <span>Keep earlier occurrences and completed tasks from today as history.</span>
+            </button>
+            <button type="button" onClick={onKeep} disabled={pending}>
+              <strong>Keep scheduled tasks</strong>
+              <span>Only mark this goal item as complete.</span>
+            </button>
+          </div>
+          <div className="task-modal__recurrence-confirm-actions">
+            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </GoalOccurrenceConfirmPortal>
   );
 }
 
@@ -1238,36 +1244,38 @@ function GoalOccurrenceDeleteConfirm({
   onPick: (action: GoalOccurrenceDeleteAction) => void;
 }) {
   return (
-    <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm" role="dialog" aria-modal="true" aria-label="Delete goal item occurrences">
-      <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide task-modal__recurrence-confirm-card--delete">
-        <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
-          <RepeatIcon />
-        </div>
-        <div className="pomodoro-confirm__content">
-          <h3>Delete scheduled goal task?</h3>
-          <p>“{itemLabel}” has calendar occurrences. Choose what should happen to them.</p>
-        </div>
-        <div className="task-modal__recurrence-choice-list">
-          <button type="button" onClick={() => onPick("delete-all")} disabled={pending}>
-            <strong>Delete all occurrences</strong>
-            <span>Remove every calendar task linked to this goal item.</span>
-          </button>
-          <button type="button" onClick={() => onPick("delete-future")} disabled={pending}>
-            <strong>Delete future occurrences</strong>
-            <span>Keep earlier occurrences and completed tasks from today as history.</span>
-          </button>
-          <button type="button" onClick={() => onPick("detach")} disabled={pending}>
-            <strong>Keep and unlink occurrences</strong>
-            <span>Turn them into regular calendar tasks.</span>
-          </button>
-        </div>
-        <div className="task-modal__recurrence-confirm-actions">
-          <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
-            Cancel
-          </button>
+    <GoalOccurrenceConfirmPortal>
+      <div className="pomodoro-confirm-overlay task-modal__recurrence-confirm goal-occurrence-delete-confirm" role="dialog" aria-modal="true" aria-label="Delete goal item occurrences">
+        <div className="pomodoro-confirm__card task-modal__recurrence-confirm-card task-modal__recurrence-confirm-card--wide task-modal__recurrence-confirm-card--delete">
+          <div className="pomodoro-confirm__icon task-modal__recurrence-confirm-icon" aria-hidden="true">
+            <RepeatIcon />
+          </div>
+          <div className="pomodoro-confirm__content">
+            <h3>Delete scheduled goal task?</h3>
+            <p>“{itemLabel}” has calendar occurrences. Choose what should happen to them.</p>
+          </div>
+          <div className="task-modal__recurrence-choice-list">
+            <button type="button" onClick={() => onPick("delete-all")} disabled={pending}>
+              <strong>Delete all occurrences</strong>
+              <span>Remove every calendar task linked to this goal item.</span>
+            </button>
+            <button type="button" onClick={() => onPick("delete-future")} disabled={pending}>
+              <strong>Delete future occurrences</strong>
+              <span>Keep earlier occurrences and completed tasks from today as history.</span>
+            </button>
+            <button type="button" onClick={() => onPick("detach")} disabled={pending}>
+              <strong>Keep and unlink occurrences</strong>
+              <span>Turn them into regular calendar tasks.</span>
+            </button>
+          </div>
+          <div className="task-modal__recurrence-confirm-actions">
+            <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={pending}>
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </GoalOccurrenceConfirmPortal>
   );
 }
 
