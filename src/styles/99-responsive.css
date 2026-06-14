@@ -723,6 +723,64 @@
     grid-template-columns: 1fr;
   }
 
+  .goal-starter__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-starter-card {
+    grid-template-columns: calc(var(--space-10) + var(--space-2)) minmax(0, 1fr) calc(var(--space-10) * 1.35) var(--space-6);
+  }
+
+  .goal-start-slot,
+  .goal-start-slot > .goal-starter,
+  .goal-start-slot > .goal-first-step,
+  .goal-first-step {
+    height: auto;
+    min-height: auto;
+  }
+
+  .goal-detail-page:has(.goal-first-step) {
+    height: auto;
+    min-height: auto;
+  }
+
+  .goal-first-step {
+    padding: var(--space-4);
+  }
+
+  .goal-first-step__header,
+  .goal-first-step__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .goal-first-step__choice {
+    flex-wrap: wrap;
+  }
+
+  .goal-first-step__composer {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-first-step__icon {
+    justify-self: center;
+  }
+
+  .goal-first-step__top-line {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+
+  .goal-first-step__tools,
+  .goal-first-step__date,
+  .goal-first-step__date .goal-date-picker__trigger,
+  .goal-first-step__tool,
+  .goal-first-step__submit.task-add,
+  .goal-first-step__cancel.pomodoro-btn {
+    width: 100%;
+    max-width: none;
+  }
+
   .goal-list-card__icon,
   .goal-list-card__chevron {
     display: none;
@@ -744,6 +802,16 @@
     left: 0;
     right: 0;
     max-width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .goal-first-step__top-line {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .goal-first-step__schedule {
+    grid-column: 2;
   }
 }
 
@@ -824,7 +892,7 @@
   }
 
   .goal-detail-workspace.has-task-editor .goal-detail-task__head {
-    grid-template-columns: 24px 34px minmax(160px, 1fr) 100px 110px 72px;
+    grid-template-columns: 24px 34px minmax(160px, 1fr) 100px 110px calc(var(--space-10) + var(--space-10) + var(--space-8)) 38px;
   }
 
   .goal-detail-workspace.has-task-editor .goal-detail-task.is-editing .goal-detail-task__actions {
@@ -859,7 +927,7 @@
   }
 
   .goal-detail-workspace.has-task-editor .goal-detail-task__head {
-    grid-template-columns: 24px 34px minmax(0, 1fr) 72px;
+    grid-template-columns: 24px 34px minmax(0, 1fr) calc(var(--space-10) + var(--space-10) + var(--space-8)) 38px;
   }
 
   .goal-detail-workspace.has-task-editor .goal-detail-task__deadline,

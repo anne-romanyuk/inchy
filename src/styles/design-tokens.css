@@ -65,6 +65,12 @@
   --c-focus: #bf95e6;
   --c-focus-soft: rgba(191, 149, 230, 0.35);
 
+  --field-control-bg: color-mix(in srgb, var(--c-surface-elevated) 88%, var(--c-text-on-accent));
+  --field-control-bg-active: color-mix(in srgb, var(--c-surface-elevated) 94%, var(--c-text-on-accent));
+  --field-control-border: color-mix(in srgb, var(--c-border) 70%, transparent);
+  --field-control-border-hover: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
+  --field-control-border-focus: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+
   /* --- Spacing scale ----------------------------------------------------- */
   --space-1: 4px;
   --space-2: 6px;
@@ -136,7 +142,7 @@
     18px 24px 42px -20px rgba(58, 58, 105, 0.32),
     0 0 0 1px rgba(255, 255, 255, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  --shadow-focus-ring: 0 0 0 3px var(--c-focus-soft);
+  --shadow-focus-ring: 0 0 0 1.5px var(--c-focus-soft);
 
   /* --- Motion ------------------------------------------------------------ */
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -242,7 +248,10 @@
   --c-info-soft: rgba(125, 150, 133, 0.15);
 
   --c-focus: #7e8f67;
-  --c-focus-soft: rgba(126, 143, 103, 0.34);
+  --c-focus-soft: rgba(126, 143, 103, 0.26);
+
+  --field-control-bg: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  --field-control-bg-active: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
 
   --shadow-soft:
     0 8px 18px -16px rgba(74, 64, 44, 0.22),

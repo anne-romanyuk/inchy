@@ -188,7 +188,7 @@
 }
 
 .history-task__check input[type="checkbox"]:disabled + label {
-  cursor: default;
+  cursor: not-allowed;
   opacity: 1;
   transform: none;
   transition: none;
@@ -241,9 +241,9 @@
   width: 100%;
   min-width: 0;
   height: var(--space-9);
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
   outline: none;
   font: 600 var(--text-body-small-size) / 1 var(--planner-font);
@@ -260,19 +260,25 @@
 }
 
 .history-task__field:hover,
-.history-task__field:focus,
 .history-task .task-modal__time-trigger:hover,
+.history-task .task-modal__duration-input:hover,
+.history-task__date-picker .goal-date-picker__trigger:hover,
+.history-task__category-picker .category-picker__input:hover {
+  border-color: var(--field-control-border-hover);
+  background: var(--field-control-bg-active);
+  box-shadow: none;
+}
+
+.history-task__field:focus,
 .history-task .task-modal__time-trigger:focus-visible,
 .history-task .task-modal__time-trigger[aria-expanded="true"],
-.history-task .task-modal__duration-input:hover,
 .history-task .task-modal__duration-input:focus-visible,
-.history-task__date-picker .goal-date-picker__trigger:hover,
 .history-task__date-picker .goal-date-picker__trigger:focus-visible,
 .history-task__date-picker .goal-date-picker__trigger[aria-expanded="true"],
-.history-task__category-picker .category-picker__input:hover,
 .history-task__category-picker .category-picker__input:focus-visible,
 .history-task__category-picker .category-picker__input[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--c-focus) 54%, var(--c-border));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 

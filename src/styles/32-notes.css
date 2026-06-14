@@ -495,7 +495,8 @@
   font: 600 var(--text-body-small-size) / 1 var(--font-base);
   text-align: left;
   cursor: pointer;
-  transition: background 160ms ease, color 160ms ease;
+  box-shadow: none;
+  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
 }
 .notes-card-menu__item svg {
   width: 16px;
@@ -504,6 +505,7 @@
 }
 .notes-card-menu__item:hover {
   background: var(--c-surface-soft);
+  box-shadow: inset 0 0 0 1px var(--c-border-soft);
   color: var(--c-text-primary);
 }
 .notes-card-menu__item--danger {
@@ -511,6 +513,7 @@
 }
 .notes-card-menu__item--danger:hover {
   background: color-mix(in srgb, var(--c-danger) 12%, transparent);
+  box-shadow: none;
   color: var(--c-danger);
 }
 /* Let the open menu escape the card's rounded clip (and overlap neighbours). */
@@ -1126,12 +1129,17 @@
 .notes-tools .notes-date-picker .goal-date-picker__trigger,
 .notes-tools .notes-filter-strip {
   min-height: calc(var(--space-10) + var(--space-1));
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  background: var(--field-control-bg);
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+.notes-tools .notes-search .ui-field__control:hover {
+  border-color: var(--field-control-border-hover);
+  background: var(--field-control-bg-active);
 }
 
 .notes-list-card,
@@ -1150,6 +1158,7 @@
 .notes-tools .notes-search .ui-field__control:focus-visible,
 .notes-tools .notes-date-picker .goal-date-picker__trigger:focus-visible,
 .notes-tools .notes-date-picker .goal-date-picker__trigger[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }

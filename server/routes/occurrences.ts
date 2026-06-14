@@ -593,43 +593,6 @@ occurrenceRoutes.openapi(updateGoalLinkedScheduleRoute, (c) => {
          WHERE id = ? AND user_id = ?`,
       ).run(addDaysToDateKey(today, -1), now, id, userId);
       deleteFutureMaterializedOccurrences(id, userId, today, true, true);
-
-      // No completed filter here: a preserved completed row on that date already
-      // represents the task — inserting another unchecked one-off would
-      // resurrect it as not done.
-      const duplicateOneOff = db
-        .prepare(
-          `SELECT id FROM task_occurrences
-           WHERE user_id = ? AND occurrence_date = ? AND source_kind = ? AND ${goalScheduleColumn(goalSourceKind)} = ?`,
-        )
-        .get(userId, nextOccurrenceDate, goalSourceKind, sourceId) as { id: string } | undefined;
-      if (!duplicateOneOff) {
-        const minPositionRow = db
-          .prepare("SELECT MIN(position) AS min_position FROM task_occurrences WHERE user_id = ? AND occurrence_date = ?")
-          .get(userId, nextOccurrenceDate) as { min_position: number | null };
-        db.prepare(
-          `INSERT INTO task_occurrences
-           (id, user_id, occurrence_date, source_kind, goal_id, goal_task_id, goal_subtask_id,
-            recurring_task_id, title, priority, category, duration, time, completed, position, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-        ).run(
-          newId(),
-          userId,
-          nextOccurrenceDate,
-          goalSourceKind,
-          rule.goal_id,
-          rule.goal_task_id,
-          rule.goal_subtask_id,
-          rule.title,
-          rule.priority,
-          rule.category,
-          nextDuration,
-          nextTime,
-          (minPositionRow.min_position ?? 1) - 1,
-          now,
-          now,
-        );
-      }
     }
   })();
 

@@ -35,6 +35,9 @@ Light / Dream / Moon (and the `dark` alias) are **deprecated** — do not build,
 
 `--c-background`, `--c-background-soft`, `--c-surface`, `--c-surface-soft`, `--c-surface-elevated`, `--c-border`, `--c-border-soft`, `--c-text-primary`, `--c-text-secondary`, `--c-text-muted`, `--c-text-on-accent`, `--c-accent`, `--c-accent-hover`, `--c-accent-soft`, `--c-accent-gradient`, `--c-danger`/`--c-danger-soft`, `--c-warning`/`--c-warning-soft`, `--c-success`/`--c-success-soft`, `--c-info`/`--c-info-soft`, `--c-focus`/`--c-focus-soft`.
 
+### Fields — `--field-control-bg`, `--field-control-bg-active`, `--field-control-border`, `--field-control-border-hover`, `--field-control-border-focus`
+Text inputs and textareas use the Today add-task title field pattern: soft cream fill, thin neutral border, slightly brighter hover, and a thin visible focus ring.
+
 | Use | Token |
 |---|---|
 | Primary action | `--c-accent-gradient` (fill), text `--c-text-on-accent` |
@@ -53,7 +56,7 @@ Light / Dream / Moon (and the `dark` alias) are **deprecated** — do not build,
 ### Typography — roles, not raw sizes:
 `--text-page-title-*`, `--text-page-subtitle-*`, `--text-section-title-*`, `--text-card-title-*`, `--text-item-title-*`, `--text-body-*`, `--text-body-small-*`, `--text-caption-*`, `--text-label-*` (uppercase tracked), `--text-button-*`, `--text-badge-*`.
 
-### Shadows — `--shadow-none | --shadow-soft | --shadow-medium | --shadow-elevated` + `--shadow-focus-ring`. No other box-shadows on cards.
+### Shadows — `--shadow-none | --shadow-soft | --shadow-medium | --shadow-elevated` + `--shadow-focus-ring`. Focus rings should read as a thin, visible highlight on fields. No other box-shadows on cards.
 
 ---
 
@@ -84,6 +87,8 @@ Structure is fixed: `__header` (`__title` + `__description`) → `__body` → `_
 
 ### Field — `.ui-field`
 `__label` + `__control` (input/textarea/select) + `__helper` / `__error`. Shared height, border, radius, focus ring, placeholder color, disabled & `.is-invalid` states.
+
+Disabled controls and fields must feel unavailable everywhere: use `cursor: not-allowed`, keep the muted disabled surface/text, and do not apply hover/focus activation styles while disabled.
 
 ### CategoryPicker — `CategoryPicker` + `.category-picker`
 Use the shared React component for every category selector or filter in tasks, notes, and plan. The field is always a neutral soft pill. Selected categories render inside the field as the same colored `.task-category` label used in task rows and calendar cards. Neutral values such as "No category" and "All categories" stay white/soft. Do not recreate category dropdowns per feature.

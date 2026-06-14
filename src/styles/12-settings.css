@@ -113,7 +113,7 @@
 .settings-menu__item:disabled {
   color: var(--c-text-muted);
   opacity: 0.55;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .settings-menu__icon {

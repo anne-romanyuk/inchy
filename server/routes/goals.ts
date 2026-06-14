@@ -6,14 +6,77 @@ import { requireUser, type AuthEnv } from "../middleware/auth";
 import { createApp } from "../openapi/hono";
 import {
   ErrorResponseSchema,
+  type GoalActor,
   GoalCreateInputSchema,
   GoalEnvelopeSchema,
+  type GoalMember,
   type GoalOccurrenceDeleteAction,
   type GoalOccurrenceDeleteDecision,
   GoalsEnvelopeSchema,
   GoalUpdateInputSchema,
   OkResponseSchema,
 } from "../../shared/schemas";
+
+type GoalRole = "owner" | "member";
+
+type ActorRow = { id: string; name: string; avatar_id: string | null; avatar_image: string | null };
+
+function actorFromRow(row: ActorRow): GoalActor {
+  return { id: row.id, name: row.name, avatarId: row.avatar_id, avatarImage: row.avatar_image ?? null };
+}
+
+// Owner of a goal, plus anyone who's an accepted member. Used for access checks.
+function getGoalAccess(userId: string, goalId: string): { goal: GoalRow; role: GoalRole } | null {
+  const goal = db.prepare("SELECT * FROM goals WHERE id = ?").get(goalId) as GoalRow | undefined;
+  if (!goal) return null;
+  if (goal.user_id === userId) return { goal, role: "owner" };
+  const member = db
+    .prepare("SELECT 1 FROM goal_members WHERE goal_id = ? AND user_id = ? AND status = 'accepted'")
+    .get(goalId, userId);
+  return member ? { goal, role: "member" } : null;
+}
+
+function loadActorsByIds(ids: Array<string | null | undefined>): Map<string, GoalActor> {
+  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  const map = new Map<string, GoalActor>();
+  if (unique.length === 0) return map;
+  const placeholders = unique.map(() => "?").join(",");
+  const rows = db
+    .prepare(`SELECT id, name, avatar_id, avatar_image FROM users WHERE id IN (${placeholders})`)
+    .all(...unique) as ActorRow[];
+  for (const row of rows) map.set(row.id, actorFromRow(row));
+  return map;
+}
+
+// Owner first, then accepted members — for the avatar stack on a shared goal.
+function loadGoalMembers(goal: GoalRow): GoalMember[] {
+  const members: GoalMember[] = [];
+  const owner = db
+    .prepare("SELECT id, name, avatar_id, avatar_image FROM users WHERE id = ?")
+    .get(goal.user_id) as ActorRow | undefined;
+  if (owner) members.push({ ...actorFromRow(owner), role: "owner", status: "accepted" });
+  const rows = db
+    .prepare(
+      `SELECT u.id, u.name, u.avatar_id, u.avatar_image, gm.status
+       FROM goal_members gm JOIN users u ON u.id = gm.user_id
+       WHERE gm.goal_id = ? AND gm.status IN ('accepted','pending')
+       ORDER BY (gm.status = 'accepted') DESC, u.name COLLATE NOCASE`,
+    )
+    .all(goal.id) as Array<ActorRow & { status: "accepted" | "pending" }>;
+  for (const row of rows) members.push({ ...actorFromRow(row), role: "member", status: row.status });
+  return members;
+}
+
+function loadGoalParticipantIds(goalId: string, fallbackUserId: string): string[] {
+  const rows = db
+    .prepare(
+      `SELECT user_id FROM goals WHERE id = ?
+       UNION
+       SELECT user_id FROM goal_members WHERE goal_id = ? AND status = 'accepted'`,
+    )
+    .all(goalId, goalId) as Array<{ user_id: string }>;
+  return [...new Set([fallbackUserId, ...rows.map((row) => row.user_id)])];
+}
 
 type GoalTaskInput = {
   id?: string;
@@ -76,13 +139,22 @@ const GoalIdParamSchema = z.object({
 });
 
 function readGoal(userId: string, id: string) {
-  const goal = db.prepare("SELECT * FROM goals WHERE id = ? AND user_id = ?").get(id, userId) as GoalRow | undefined;
-  if (!goal) return null;
+  const access = getGoalAccess(userId, id);
+  if (!access) return null;
+  const { goal, role } = access;
   const tasks = db
     .prepare("SELECT * FROM goal_tasks WHERE goal_id = ? ORDER BY position ASC, created_at ASC")
     .all(id) as GoalTaskRow[];
   const subtasks = loadSubtasksByTask(id);
-  return toGoal(goal, tasks, subtasks);
+
+  // Resolve "completed by" actors in one query (covers both tasks and subtasks).
+  const actorIds: Array<string | null | undefined> = [];
+  for (const task of tasks) actorIds.push(task.completed_by);
+  for (const bucket of subtasks.values()) for (const sub of bucket) actorIds.push(sub.completed_by);
+  const actorsById = loadActorsByIds(actorIds);
+  const members = loadGoalMembers(goal);
+
+  return toGoal(goal, tasks, subtasks, { actorsById, members, viewerRole: role, ownerId: goal.user_id });
 }
 
 function todayDateKey(now = new Date()) {
@@ -97,8 +169,8 @@ function todayDateKey(now = new Date()) {
  * that are about to be removed: flip them to `standalone`, drop the goal links,
  * and snapshot the live title. The occurrence is the user's actual record of
  * work — it may be completed on past days and have focus sessions attached — so
- * deleting a goal/task/subtask must NOT erase that history. Instead the Today
- * entry lives on as a plain standalone task.
+ * deleting a goal/task/subtask must NOT erase that history. Instead each
+ * participant's Today entry lives on as a plain standalone task.
  *
  * MUST run before the DELETE so the title subqueries still resolve. `column` is
  * a fixed whitelist (not user input), so the interpolation is safe.
@@ -108,14 +180,15 @@ function todayDateKey(now = new Date()) {
  * occurrences in one pass.
  */
 function detachOccurrencesByColumn(
-  userId: string,
+  userIds: string[],
   column: GoalOccurrenceDeleteColumn,
   ids: string[],
   now: string,
   options: { beforeDate?: string; completedOnDate?: string; clearRecurringTaskId?: boolean } = {},
 ) {
-  if (ids.length === 0) return;
+  if (ids.length === 0 || userIds.length === 0) return;
   const placeholders = ids.map(() => "?").join(",");
+  const userPlaceholders = userIds.map(() => "?").join(",");
   const datePredicates: string[] = [];
   const dateParams: string[] = [];
   if (options.beforeDate) {
@@ -141,18 +214,19 @@ function detachOccurrencesByColumn(
          goal_subtask_id = NULL,
          recurring_task_id = CASE WHEN ? THEN NULL ELSE recurring_task_id END,
          updated_at = ?
-     WHERE ${column} IN (${placeholders}) AND user_id = ?${dateClause}`,
-  ).run(options.clearRecurringTaskId ? 1 : 0, now, ...ids, userId, ...dateParams);
+     WHERE ${column} IN (${placeholders}) AND user_id IN (${userPlaceholders})${dateClause}`,
+  ).run(options.clearRecurringTaskId ? 1 : 0, now, ...ids, ...userIds, ...dateParams);
 }
 
 function detachRecurringTasksByColumn(
-  userId: string,
+  userIds: string[],
   column: GoalOccurrenceDeleteColumn,
   ids: string[],
   now: string,
 ) {
-  if (ids.length === 0) return;
+  if (ids.length === 0 || userIds.length === 0) return;
   const placeholders = ids.map(() => "?").join(",");
+  const userPlaceholders = userIds.map(() => "?").join(",");
   db.prepare(
     `UPDATE recurring_tasks
      SET title = CASE source_kind
@@ -166,52 +240,59 @@ function detachRecurringTasksByColumn(
          goal_task_id = NULL,
          goal_subtask_id = NULL,
          updated_at = ?
-     WHERE ${column} IN (${placeholders}) AND user_id = ?`,
-  ).run(now, ...ids, userId);
+     WHERE ${column} IN (${placeholders}) AND user_id IN (${userPlaceholders})`,
+  ).run(now, ...ids, ...userIds);
 }
 
 function countGoalItemOccurrences(
-  userId: string,
+  userIds: string[],
   column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
   id: string,
 ) {
+  if (userIds.length === 0) return 0;
+  const userPlaceholders = userIds.map(() => "?").join(",");
   const occurrenceRow = db
-    .prepare(`SELECT COUNT(*) AS n FROM task_occurrences WHERE user_id = ? AND ${column} = ?`)
-    .get(userId, id) as { n: number };
+    .prepare(`SELECT COUNT(*) AS n FROM task_occurrences WHERE user_id IN (${userPlaceholders}) AND ${column} = ?`)
+    .get(...userIds, id) as { n: number };
   const recurringRow = db
-    .prepare(`SELECT COUNT(*) AS n FROM recurring_tasks WHERE user_id = ? AND ${column} = ?`)
-    .get(userId, id) as { n: number };
+    .prepare(`SELECT COUNT(*) AS n FROM recurring_tasks WHERE user_id IN (${userPlaceholders}) AND ${column} = ?`)
+    .get(...userIds, id) as { n: number };
   return occurrenceRow.n + recurringRow.n;
 }
 
 function deleteGoalLinkedOccurrencesByColumn(
-  userId: string,
+  userIds: string[],
   column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
   ids: string[],
   dateClause: "all" | "future",
   today: string,
 ) {
-  if (ids.length === 0) return;
+  if (ids.length === 0 || userIds.length === 0) return;
   const placeholders = ids.map(() => "?").join(",");
+  const userPlaceholders = userIds.map(() => "?").join(",");
   const occurrenceDateClause = dateClause === "future" ? " AND (occurrence_date > ? OR (occurrence_date = ? AND completed = 0))" : "";
   db.prepare(
     `DELETE FROM task_occurrences
-     WHERE user_id = ? AND ${column} IN (${placeholders})${occurrenceDateClause}`,
-  ).run(userId, ...ids, ...(dateClause === "future" ? [today, today] : []));
+     WHERE user_id IN (${userPlaceholders}) AND ${column} IN (${placeholders})${occurrenceDateClause}`,
+  ).run(...userIds, ...ids, ...(dateClause === "future" ? [today, today] : []));
 }
 
 function deleteRecurringTasksByColumn(
-  userId: string,
+  userIds: string[],
   column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
   ids: string[],
 ) {
-  if (ids.length === 0) return;
+  if (ids.length === 0 || userIds.length === 0) return;
   const placeholders = ids.map(() => "?").join(",");
-  db.prepare(`DELETE FROM recurring_tasks WHERE user_id = ? AND ${column} IN (${placeholders})`).run(userId, ...ids);
+  const userPlaceholders = userIds.map(() => "?").join(",");
+  db.prepare(`DELETE FROM recurring_tasks WHERE user_id IN (${userPlaceholders}) AND ${column} IN (${placeholders})`).run(
+    ...userIds,
+    ...ids,
+  );
 }
 
 function applyGoalItemOccurrenceDeleteAction(
-  userId: string,
+  userIds: string[],
   column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
   ids: string[],
   action: GoalOccurrenceDeleteAction,
@@ -220,26 +301,26 @@ function applyGoalItemOccurrenceDeleteAction(
 ) {
   if (ids.length === 0) return;
   if (action === "detach") {
-    detachOccurrencesByColumn(userId, column, ids, now);
-    detachRecurringTasksByColumn(userId, column, ids, now);
+    detachOccurrencesByColumn(userIds, column, ids, now);
+    detachRecurringTasksByColumn(userIds, column, ids, now);
     return;
   }
   if (action === "delete-future") {
-    detachOccurrencesByColumn(userId, column, ids, now, {
+    detachOccurrencesByColumn(userIds, column, ids, now, {
       beforeDate: today,
       completedOnDate: today,
       clearRecurringTaskId: true,
     });
-    deleteGoalLinkedOccurrencesByColumn(userId, column, ids, "future", today);
-    deleteRecurringTasksByColumn(userId, column, ids);
+    deleteGoalLinkedOccurrencesByColumn(userIds, column, ids, "future", today);
+    deleteRecurringTasksByColumn(userIds, column, ids);
     return;
   }
-  deleteGoalLinkedOccurrencesByColumn(userId, column, ids, "all", today);
-  deleteRecurringTasksByColumn(userId, column, ids);
+  deleteGoalLinkedOccurrencesByColumn(userIds, column, ids, "all", today);
+  deleteRecurringTasksByColumn(userIds, column, ids);
 }
 
 function requireOrApplyGoalItemOccurrenceAction(
-  userId: string,
+  userIds: string[],
   kind: GoalOccurrenceDeleteKind,
   column: Exclude<GoalOccurrenceDeleteColumn, "goal_id">,
   id: string,
@@ -247,10 +328,10 @@ function requireOrApplyGoalItemOccurrenceAction(
   now: string,
   today: string,
 ) {
-  if (countGoalItemOccurrences(userId, column, id) === 0) return;
+  if (countGoalItemOccurrences(userIds, column, id) === 0) return;
   const action = decisions.get(decisionKey(kind, id));
   if (!action) throw new GoalOccurrencesDecisionRequiredError(kind, id);
-  applyGoalItemOccurrenceDeleteAction(userId, column, [id], action, now, today);
+  applyGoalItemOccurrenceDeleteAction(userIds, column, [id], action, now, today);
 }
 
 function goalOccurrenceDecisionColumn(kind: GoalOccurrenceDeleteKind): Exclude<GoalOccurrenceDeleteColumn, "goal_id"> {
@@ -274,7 +355,7 @@ function goalOccurrenceDecisionBelongsToGoal(goalId: string, decision: GoalOccur
 }
 
 function applyExplicitGoalOccurrenceDeleteDecisions(
-  userId: string,
+  userIds: string[],
   goalId: string,
   decisions: GoalOccurrenceDeleteDecision[] | undefined,
   now: string,
@@ -283,7 +364,7 @@ function applyExplicitGoalOccurrenceDeleteDecisions(
   for (const decision of decisions ?? []) {
     if (!goalOccurrenceDecisionBelongsToGoal(goalId, decision)) continue;
     applyGoalItemOccurrenceDeleteAction(
-      userId,
+      userIds,
       goalOccurrenceDecisionColumn(decision.kind),
       [decision.id],
       decision.action,
@@ -302,7 +383,7 @@ function applyExplicitGoalOccurrenceDeleteDecisions(
  * tasks.  This diff approach keeps the goal_task / goal_subtask rows alive
  * for items whose id was reused and only deletes the ones the client truly
  * dropped.  For those truly-dropped items we DETACH their occurrences to
- * standalone first (see `detachOccurrencesByColumn`) so the user's Today
+ * standalone first (see `detachOccurrencesByColumn`) so participants' Today
  * entries and history survive even a deletion.
  *
  * It also enforces the "first subtask appears → reassign open parent
@@ -319,10 +400,12 @@ function replaceGoalTasks(
   occurrenceDeleteDecisions: GoalOccurrenceDeleteDecisionMap = new Map(),
 ) {
   const today = todayDateKey();
+  const occurrenceUserIds = loadGoalParticipantIds(goalId, userId);
   const existingTasks = db
-    .prepare("SELECT id FROM goal_tasks WHERE goal_id = ?")
-    .all(goalId) as Array<{ id: string }>;
+    .prepare("SELECT id, status, completed_by, completed_at FROM goal_tasks WHERE goal_id = ?")
+    .all(goalId) as Array<{ id: string; status: string; completed_by: string | null; completed_at: string | null }>;
   const existingTaskIds = new Set(existingTasks.map((t) => t.id));
+  const existingTaskById = new Map(existingTasks.map((t) => [t.id, t]));
 
   const seenTaskIds = new Set<string>();
   const taskInsertsOrUpdates: Array<{
@@ -345,7 +428,7 @@ function replaceGoalTasks(
   if (toDelete.length > 0) {
     for (const taskId of toDelete) {
       requireOrApplyGoalItemOccurrenceAction(
-        userId,
+        occurrenceUserIds,
         "goal_task",
         "goal_task_id",
         taskId,
@@ -360,22 +443,22 @@ function replaceGoalTasks(
 
   const insertTask = db.prepare(
     `INSERT INTO goal_tasks
-     (id, goal_id, position, title, status, deadline, icon_id, note, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, goal_id, position, title, status, deadline, icon_id, note, completed_by, completed_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const updateTask = db.prepare(
     `UPDATE goal_tasks
-     SET position = ?, title = ?, status = ?, deadline = ?, icon_id = ?, note = ?, updated_at = ?
+     SET position = ?, title = ?, status = ?, deadline = ?, icon_id = ?, note = ?, completed_by = ?, completed_at = ?, updated_at = ?
      WHERE id = ?`,
   );
   const insertSubtask = db.prepare(
     `INSERT INTO goal_subtasks
-     (id, goal_task_id, position, title, completed, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     (id, goal_task_id, position, title, completed, completed_by, completed_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const updateSubtask = db.prepare(
     `UPDATE goal_subtasks
-     SET position = ?, title = ?, completed = ?, updated_at = ?
+     SET position = ?, title = ?, completed = ?, completed_by = ?, completed_at = ?, updated_at = ?
      WHERE id = ?`,
   );
 
@@ -388,6 +471,21 @@ function replaceGoalTasks(
         : Boolean(task.completed);
     const status = derivedCompleted ? "done" : "pending";
 
+    // Attribution: stamp completed_by/at on the pending→done transition, keep it
+    // while it stays done, clear it when reopened.
+    const prevTask = existingTaskById.get(taskId);
+    let taskCompletedBy: string | null = null;
+    let taskCompletedAt: string | null = null;
+    if (status === "done") {
+      if (prevTask && prevTask.status === "done") {
+        taskCompletedBy = prevTask.completed_by;
+        taskCompletedAt = prevTask.completed_at;
+      } else {
+        taskCompletedBy = userId;
+        taskCompletedAt = now;
+      }
+    }
+
     if (isNew) {
       insertTask.run(
         taskId,
@@ -398,6 +496,8 @@ function replaceGoalTasks(
         task.deadline || null,
         task.iconId || null,
         task.note ?? null,
+        taskCompletedBy,
+        taskCompletedAt,
         now,
         now,
       );
@@ -409,6 +509,8 @@ function replaceGoalTasks(
         task.deadline || null,
         task.iconId || null,
         task.note ?? null,
+        taskCompletedBy,
+        taskCompletedAt,
         now,
         taskId,
       );
@@ -416,9 +518,10 @@ function replaceGoalTasks(
 
     // Diff subtasks for this task.
     const existingSubRows = db
-      .prepare("SELECT id FROM goal_subtasks WHERE goal_task_id = ?")
-      .all(taskId) as Array<{ id: string }>;
+      .prepare("SELECT id, completed, completed_by, completed_at FROM goal_subtasks WHERE goal_task_id = ?")
+      .all(taskId) as Array<{ id: string; completed: number; completed_by: string | null; completed_at: string | null }>;
     const existingSubIds = new Set(existingSubRows.map((s) => s.id));
+    const existingSubById = new Map(existingSubRows.map((s) => [s.id, s]));
     const wasEmpty = existingSubIds.size === 0;
 
     const seenSubIds = new Set<string>();
@@ -427,10 +530,23 @@ function replaceGoalTasks(
       const subId = sub.id && existingSubIds.has(sub.id) ? sub.id : newId();
       seenSubIds.add(subId);
       subIdInOrder.push(subId);
+      const done = sub.completed ? 1 : 0;
+      const prevSub = existingSubById.get(subId);
+      let subCompletedBy: string | null = null;
+      let subCompletedAt: string | null = null;
+      if (done) {
+        if (prevSub && prevSub.completed === 1) {
+          subCompletedBy = prevSub.completed_by;
+          subCompletedAt = prevSub.completed_at;
+        } else {
+          subCompletedBy = userId;
+          subCompletedAt = now;
+        }
+      }
       if (existingSubIds.has(subId)) {
-        updateSubtask.run(subIndex, sub.title, sub.completed ? 1 : 0, now, subId);
+        updateSubtask.run(subIndex, sub.title, done, subCompletedBy, subCompletedAt, now, subId);
       } else {
-        insertSubtask.run(subId, taskId, subIndex, sub.title, sub.completed ? 1 : 0, now, now);
+        insertSubtask.run(subId, taskId, subIndex, sub.title, done, subCompletedBy, subCompletedAt, now, now);
       }
     });
 
@@ -438,7 +554,7 @@ function replaceGoalTasks(
     if (subsToDelete.length > 0) {
       for (const subtaskId of subsToDelete) {
         requireOrApplyGoalItemOccurrenceAction(
-          userId,
+          occurrenceUserIds,
           "goal_subtask",
           "goal_subtask_id",
           subtaskId,
@@ -460,19 +576,20 @@ function replaceGoalTasks(
           "SELECT goal_subtasks.title AS title FROM goal_subtasks WHERE id = ?",
         )
         .get(firstSubId) as { title: string } | undefined;
+      const userPlaceholders = occurrenceUserIds.map(() => "?").join(",");
       db.prepare(
         `UPDATE task_occurrences
          SET source_kind = 'goal_subtask',
              goal_subtask_id = ?,
              title = ?,
              updated_at = ?
-         WHERE user_id = ? AND goal_task_id = ? AND source_kind = 'goal_task' AND completed = 0`,
-      ).run(firstSubId, subRow?.title ?? task.title, now, userId, taskId);
+         WHERE user_id IN (${userPlaceholders}) AND goal_task_id = ? AND source_kind = 'goal_task' AND completed = 0`,
+      ).run(firstSubId, subRow?.title ?? task.title, now, ...occurrenceUserIds, taskId);
     }
   }
 
   applyExplicitGoalOccurrenceDeleteDecisions(
-    userId,
+    occurrenceUserIds,
     goalId,
     [...occurrenceDeleteDecisions].map(([key, action]) => {
       const [kind, id] = key.split(":") as [GoalOccurrenceDeleteKind, string];
@@ -496,34 +613,38 @@ const listGoalsRoute = createRoute({
 
 goalRoutes.openapi(listGoalsRoute, (c) => {
   const userId = c.get("userId");
-  const rows = db
-    .prepare("SELECT * FROM goals WHERE user_id = ? AND status != 'archived' ORDER BY deadline IS NULL, deadline ASC, created_at DESC")
-    .all(userId) as GoalRow[];
-  const stageRows = db
-    .prepare(`SELECT goal_tasks.* FROM goal_tasks JOIN goals ON goals.id = goal_tasks.goal_id WHERE goals.user_id = ? ORDER BY goal_tasks.position ASC, goal_tasks.created_at ASC`)
-    .all(userId) as GoalTaskRow[];
-  const stagesByGoal = new Map<string, GoalTaskRow[]>();
-  for (const stage of stageRows) {
-    const bucket = stagesByGoal.get(stage.goal_id) ?? [];
-    bucket.push(stage);
-    stagesByGoal.set(stage.goal_id, bucket);
-  }
-  const subtaskRows = db
-    .prepare(
-      `SELECT goal_subtasks.* FROM goal_subtasks
-       JOIN goal_tasks ON goal_tasks.id = goal_subtasks.goal_task_id
-       JOIN goals ON goals.id = goal_tasks.goal_id
-       WHERE goals.user_id = ?
-       ORDER BY goal_subtasks.position ASC, goal_subtasks.created_at ASC`,
-    )
-    .all(userId) as GoalSubtaskRow[];
-  const subtasksByTask = new Map<string, GoalSubtaskRow[]>();
-  for (const sub of subtaskRows) {
-    const bucket = subtasksByTask.get(sub.goal_task_id) ?? [];
-    bucket.push(sub);
-    subtasksByTask.set(sub.goal_task_id, bucket);
-  }
-  return c.json({ goals: rows.map((row) => toGoal(row, stagesByGoal.get(row.id) ?? [], subtasksByTask)) }, 200);
+  // Goals the user owns, plus shared goals they've accepted into. readGoal
+  // resolves members + "completed by" per goal (goal counts are small).
+  const ownerIds = (
+    db.prepare("SELECT id FROM goals WHERE user_id = ? AND status != 'archived'").all(userId) as Array<{ id: string }>
+  ).map((r) => r.id);
+  const memberIds = (
+    db
+      .prepare(
+        `SELECT g.id FROM goals g
+         JOIN goal_members gm ON gm.goal_id = g.id
+         WHERE gm.user_id = ? AND gm.status = 'accepted' AND g.status != 'archived'`,
+      )
+      .all(userId) as Array<{ id: string }>
+  ).map((r) => r.id);
+
+  const ids = [...new Set([...ownerIds, ...memberIds])];
+  const goals = ids.map((id) => readGoal(userId, id)).filter((g): g is NonNullable<typeof g> => g !== null);
+
+  // Preserve the previous ordering: nearest deadline first (nulls last), then
+  // newest created first.
+  goals.sort((a, b) => {
+    if (a.deadline && b.deadline) {
+      if (a.deadline !== b.deadline) return a.deadline < b.deadline ? -1 : 1;
+    } else if (a.deadline && !b.deadline) {
+      return -1;
+    } else if (!a.deadline && b.deadline) {
+      return 1;
+    }
+    return a.createdAt < b.createdAt ? 1 : -1;
+  });
+
+  return c.json({ goals }, 200);
 });
 
 const createGoalRoute = createRoute({
@@ -576,19 +697,26 @@ goalRoutes.openapi(updateGoalRoute, (c) => {
   const userId = c.get("userId");
   const { id } = c.req.valid("param");
   const input = c.req.valid("json");
-  const existing = db.prepare("SELECT * FROM goals WHERE id = ? AND user_id = ?").get(id, userId) as GoalRow | undefined;
-  if (!existing) return c.json({ message: "Goal not found." }, 404);
+  const access = getGoalAccess(userId, id);
+  if (!access) return c.json({ message: "Goal not found." }, 404);
+  const existing = access.goal;
   const now = new Date().toISOString();
+
   try {
     db.transaction(() => {
-      db.prepare("UPDATE goals SET title = ?, deadline = ?, icon_id = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(
-        input.title ?? existing.title,
-        input.deadline !== undefined ? input.deadline : existing.deadline,
-        input.iconId !== undefined ? input.iconId : existing.icon_id ?? null,
-        now,
-        id,
-        userId,
-      );
+      // Members are content admins: they can fully edit tasks/subtasks/notes.
+      // Goal metadata (title/dates/icon) stays owner-only for now — finer-grained
+      // permissions come later.
+      if (access.role === "owner") {
+        db.prepare("UPDATE goals SET title = ?, deadline = ?, icon_id = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(
+          input.title ?? existing.title,
+          input.deadline !== undefined ? input.deadline : existing.deadline,
+          input.iconId !== undefined ? input.iconId : existing.icon_id ?? null,
+          now,
+          id,
+          userId,
+        );
+      }
       if (input.tasks) {
         replaceGoalTasks(userId, id, input.tasks, now, buildOccurrenceDeleteDecisionMap(input.occurrenceDeleteDecisions));
       }
@@ -629,14 +757,152 @@ goalRoutes.openapi(deleteGoalRoute, (c) => {
   let deleted = false;
   db.transaction(() => {
     // Detach this goal's occurrences to standalone first so deleting the goal
-    // doesn't cascade away the user's Today entries / past-day history. All
+    // doesn't cascade away participants' Today entries / past-day history. All
     // goal-linked occurrences carry goal_id, so this one pass covers them.
-    detachOccurrencesByColumn(userId, "goal_id", [id], now);
-    detachRecurringTasksByColumn(userId, "goal_id", [id], now);
+    const occurrenceUserIds = loadGoalParticipantIds(id, userId);
+    detachOccurrencesByColumn(occurrenceUserIds, "goal_id", [id], now);
+    detachRecurringTasksByColumn(occurrenceUserIds, "goal_id", [id], now);
     const info = db.prepare("DELETE FROM goals WHERE id = ? AND user_id = ?").run(id, userId);
     deleted = info.changes > 0;
   })();
   if (!deleted) return c.json({ message: "Goal not found." }, 404);
+  checkpointDatabase();
+  return c.json({ ok: true as const }, 200);
+});
+
+// ---------------------------------------------------------------------------
+// Sharing — owner invites a friend; the friend accepts/declines from Goals.
+// Plain Hono handlers (no OpenAPI boilerplate); static `/requests` segment is
+// matched ahead of the `/:id` param routes by the router.
+// ---------------------------------------------------------------------------
+
+function areFriends(a: string, b: string): boolean {
+  const row = db
+    .prepare(
+      `SELECT 1 FROM friendships
+       WHERE status = 'accepted'
+         AND ((requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?))`,
+    )
+    .get(a, b, b, a);
+  return Boolean(row);
+}
+
+// Incoming, not-yet-answered goal-share invites for the current user.
+goalRoutes.get("/requests", (c) => {
+  const userId = c.get("userId");
+  const rows = db
+    .prepare(
+      `SELECT g.id AS goalId, g.title AS title, g.icon_id AS iconId,
+              u.id AS ownerId, u.name AS ownerName, u.avatar_id AS ownerAvatarId, u.avatar_image AS ownerAvatarImage,
+              gm.created_at AS invitedAt
+       FROM goal_members gm
+       JOIN goals g ON g.id = gm.goal_id
+       JOIN users u ON u.id = g.user_id
+       WHERE gm.user_id = ? AND gm.status = 'pending' AND g.status != 'archived'
+       ORDER BY gm.created_at DESC`,
+    )
+    .all(userId) as Array<{
+    goalId: string;
+    title: string;
+    iconId: string | null;
+    ownerId: string;
+    ownerName: string;
+    ownerAvatarId: string | null;
+    ownerAvatarImage: string | null;
+    invitedAt: string;
+  }>;
+
+  const requests = rows.map((r) => ({
+    goalId: r.goalId,
+    title: r.title,
+    iconId: r.iconId ?? null,
+    owner: { id: r.ownerId, name: r.ownerName, avatarId: r.ownerAvatarId, avatarImage: r.ownerAvatarImage ?? null },
+    taskCount: (db.prepare("SELECT COUNT(*) AS n FROM goal_tasks WHERE goal_id = ?").get(r.goalId) as { n: number }).n,
+    invitedAt: r.invitedAt,
+  }));
+
+  return c.json({ requests }, 200);
+});
+
+goalRoutes.post("/requests/:id/accept", (c) => {
+  const userId = c.get("userId");
+  const goalId = c.req.param("id");
+  const now = new Date().toISOString();
+  const info = db
+    .prepare("UPDATE goal_members SET status = 'accepted', updated_at = ? WHERE goal_id = ? AND user_id = ? AND status = 'pending'")
+    .run(now, goalId, userId);
+  if (info.changes === 0) return c.json({ message: "Request not found." }, 404);
+  checkpointDatabase();
+  return c.json({ goal: readGoal(userId, goalId)! }, 200);
+});
+
+goalRoutes.post("/requests/:id/decline", (c) => {
+  const userId = c.get("userId");
+  const goalId = c.req.param("id");
+  const now = new Date().toISOString();
+  const info = db
+    .prepare("UPDATE goal_members SET status = 'declined', updated_at = ? WHERE goal_id = ? AND user_id = ? AND status = 'pending'")
+    .run(now, goalId, userId);
+  if (info.changes === 0) return c.json({ message: "Request not found." }, 404);
+  checkpointDatabase();
+  return c.json({ ok: true as const }, 200);
+});
+
+// Owner shares a goal with a friend → pending membership + flips goal to 'pool'.
+goalRoutes.post("/:id/share", async (c) => {
+  const userId = c.get("userId");
+  const goalId = c.req.param("id");
+  const goal = db.prepare("SELECT * FROM goals WHERE id = ? AND user_id = ?").get(goalId, userId) as GoalRow | undefined;
+  if (!goal) return c.json({ message: "Goal not found." }, 404);
+
+  const body = (await c.req.json().catch(() => null)) as { friendId?: string } | null;
+  const friendId = body?.friendId?.trim();
+  if (!friendId) return c.json({ message: "friendId is required." }, 422);
+  if (friendId === userId) return c.json({ message: "You can't share a goal with yourself." }, 400);
+  if (!areFriends(userId, friendId)) return c.json({ message: "You can only share goals with friends." }, 400);
+
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    db.prepare("UPDATE goals SET share_mode = 'pool', updated_at = ? WHERE id = ?").run(now, goalId);
+    const existing = db
+      .prepare("SELECT id, status FROM goal_members WHERE goal_id = ? AND user_id = ?")
+      .get(goalId, friendId) as { id: string; status: string } | undefined;
+    if (!existing) {
+      db.prepare(
+        `INSERT INTO goal_members (id, goal_id, user_id, role, status, invited_by, created_at, updated_at)
+         VALUES (?, ?, ?, 'member', 'pending', ?, ?, ?)`,
+      ).run(newId(), goalId, friendId, userId, now, now);
+    } else if (existing.status === "declined") {
+      // Re-invite someone who previously declined.
+      db.prepare("UPDATE goal_members SET status = 'pending', invited_by = ?, updated_at = ? WHERE id = ?").run(
+        userId,
+        now,
+        existing.id,
+      );
+    }
+    // pending / accepted: leave as-is (idempotent re-share).
+  })();
+  checkpointDatabase();
+  return c.json({ goal: readGoal(userId, goalId)! }, 200);
+});
+
+// Owner removes a member, or a member leaves a shared goal (targetId === self).
+goalRoutes.delete("/:id/members/:memberId", (c) => {
+  const userId = c.get("userId");
+  const goalId = c.req.param("id");
+  const targetId = c.req.param("memberId");
+  const goal = db.prepare("SELECT * FROM goals WHERE id = ?").get(goalId) as GoalRow | undefined;
+  if (!goal) return c.json({ message: "Goal not found." }, 404);
+  const isOwner = goal.user_id === userId;
+  if (!isOwner && targetId !== userId) return c.json({ message: "Not allowed." }, 403);
+
+  db.transaction(() => {
+    db.prepare("DELETE FROM goal_members WHERE goal_id = ? AND user_id = ?").run(goalId, targetId);
+    const remaining = db
+      .prepare("SELECT COUNT(*) AS n FROM goal_members WHERE goal_id = ? AND status = 'accepted'")
+      .get(goalId) as { n: number };
+    if (remaining.n === 0) db.prepare("UPDATE goals SET share_mode = 'personal' WHERE id = ?").run(goalId);
+  })();
   checkpointDatabase();
   return c.json({ ok: true as const }, 200);
 });

@@ -290,13 +290,7 @@ function TaskListItem({
           label={`Focus on ${task.title}`}
           onClick={onToggleFocus}
         />
-        {task.sourceKind === "standalone" ? (
-          <ActionIcon type="edit" label={`Edit ${task.title}`} onClick={onStartEdit} />
-        ) : (
-          // Goal-linked occurrences are not editable here — their title
-          // comes from the underlying goal_task / goal_subtask.
-          <span className="task-action--ghost" aria-hidden="true" />
-        )}
+        <ActionIcon type="edit" label={`Edit ${task.title}`} onClick={onStartEdit} />
       </>
     </Reorder.Item>
   );
@@ -475,16 +469,21 @@ export function TodayPage() {
   };
 
   const editingTask = useMemo(
-    () => tasks.find((task) => task.id === editingTaskId && task.sourceKind === "standalone") ?? null,
+    () => tasks.find((task) => task.id === editingTaskId) ?? null,
     [editingTaskId, tasks],
   );
+  const editingTaskGoalTitle = useMemo(
+    () => (editingTask?.sourceKind !== "standalone" && editingTask?.goalId ? goalTitleById.get(editingTask.goalId) ?? "" : ""),
+    [editingTask, goalTitleById],
+  );
+  const editingTaskIsGoalLinked = Boolean(editingTask && editingTask.sourceKind !== "standalone");
 
   const editingTaskData = useMemo(
     () =>
       editingTask
         ? {
             title: editingTask.title,
-            category: editingTask.category,
+            category: editingTaskIsGoalLinked ? editingTaskGoalTitle : editingTask.category,
             duration: editingTask.duration,
             time: editingTask.time,
             recurringTaskId: editingTask.recurringTaskId,
@@ -497,7 +496,7 @@ export function TodayPage() {
             repeatEndDate: editingTask.repeatEndDate,
           }
         : undefined,
-    [editingTask],
+    [editingTask, editingTaskGoalTitle, editingTaskIsGoalLinked],
   );
 
   const activeFocusTask = useMemo(
@@ -677,13 +676,18 @@ export function TodayPage() {
                 variant="dialog"
                 editingTask={editingTaskData}
                 editingDate={today}
+                lockedFields={editingTaskIsGoalLinked ? { title: true, category: true } : undefined}
                 onClose={() => setEditingTaskId(null)}
-                onSaveEdit={async ({ date, ...fields }) => {
+                onSaveEdit={async ({ date, title, category, ...fields }) => {
                   const toDate = date ?? today;
+                  const editableFields =
+                    editingTask.sourceKind === "standalone"
+                      ? { ...fields, title, category }
+                      : fields;
                   await updateTask.mutateAsync({
                     id: editingTask.id,
                     updates: {
-                      ...fields,
+                      ...editableFields,
                       ...(toDate !== today ? { occurrenceDate: toDate } : {}),
                     },
                   });

@@ -257,12 +257,33 @@ export {
   MAX_GOAL_SUBTASK_TITLE,
 } from "./constants";
 
+// A minimal person reference used for goal sharing: "completed by" attribution
+// and the member list. Never includes private fields like email.
+export const GoalActorSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    avatarId: z.string().nullable(),
+    avatarImage: z.string().nullable(),
+  })
+  .openapi("GoalActor");
+export type GoalActor = z.infer<typeof GoalActorSchema>;
+
+export const goalMemberRoleValues = ["owner", "member"] as const;
+export const goalMemberStatusValues = ["pending", "accepted", "declined"] as const;
+export const GoalMemberSchema = GoalActorSchema.extend({
+  role: z.enum(goalMemberRoleValues),
+  status: z.enum(goalMemberStatusValues),
+}).openapi("GoalMember");
+export type GoalMember = z.infer<typeof GoalMemberSchema>;
+
 export const GoalSubtaskSchema = z
   .object({
     id: z.string(),
     title: z.string(),
     completed: z.boolean(),
     position: z.number().int().nonnegative(),
+    completedBy: GoalActorSchema.nullable().optional(),
   })
   .openapi("GoalSubtask");
 export type GoalSubtask = z.infer<typeof GoalSubtaskSchema>;
@@ -278,6 +299,7 @@ export const GoalTaskSchema = z
     iconId: z.string().nullable(),
     note: z.string().nullable(),
     subtasks: z.array(GoalSubtaskSchema),
+    completedBy: GoalActorSchema.nullable().optional(),
   })
   .openapi("GoalTask");
 export type GoalTask = z.infer<typeof GoalTaskSchema>;
@@ -288,6 +310,10 @@ export const GoalSubtaskInputSchema = z.object({
   completed: z.boolean().optional().default(false),
 });
 
+export const goalShareModeValues = ["personal", "pool"] as const;
+export const GoalShareModeSchema = z.enum(goalShareModeValues).openapi("GoalShareMode");
+export type GoalShareMode = z.infer<typeof GoalShareModeSchema>;
+
 export const GoalSchema = z
   .object({
     id: z.string(),
@@ -297,9 +323,36 @@ export const GoalSchema = z
     tasks: z.array(GoalTaskSchema),
     createdAt: z.string(),
     updatedAt: z.string(),
+    // Sharing. For personal goals: shareMode 'personal', viewerRole 'owner',
+    // members []. For shared goals these describe the pool.
+    shareMode: GoalShareModeSchema.optional().default("personal"),
+    ownerId: z.string().optional(),
+    viewerRole: z.enum(goalMemberRoleValues).optional().default("owner"),
+    members: z.array(GoalMemberSchema).optional().default([]),
   })
   .openapi("Goal");
 export type Goal = z.infer<typeof GoalSchema>;
+
+// An incoming, not-yet-answered goal-share invite shown in the invitee's Goals.
+export const GoalShareRequestSchema = z
+  .object({
+    goalId: z.string(),
+    title: z.string(),
+    iconId: z.string().nullable(),
+    owner: GoalActorSchema,
+    taskCount: z.number().int().nonnegative(),
+    invitedAt: z.string(),
+  })
+  .openapi("GoalShareRequest");
+export type GoalShareRequest = z.infer<typeof GoalShareRequestSchema>;
+
+export const GoalShareInputSchema = z
+  .object({ friendId: z.string().min(1) })
+  .openapi("GoalShareInput");
+
+export const GoalShareRequestsEnvelopeSchema = z
+  .object({ requests: z.array(GoalShareRequestSchema) })
+  .openapi("GoalShareRequestsEnvelope");
 
 export const GoalTaskInputSchema = z.object({
   id: z.string().optional(),
@@ -361,6 +414,66 @@ export const UserEnvelopeSchema = z.object({ user: PublicUserSchema }).openapi("
 export const NullableUserEnvelopeSchema = z
   .object({ user: PublicUserSchema.nullable() })
   .openapi("NullableUserEnvelope");
+
+// ---------------------------------------------------------------------------
+// Friends — social graph + shareable invite codes.
+// ---------------------------------------------------------------------------
+
+// A friend, as seen by the current user: just the public bits needed to render
+// a row (never the email or other private profile fields).
+export const FriendSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    avatarId: z.string().nullable(),
+    avatarImage: z.string().nullable(),
+    since: z.string(),
+  })
+  .openapi("Friend");
+export type Friend = z.infer<typeof FriendSchema>;
+
+export const FriendsEnvelopeSchema = z.object({ friends: z.array(FriendSchema) }).openapi("FriendsEnvelope");
+
+// The current user's own invite code. The full shareable URL is composed on the
+// client from window.location.origin so it always points at the app origin.
+export const FriendInviteSchema = z
+  .object({
+    code: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi("FriendInvite");
+export type FriendInvite = z.infer<typeof FriendInviteSchema>;
+
+export const FriendInviteEnvelopeSchema = z.object({ invite: FriendInviteSchema }).openapi("FriendInviteEnvelope");
+
+// Reasons an invite cannot be redeemed (shown on the landing page).
+export const friendInviteReasons = ["not_found", "revoked", "expired", "exhausted", "self", "already_friends"] as const;
+export const FriendInviteReasonSchema = z.enum(friendInviteReasons).openapi("FriendInviteReason");
+export type FriendInviteReason = z.infer<typeof FriendInviteReasonSchema>;
+
+// Preview shown to a (logged-in) user opening someone's invite link, before
+// they accept. `valid` true means redeem will succeed.
+export const FriendInvitePreviewSchema = z
+  .object({
+    valid: z.boolean(),
+    reason: FriendInviteReasonSchema.nullable(),
+    inviter: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        avatarId: z.string().nullable(),
+        avatarImage: z.string().nullable(),
+      })
+      .nullable(),
+  })
+  .openapi("FriendInvitePreview");
+export type FriendInvitePreview = z.infer<typeof FriendInvitePreviewSchema>;
+
+export const FriendInvitePreviewEnvelopeSchema = z
+  .object({ preview: FriendInvitePreviewSchema })
+  .openapi("FriendInvitePreviewEnvelope");
+
+export const FriendEnvelopeSchema = z.object({ friend: FriendSchema }).openapi("FriendEnvelope");
 
 export const TasksEnvelopeSchema = z.object({ tasks: z.array(TaskSchema) }).openapi("TasksEnvelope");
 export const GoalsEnvelopeSchema = z.object({ goals: z.array(GoalSchema) }).openapi("GoalsEnvelope");

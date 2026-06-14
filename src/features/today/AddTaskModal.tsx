@@ -466,10 +466,12 @@ function RepeatFrequencyDropdown({
 
 function RepeatDisableConfirm({
   disabled,
+  message = "This task will stay on this date. Future repetitions from this series will be removed.",
   onCancel,
   onConfirm,
 }: {
   disabled: boolean;
+  message?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -481,7 +483,7 @@ function RepeatDisableConfirm({
         </div>
         <div className="pomodoro-confirm__content">
           <h3>Remove future repeats?</h3>
-          <p>This task will stay on this date. Future repetitions from this series will be removed.</p>
+          <p>{message}</p>
         </div>
         <div className="task-modal__recurrence-confirm-actions">
           <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text" onClick={onCancel} disabled={disabled}>
@@ -548,6 +550,7 @@ export function AddTaskModal({
   pendingLabel,
   scheduleNotice,
   confirmDisableRepeatOnCreate,
+  disableRepeatConfirmMessage,
   onCreateTask,
   editingTask,
   editingDate,
@@ -569,6 +572,7 @@ export function AddTaskModal({
   pendingLabel?: string;
   scheduleNotice?: ReactNode;
   confirmDisableRepeatOnCreate?: boolean;
+  disableRepeatConfirmMessage?: string;
   onCreateTask?: (input: AddTaskModalCreateInput) => Promise<unknown> | unknown;
   editingTask?: EditableTask;
   // When provided (edit mode), the date field is shown and its value is passed
@@ -1586,6 +1590,7 @@ export function AddTaskModal({
       </form>
       {confirmDisableRepeat ? (
         <RepeatDisableConfirm
+          message={disableRepeatConfirmMessage}
           onCancel={() => setConfirmDisableRepeat(false)}
           onConfirm={() => {
             if (isEditMode) void saveEdit({ confirmedDisableRepeat: true });

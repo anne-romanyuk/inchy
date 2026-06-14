@@ -69,6 +69,11 @@ function GoalDetailRoute() {
 }
 const NotesPage = lazyRoute(() => import("../features/notes/NotesPage"), ({ NotesPage }) => NotesPage);
 const PlanPage = lazyRoute(() => import("../features/plan/PlanPage"), ({ PlanPage }) => PlanPage);
+const FriendsPage = lazyRoute(() => import("../features/friends/FriendsPage"), ({ FriendsPage }) => FriendsPage);
+const InviteLandingPage = lazyRoute(
+  () => import("../features/friends/InviteLandingPage"),
+  ({ InviteLandingPage }) => InviteLandingPage,
+);
 const SettingsPage = lazyRoute(() => import("../features/settings/SettingsPage"), ({ SettingsPage }) => SettingsPage);
 
 function PageChunk({ children }: { children: ReactNode }) {
@@ -77,6 +82,7 @@ function PageChunk({ children }: { children: ReactNode }) {
 
 export const router = createBrowserRouter([
   { path: "/", element: <PublicOnly /> },
+  { path: "/invite/:code", element: <PageChunk><InviteLandingPage /></PageChunk> },
   {
     path: "/",
     element: <RequireAuth />,
@@ -90,6 +96,7 @@ export const router = createBrowserRouter([
       { path: "plan", element: <PageChunk><PlanPage /></PageChunk> },
       { path: "progress", element: <PlaceholderPage label="Progress" /> },
       { path: "notes", element: <PageChunk><NotesPage /></PageChunk> },
+      { path: "friends", element: <PageChunk><FriendsPage /></PageChunk> },
       { path: "templates", element: <PlaceholderPage label="Templates" /> },
       { path: "settings", element: <PageChunk><SettingsPage /></PageChunk> },
     ],

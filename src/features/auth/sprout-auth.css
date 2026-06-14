@@ -3,7 +3,7 @@
    the left, animated "Plan peacefully with Sprout" headline on the right above
    the character. Scoped under `.sprout-auth` so it overrides the shared
    SoftLoginModal styles only on this page; the classic page is untouched.
-   Fonts: app fonts only — "Quattrocento" (serif display) + "Quattrocento Sans".
+   Fonts: app fonts only — "Quattrocento" for login display copy.
    ========================================================================== */
 
 .sprout-auth {
@@ -22,7 +22,6 @@
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
-  /* App display serif for the big headline. */
   --sprout-serif: "Quattrocento", Georgia, "Times New Roman", serif;
   --sprout-ink: #3f5236;        /* deep eucalyptus green */
   --sprout-ink-soft: #5a6b50;

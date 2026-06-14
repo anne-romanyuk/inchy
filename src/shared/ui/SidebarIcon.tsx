@@ -40,6 +40,13 @@ export function SidebarIcon({ id }: { id: SidebarItemId }) {
         <path d="M8.4 8h7.2M8.4 11.5h7.2M8.4 15h4.4" />
       </>
     ),
+    friends: (
+      <>
+        <circle cx="9" cy="9.2" r="3.1" />
+        <path d="M3.6 19c.5-3 2.7-4.6 5.4-4.6s4.9 1.6 5.4 4.6" />
+        <path d="M15.6 6.6a2.8 2.8 0 0 1 0 5.4M17.4 18.6c-.3-2-1.3-3.4-2.9-4.2 2.4-.5 4.6 1 5.1 4.2" />
+      </>
+    ),
     templates: (
       <>
         <rect x="4" y="4" width="16" height="16" rx="2.2" />

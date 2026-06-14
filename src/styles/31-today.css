@@ -798,17 +798,15 @@
   width: 100%;
   min-width: 0;
   height: 28px;
-  border: 0;
-  border-radius: 999px;
+  border: 1px solid var(--field-control-border);
+  border-radius: var(--radius-sm);
   padding: 0 10px;
-  background: rgba(216, 216, 216, 0.52);
-  color: rgb(71, 71, 71);
+  background: var(--field-control-bg);
+  color: var(--c-text-primary);
   font: 600 13px/1 var(--planner-font);
   outline: none;
-  box-shadow:
-    inset 3px 3px 7px rgba(115, 115, 115, 0.16),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.62);
-  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+  box-shadow: none;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, color 160ms ease;
 }
 
 .task-edit-field .task-modal__dropdown-trigger {
@@ -828,15 +826,18 @@
 
 .task-edit-field input:not(.category-picker__input):hover,
 .task-edit-field select:hover,
-.task-edit-field .task-modal__dropdown-trigger:hover,
+.task-edit-field .task-modal__dropdown-trigger:hover {
+  background: var(--field-control-bg-active);
+  border-color: var(--field-control-border-hover);
+  box-shadow: none;
+}
+
 .task-edit-field input:not(.category-picker__input):focus,
 .task-edit-field select:focus,
 .task-edit-field .task-modal__dropdown-trigger:focus-visible {
-  background: rgba(232, 232, 232, 0.68);
-  box-shadow:
-    inset 3px 3px 7px rgba(115, 115, 115, 0.14),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.72),
-    0 0 0 2px var(--c-focus-soft);
+  background: var(--field-control-bg-active);
+  border-color: var(--field-control-border-focus);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 .task-edit-field--category input:not(.category-picker__input),
@@ -1300,10 +1301,10 @@
 .task-modal__dropdown-trigger {
   width: 100%;
   height: 42px;
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-4);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
   outline: none;
   font: 600 13px/1 var(--planner-font);
@@ -2142,8 +2143,8 @@
 .task-modal__meta-row select:hover,
 .task-modal__repeat-interval-field input:hover,
 .task-modal__dropdown-trigger:hover {
-  border-color: color-mix(in srgb, var(--c-border) 92%, var(--c-text-secondary));
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+  border-color: var(--field-control-border-hover);
+  background: var(--field-control-bg-active);
 }
 
 .task-modal__title-input:focus-visible,
@@ -2158,8 +2159,8 @@
 .task-modal__repeat-interval-field input:focus-visible,
 .task-modal__dropdown-trigger:focus-visible,
 .task-modal__draft-row--inline .task-modal__combobox input:not(.category-picker__input)[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 
@@ -4003,16 +4004,24 @@
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field input,
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field select,
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field .task-modal__dropdown-trigger {
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--c-surface-soft) 42%, transparent);
+  background: var(--field-control-bg);
+  box-shadow: none;
+}
+
+.today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field input:hover,
+.today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field select:hover,
+.today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field .task-modal__dropdown-trigger:hover {
+  border-color: var(--field-control-border-hover);
+  background: var(--field-control-bg-active);
   box-shadow: none;
 }
 
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field input:focus,
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field select:focus,
 .today-dashboard .tasks-panel--today .task-item.is-editing .task-edit-field .task-modal__dropdown-trigger:focus-visible {
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  border-color: var(--field-control-border-focus);
   box-shadow: var(--shadow-focus-ring);
 }
 

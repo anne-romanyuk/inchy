@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import type { Goal, GoalSubtask, GoalTask } from "../../../shared/schemas";
@@ -11,12 +11,19 @@ import {
 } from "../../../shared/constants";
 import { AddToTodayButton } from "./AddToTodayButton";
 import { GoalDatePicker } from "./GoalDatePicker";
+import { GoalStarterOptions, type GoalStarterKind } from "./GoalStarterOptions";
 import { forestGoalIcons, getGoalIconSrc } from "./goalIcons";
 import { useGoals, useUpdateGoal } from "./useGoals";
 import { DeleteActionButton } from "../../shared/ui/DeleteActionButton";
 
 const MOBILE_TASK_SWIPE_LIMIT = 128;
 const MOBILE_TASK_SWIPE_TRIGGER = 96;
+
+function resetGoalDetailMobileScroll() {
+  window.scrollTo(0, 0);
+  document.querySelector<HTMLElement>(".mobile-shell__content")?.scrollTo(0, 0);
+  document.querySelector<HTMLElement>(".gdm-scroll")?.scrollTo(0, 0);
+}
 
 type Health = "overdue" | "due-today" | "due-soon";
 
@@ -985,6 +992,17 @@ export function GoalDetailMobile() {
   const [editingGoal, setEditingGoal] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
 
+  useLayoutEffect(() => {
+    resetGoalDetailMobileScroll();
+    const frame = window.requestAnimationFrame(resetGoalDetailMobileScroll);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [goalId, goalsQuery.isLoading, Boolean(goal)]);
+
+  useEffect(() => {
+    setAddingTask(false);
+  }, [goalId]);
+
   if (goalsQuery.isLoading) {
     return <p className="goals-mobile__empty">Loading goal...</p>;
   }
@@ -1013,6 +1031,8 @@ export function GoalDetailMobile() {
   const overdue = goal.tasks.filter((task) => getTaskHealth(task) === "overdue").length;
   const dueToday = goal.tasks.filter((task) => getTaskHealth(task) === "due-today").length;
   const goalHealthLabel = getGoalHealthLabel(goal);
+  const showTaskProgressSummary = goal.tasks.length > 0;
+  const canEditGoalMeta = goal.viewerRole !== "member";
 
   const saveTasks = async (draft?: MobileTaskDraft, removeTaskId?: string) => {
     await updateGoal.mutateAsync({
@@ -1026,6 +1046,11 @@ export function GoalDetailMobile() {
   const toggleTask = async (task: GoalTask) => {
     if (task.subtasks.length > 0) return;
     await saveTasks({ ...toMobileTaskDraft(task), completed: !task.completed });
+  };
+
+  const handleStarterSelect = (kind: GoalStarterKind) => {
+    if (kind !== "steps") return;
+    setAddingTask(true);
   };
 
   if (editingGoal) {
@@ -1066,14 +1091,16 @@ export function GoalDetailMobile() {
 
       <div className="gdm-scroll app-scroll">
         <section className="gdm-summary" aria-label="Goal summary">
-          <button
-            type="button"
-            className="ui-icon-btn ui-icon-btn--subtle gdm-summary__edit"
-            aria-label="Edit goal"
-            onClick={() => setEditingGoal(true)}
-          >
-            <GoalMobileEditIcon />
-          </button>
+          {canEditGoalMeta ? (
+            <button
+              type="button"
+              className="ui-icon-btn ui-icon-btn--subtle gdm-summary__edit"
+              aria-label="Edit goal"
+              onClick={() => setEditingGoal(true)}
+            >
+              <GoalMobileEditIcon />
+            </button>
+          ) : null}
           <div className="gdm-summary__top">
             <span className="gdm-summary__icon" aria-hidden="true">
               <GoalTaskIcon iconId={goal.iconId ?? nextTask?.iconId} />
@@ -1090,24 +1117,30 @@ export function GoalDetailMobile() {
           <div className="goal-progress" aria-label={`${progress}% completed`}>
             <span style={{ width: `${progress}%` }} />
           </div>
-          <div className="gdm-summary__stats">
-            <span>{doneTasks}/{goal.tasks.length} done</span>
-            <span>{openTasks} open</span>
-            {goal.deadline ? <span>Due {formatDate(goal.deadline)}</span> : null}
-            {overdue > 0 ? <span className="gdm-summary__alert gdm-summary__alert--overdue">{overdue} overdue</span> : null}
-            {dueToday > 0 ? <span className="gdm-summary__alert gdm-summary__alert--due-today">{dueToday} today</span> : null}
-          </div>
+          {goal.deadline || showTaskProgressSummary ? (
+            <div className="gdm-summary__stats">
+              {showTaskProgressSummary ? <span>{doneTasks}/{goal.tasks.length} done</span> : null}
+              {showTaskProgressSummary ? <span>{openTasks} open</span> : null}
+              {goal.deadline ? <span>Due {formatDate(goal.deadline)}</span> : null}
+              {showTaskProgressSummary && overdue > 0 ? (
+                <span className="gdm-summary__alert gdm-summary__alert--overdue">{overdue} overdue</span>
+              ) : null}
+              {showTaskProgressSummary && dueToday > 0 ? (
+                <span className="gdm-summary__alert gdm-summary__alert--due-today">{dueToday} today</span>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
-        <section className="gdm-tasks" aria-label="Goal tasks">
-          <header className="gdm-section-header">
-            <div>
-              <h2>Tasks</h2>
-              <p>{goal.tasks.length ? "Swipe right to edit, left to delete" : "Start with the first task"}</p>
-            </div>
-          </header>
+        {goal.tasks.length ? (
+          <section className="gdm-tasks" aria-label="Goal tasks">
+            <header className="gdm-section-header">
+              <div>
+                <h2>Tasks</h2>
+                <p>Swipe right to edit, left to delete</p>
+              </div>
+            </header>
 
-          {goal.tasks.length ? (
             <ul className="gdm-task-list">
               <AnimatePresence initial={false}>
                 {goal.tasks.map((task) => (
@@ -1127,13 +1160,19 @@ export function GoalDetailMobile() {
                 ))}
               </AnimatePresence>
             </ul>
-          ) : null}
 
-          <GoalMobileAddTask
-            disabled={goal.tasks.length >= MAX_GOAL_TASKS}
-            onOpen={() => setAddingTask(true)}
+            <GoalMobileAddTask
+              disabled={goal.tasks.length >= MAX_GOAL_TASKS}
+              onOpen={() => setAddingTask(true)}
+            />
+          </section>
+        ) : (
+          <GoalStarterOptions
+            className="goal-starter--mobile"
+            onSelect={handleStarterSelect}
+            disabledKinds={["number", "milestones", "repeat"]}
           />
-        </section>
+        )}
       </div>
     </motion.section>
   );

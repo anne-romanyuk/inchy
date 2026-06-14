@@ -4,6 +4,8 @@ import type {
   DefaultTask,
   FocusSession,
   Goal,
+  GoalActor,
+  GoalMember,
   GoalTask,
   GoalSubtask,
   Note,
@@ -159,6 +161,7 @@ export type GoalRow = {
   pace_target: number | null;
   pace_unit: string | null;
   status: "active" | "paused" | "done" | "archived";
+  share_mode?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -172,6 +175,8 @@ export type GoalTaskRow = {
   deadline: string | null;
   icon_id: string | null;
   note: string | null;
+  completed_by?: string | null;
+  completed_at?: string | null;
   created_at: string;
   updated_at?: string;
 };
@@ -182,30 +187,46 @@ export type GoalSubtaskRow = {
   position: number;
   title: string;
   completed: number;
+  completed_by?: string | null;
+  completed_at?: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export function toGoalSubtask(row: GoalSubtaskRow): GoalSubtask {
+// Resolve a completed_by user id to a GoalActor using a prebuilt map (avoids
+// per-row DB lookups). Returns null when not completed or the actor is unknown.
+function resolveActor(id: string | null | undefined, actorsById?: Map<string, GoalActor>): GoalActor | null {
+  if (!id || !actorsById) return null;
+  return actorsById.get(id) ?? null;
+}
+
+export function toGoalSubtask(row: GoalSubtaskRow, actorsById?: Map<string, GoalActor>): GoalSubtask {
   return {
     id: row.id,
     title: row.title,
     completed: Boolean(row.completed),
     position: row.position,
+    completedBy: row.completed ? resolveActor(row.completed_by, actorsById) : null,
   };
 }
 
-export function toGoalTask(row: GoalTaskRow, subtasks: GoalSubtaskRow[] = []): GoalTask {
+export function toGoalTask(
+  row: GoalTaskRow,
+  subtasks: GoalSubtaskRow[] = [],
+  actorsById?: Map<string, GoalActor>,
+): GoalTask {
+  const completed = row.status === "done";
   return {
     id: row.id,
     title: row.title,
     deadline: row.deadline ?? null,
-    completed: row.status === "done",
+    completed,
     position: row.position,
     createdAt: row.created_at,
     iconId: row.icon_id ?? null,
     note: row.note ?? null,
-    subtasks: subtasks.map(toGoalSubtask),
+    subtasks: subtasks.map((sub) => toGoalSubtask(sub, actorsById)),
+    completedBy: completed ? resolveActor(row.completed_by, actorsById) : null,
   };
 }
 
@@ -292,14 +313,24 @@ export function toGoal(
   row: GoalRow,
   tasks: GoalTaskRow[] = [],
   subtasksByTask: Map<string, GoalSubtaskRow[]> = new Map(),
+  opts: {
+    actorsById?: Map<string, GoalActor>;
+    members?: GoalMember[];
+    viewerRole?: "owner" | "member";
+    ownerId?: string;
+  } = {},
 ): Goal {
   return {
     id: row.id,
     title: row.title,
     deadline: row.deadline ?? null,
     iconId: row.icon_id ?? null,
-    tasks: tasks.map((task) => toGoalTask(task, subtasksByTask.get(task.id) ?? [])),
+    tasks: tasks.map((task) => toGoalTask(task, subtasksByTask.get(task.id) ?? [], opts.actorsById)),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    shareMode: row.share_mode === "pool" ? "pool" : "personal",
+    ownerId: opts.ownerId ?? row.user_id,
+    viewerRole: opts.viewerRole ?? "owner",
+    members: opts.members ?? [],
   };
 }

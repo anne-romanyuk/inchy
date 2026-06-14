@@ -47,6 +47,14 @@ select {
   font-family: inherit;
 }
 
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 [hidden] {
   display: none !important;
 }
@@ -1626,8 +1634,15 @@ select {
 :root[data-theme="forest"] .task-modal__close,
 :root[data-theme="forest"] .task-modal__queue-item button,
 :root[data-theme="forest"] .character-onboarding__option {
-  background: rgba(252, 248, 241, 0.58);
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
+  box-shadow: none;
+}
+
+:root[data-theme="forest"] .task-modal__close,
+:root[data-theme="forest"] .task-modal__queue-item button,
+:root[data-theme="forest"] .character-onboarding__option {
+  background: rgba(252, 248, 241, 0.58);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.86),
     inset 2px 2px 8px color-mix(in srgb, var(--c-success) 9%, transparent),
@@ -1643,18 +1658,21 @@ select {
 }
 
 :root[data-theme="forest"] input:hover,
-:root[data-theme="forest"] input:focus,
 :root[data-theme="forest"] select:hover,
-:root[data-theme="forest"] select:focus,
 :root[data-theme="forest"] textarea:hover,
+:root[data-theme="forest"] .task-modal__dropdown-trigger:hover {
+  background: var(--field-control-bg-active);
+  border-color: var(--field-control-border-hover);
+  box-shadow: none;
+}
+
+:root[data-theme="forest"] input:focus,
+:root[data-theme="forest"] select:focus,
 :root[data-theme="forest"] textarea:focus,
-:root[data-theme="forest"] .task-modal__dropdown-trigger:hover,
 :root[data-theme="forest"] .task-modal__dropdown-trigger:focus-visible {
-  background: rgba(252, 248, 241, 0.78);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 2px 2px 8px color-mix(in srgb, var(--c-success) 8%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--c-accent) 18%, transparent);
+  background: var(--field-control-bg-active);
+  border-color: var(--field-control-border-focus);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 /* Profile theme toggle */
@@ -1992,12 +2010,20 @@ select {
 .add-to-today__btn.is-on-today,
 .add-to-today__btn:disabled,
 .add-to-today__btn.is-disabled {
-  cursor: default;
   transform: none;
   opacity: 0.5;
   box-shadow:
     0 6px 14px -12px rgba(58, 58, 105, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.add-to-today__btn:disabled,
+.add-to-today__btn.is-disabled {
+  cursor: not-allowed;
+}
+
+.add-to-today__btn.is-on-today:not(:disabled):not(.is-disabled) {
+  cursor: default;
 }
 
 .add-to-today__hint {

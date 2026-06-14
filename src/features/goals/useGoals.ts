@@ -44,6 +44,60 @@ export function useUpdateGoal() {
   });
 }
 
+export function useGoalRequests() {
+  return useQuery({
+    queryKey: queryKeys.goalRequests,
+    queryFn: async () => (await goalsApi.fetchGoalRequests()).requests,
+  });
+}
+
+export function useShareGoal() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goalId, friendId }: { goalId: string; friendId: string }) => goalsApi.shareGoal(goalId, friendId),
+    onSuccess: ({ goal }) => {
+      client.setQueryData<Goal[]>(queryKeys.goals, (current = []) =>
+        current.map((item) => (item.id === goal.id ? goal : item)),
+      );
+    },
+  });
+}
+
+export function useAcceptGoalRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (goalId: string) => goalsApi.acceptGoalRequest(goalId),
+    onSuccess: ({ goal }) => {
+      client.setQueryData<Goal[]>(queryKeys.goals, (current = []) =>
+        current.some((g) => g.id === goal.id) ? current.map((g) => (g.id === goal.id ? goal : g)) : [goal, ...current],
+      );
+      client.invalidateQueries({ queryKey: queryKeys.goalRequests });
+      client.invalidateQueries({ queryKey: queryKeys.goals });
+    },
+  });
+}
+
+export function useDeclineGoalRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (goalId: string) => goalsApi.declineGoalRequest(goalId),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: queryKeys.goalRequests });
+    },
+  });
+}
+
+export function useRemoveGoalMember() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goalId, memberId }: { goalId: string; memberId: string }) =>
+      goalsApi.removeGoalMember(goalId, memberId),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: queryKeys.goals });
+    },
+  });
+}
+
 export function useDeleteGoal() {
   const client = useQueryClient();
   return useMutation({

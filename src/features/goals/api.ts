@@ -1,4 +1,4 @@
-import type { Goal, GoalOccurrenceDeleteDecision } from "../../../shared/schemas";
+import type { Goal, GoalOccurrenceDeleteDecision, GoalShareRequest } from "../../../shared/schemas";
 import { apiFetch } from "../../shared/api/client";
 
 export type GoalSubtaskInput = {
@@ -42,4 +42,26 @@ export function updateGoal(id: string, input: GoalUpdateInput) {
 
 export function deleteGoal(id: string) {
   return apiFetch<{ ok: true }>(`/api/goals/${id}`, { method: "DELETE" });
+}
+
+// --- Sharing ---------------------------------------------------------------
+
+export function shareGoal(goalId: string, friendId: string) {
+  return apiFetch<{ goal: Goal }>(`/api/goals/${goalId}/share`, { method: "POST", body: { friendId } });
+}
+
+export function fetchGoalRequests() {
+  return apiFetch<{ requests: GoalShareRequest[] }>("/api/goals/requests");
+}
+
+export function acceptGoalRequest(goalId: string) {
+  return apiFetch<{ goal: Goal }>(`/api/goals/requests/${goalId}/accept`, { method: "POST" });
+}
+
+export function declineGoalRequest(goalId: string) {
+  return apiFetch<{ ok: true }>(`/api/goals/requests/${goalId}/decline`, { method: "POST" });
+}
+
+export function removeGoalMember(goalId: string, memberId: string) {
+  return apiFetch<{ ok: true }>(`/api/goals/${goalId}/members/${memberId}`, { method: "DELETE" });
 }

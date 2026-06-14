@@ -17,7 +17,7 @@ type Props = {
   size?: "sm" | "md";
 };
 
-function CalendarScheduleIcon() {
+export function CalendarScheduleIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <rect x="5" y="6.2" width="14" height="13" rx="2.6" />
@@ -161,6 +161,7 @@ export function ScheduleGoalTaskButton({
               />
             }
             confirmDisableRepeatOnCreate={Boolean(recurring)}
+            disableRepeatConfirmMessage="Unchecked occurrences from today forward will be removed. Completed occurrences will stay in the calendar."
             onCreateTask={scheduleTask}
           />
         ) : null}

@@ -992,10 +992,10 @@
   width: 100%;
   height: calc(var(--space-10) + var(--space-2));
   min-height: calc(var(--space-10) + var(--space-2));
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-4);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  background: var(--field-control-bg);
   box-shadow: none;
   color: var(--c-text-primary);
   font-size: var(--mobile-task-modal-field-size);
@@ -1045,8 +1045,8 @@
 .mobile-shell .task-modal__time-trigger[aria-expanded="true"],
 .mobile-shell .task-modal__draft-row--inline .task-modal__combobox input:focus-visible,
 .mobile-shell .task-modal__duration-input:focus-visible {
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 
@@ -1688,6 +1688,58 @@
   padding-top: var(--space-2);
 }
 
+.goal-detail-mobile .goal-starter {
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.goal-detail-mobile .goal-starter__header {
+  display: block;
+}
+
+.goal-detail-mobile .goal-starter__header h2 {
+  font-size: calc(var(--text-section-title-size) + var(--space-1) / 2);
+}
+
+.goal-detail-mobile .goal-starter__header p,
+.goal-detail-mobile .goal-starter-card__copy span,
+.goal-detail-mobile .goal-starter__tip {
+  font-size: var(--text-body-size);
+}
+
+.goal-detail-mobile .goal-starter__grid {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.goal-detail-mobile .goal-starter-card {
+  grid-template-columns: calc(var(--space-10) + var(--space-1)) minmax(0, 1fr) calc(var(--space-10) + var(--space-3)) var(--space-5);
+  gap: var(--space-3);
+  min-height: calc(var(--space-10) * 1.55);
+  padding: var(--space-2) var(--space-3);
+}
+
+.goal-detail-mobile .goal-starter-card__icon {
+  width: calc(var(--space-10) + var(--space-1));
+  height: calc(var(--space-10) + var(--space-1));
+}
+
+.goal-detail-mobile .goal-starter-card__copy strong {
+  font-size: var(--text-section-title-size);
+}
+
+.goal-detail-mobile .goal-starter-card__art {
+  width: calc(var(--space-10) + var(--space-3));
+}
+
+.goal-detail-mobile .goal-starter__tip {
+  align-items: flex-start;
+  min-height: 0;
+  padding: var(--space-3);
+}
+
 .gdm-section-header {
   display: flex;
   align-items: flex-end;
@@ -1995,9 +2047,9 @@
 .gdm-task-details textarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--c-surface-soft) 70%, var(--c-surface));
+  border: 1px solid var(--field-control-border);
+  border-radius: var(--radius-sm);
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
   font-size: var(--gdm-body-size);
   line-height: var(--text-body-line);
@@ -2016,7 +2068,8 @@
 .gdm-task-details textarea:focus,
 .gdm-task-details textarea:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 
@@ -2285,9 +2338,9 @@
 .gdm-add input {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--c-surface-soft) 70%, var(--c-surface));
+  border: 1px solid var(--field-control-border);
+  border-radius: var(--radius-sm);
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
   font-size: var(--gdm-body-size);
   line-height: var(--text-body-line);
@@ -2304,7 +2357,8 @@
 .gdm-add input:focus,
 .gdm-add input:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--c-focus) 62%, var(--c-border));
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 
@@ -2545,9 +2599,9 @@
 .mobile-shell .goal-modal--mobile .goal-input,
 .mobile-shell .goal-modal--mobile .goal-date-picker__trigger {
   min-height: var(--goal-create-control-size);
-  border: 1px solid color-mix(in srgb, var(--c-border) 70%, transparent);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 88%, var(--c-text-on-accent));
+  background: var(--field-control-bg);
   color: var(--c-text-primary);
   box-shadow: none;
 }
@@ -2564,7 +2618,7 @@
 .mobile-shell .goal-modal--mobile .goal-input:focus-visible,
 .mobile-shell .goal-modal--mobile .goal-date-picker__trigger:focus-visible,
 .mobile-shell .goal-modal--mobile .goal-date-picker__trigger[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--c-sidebar-surface-solid) 94%, var(--c-text-on-accent));
+  background: var(--field-control-bg-active);
 }
 
 .mobile-shell .goal-modal--mobile .goal-date-picker--large,

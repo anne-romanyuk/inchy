@@ -48,7 +48,8 @@ magical, adult, non-corporate** — do not redesign it into something "new".
 12. Avoid childish decoration, excessive gradients, random shadows, inconsistent borders, layout jumps.
 13. Keep visual hierarchy clear: one primary action per area; secondary actions visually quieter.
 14. Ensure responsive behavior and stable layout when content grows (scroll inside panels).
-15. Update the documentation / examples when changing shared components.
+15. Disabled controls and fields must use `cursor: not-allowed`, muted disabled styling, and no hover/focus activation while disabled.
+16. Update the documentation / examples when changing shared components.
 
 ### Do not
 

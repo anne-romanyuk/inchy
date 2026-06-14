@@ -41,6 +41,8 @@ implement second.
 | `/notes` | `NotesPage.tsx` | same desktop page in shell | ❌ no mobile variant |
 | `/settings` | `SettingsPage.tsx` | same desktop page in shell | ❌ no mobile variant, no tab entry |
 | `/` (logged out) | `AuthPage.tsx` (Sprout) | same page | ❓ responsive state unverified |
+| `/friends` | `FriendsPage.tsx` | same desktop page in shell | 🟡 renders in mobile shell, no tab entry |
+| `/invite/:code` | `InviteLandingPage.tsx` (public, no shell) | same page | ✅ standalone responsive card |
 | Add/Edit task | `AddTaskModal.tsx` | `AddTaskModalMobile.tsx` | Dedicated, heavily reduced (see §3) |
 
 ---
@@ -56,6 +58,7 @@ implement second.
 | Focus entry | ✅ | ✅ | |
 | Plan entry | ✅ | ❌ | Mobile: only by typing the URL |
 | Notes entry | ✅ | 🟡 | "More" tab currently just lands on `/notes` |
+| Friends entry | ✅ sidebar | ❌ | Mobile: only by typing the URL; no tab/"More" entry |
 | Settings entry | ✅ | ❌ | Unreachable on mobile |
 | Logout | ✅ sidebar button | ❌ | Unreachable on mobile |
 | "More" sheet (Notes/History/Settings/Profile/Logout) | ➖ | ❌ | Planned per `MobileShell.tsx` comment — not built |
@@ -134,7 +137,9 @@ Desktop `AddTaskModal` vs mobile `AddTaskModalMobile`.
 | Open goal detail | ✅ | ✅ | |
 | Delete goal | ✅ via detail + `window.confirm` | 🟡 swipe-delete, **no confirmation** | ⚠️ destructive without confirm — fix or accept |
 | `?new=1` deep link opens editor | ✅ | ✅ | Shared code path |
-| Empty state | ❓ | ❓ | |
+| Incoming shared-goal requests (Accept/Decline) | ✅ `GoalRequestsSection` | ❌ | "Shared with you" list above goals; mobile list has no equivalent yet |
+| Shared goals appear in list (as member) | ✅ | ✅ | `GET /api/goals` returns owned + accepted-member goals |
+| Empty state | ✅ | ✅ | Empty goals now show shared starter options before adding steps |
 
 ## 6. Goal detail
 
@@ -143,9 +148,10 @@ Desktop `GoalDetailPage` vs `GoalDetailMobile`.
 | Capability | Desktop | Mobile | Notes |
 |---|---|---|---|
 | Summary hero (icon, dates, status, progress) | ✅ | ✅ | |
-| Edit goal | ✅ editor modal | ✅ full-screen edit page | |
+| Edit goal | ✅ editor modal | ✅ full-screen edit page | Owner-only for shared goals; members edit goal content, not metadata |
 | Delete goal (with confirm) | ✅ `window.confirm` | ❓ | Mobile has trash icon — verify confirm exists |
 | Task list + per-task progress | ✅ | ✅ | |
+| Empty goal starter options | ✅ | ✅ | `Add a first step` opens the existing step/task flow; future goal types are present but disabled until their workflows exist |
 | Add goal task | ✅ inline row | ✅ create page | |
 | Inline rename task | ✅ | ✅ | |
 | Task icon picker | ✅ popover | ✅ mobile select | |
@@ -159,7 +165,11 @@ Desktop `GoalDetailPage` vs `GoalDetailMobile`.
 | Subtasks: reorder | ✅ | ❓ | |
 | Subtask → add to today | ✅ | ✅ | |
 | Task note | ✅ | ✅ | |
-| Delete scheduled goal task/subtask → occurrence scope confirm | ✅ `GoalOccurrenceDeleteConfirm` | ❌ | Not imported in `GoalDetailMobile` |
+| Delete scheduled goal task/subtask → occurrence scope confirm | ✅ `GoalOccurrenceDeleteConfirm` | ❌ | For shared goals, the chosen detach/delete action applies to all accepted participants; mobile still skips the confirm |
+| Share goal with a friend (owner) | ✅ `ShareGoalControl` popover | ❌ | `GoalDetailMobile` has no share control yet |
+| Member avatar stack on shared goal | ✅ `GoalMembersBar` | ❌ | |
+| "Completed by X" attribution on tasks/subtasks | ✅ `CompletedByTag` | ❌ | Server sets `completed_by`; mobile doesn't render it |
+| Shared-goal member content editing | ✅ add/edit/delete/reorder tasks, subtasks, and task notes | ✅ add/edit/delete tasks, subtasks, and task notes | Members are content admins by default; metadata/share/delete stay owner-only until finer permissions exist |
 
 ## 7. Goal editor (create/edit modal)
 
@@ -167,10 +177,10 @@ Shared component; mobile gets sheet styling (`45-mobile.css`).
 
 | Capability | Desktop | Mobile | Notes |
 |---|---|---|---|
-| Name, description | ✅ | ✅ | |
+| Name, deadline | ✅ | ✅ | Create no longer includes task creation |
 | Goal icon picker | ✅ | ❓ | |
 | Start / target dates | ✅ | ❓ | |
-| Tasks: add / rename / icon / reorder / delete | ✅ | ❓ | Drag-reorder on touch? |
+| Tasks: add / rename / icon / reorder / delete | ➖ | ➖ | Removed from goal creation; tasks are added from goal detail |
 | Save / cancel | ✅ | ✅ | |
 
 ## 8. Plan
@@ -243,7 +253,25 @@ Same component everywhere (`fullPage` on `/focus`); mobile parity = usability, n
 | Headline + character art layout | ✅ | ❓ | Likely needs stacked layout ≤768px |
 | Loader / eyes animation | ✅ | ❓ | |
 
-## 13. Modals & confirmations inventory
+## 13. Friends
+
+Social graph + invite-code sharing. Desktop renders in `AppShell`; mobile
+renders the same `FriendsPage` inside `MobileShell` (no dedicated mobile screen
+yet). The invite landing (`/invite/:code`) is a standalone public page.
+
+| Capability | Desktop | Mobile | Notes |
+|---|---|---|---|
+| Friends list (avatar + name) | ✅ | 🟡 | Same page in shell; no tab/"More" entry |
+| Add friend modal (own invite link + copy) | ✅ `AddFriendModal` | 🟡 | Renders in shell |
+| Generate a new invite link (revokes old) | ✅ | 🟡 | |
+| Add by pasted link or code | ✅ | 🟡 | Parses full URL or bare code |
+| Remove friend (inline confirm) | ✅ two-step inline | 🟡 | Quiet trash icon → "Remove? / Cancel" |
+| Invite landing preview (who invited) | ✅ | ✅ | Authed preview; standalone card |
+| Accept invite → become friends | ✅ | ✅ | |
+| Logged-out invite → sign in then return | ✅ | ✅ | Code stashed in `sessionStorage`, `PublicOnly` redirects back |
+| Invalid/expired/revoked/self/already-friends states | ✅ | ✅ | Shown on landing card |
+
+## 14. Modals & confirmations inventory
 
 Quick cross-reference — every dialog in the app and where it can fire.
 
@@ -263,8 +291,10 @@ Quick cross-reference — every dialog in the app and where it can fire.
 | Avatar crop | `AvatarCropModal` (Settings) | ✅ | ❌ |
 | Task category delete (detach / delete-tasks) | `TaskCategoryDeleteModal` (Settings) | ✅ | ❌ |
 | Delete note confirm | NotesPage inline | ✅ | ❌ |
+| Add friend | `AddFriendModal` (Friends) | ✅ | 🟡 in shell |
+| Remove friend (inline confirm) | FriendsPage inline | ✅ | 🟡 in shell |
 
-## 14. Known gaps — shortlist
+## 15. Known gaps — shortlist
 
 Priority candidates, in rough order of user pain:
 
@@ -278,6 +308,11 @@ Priority candidates, in rough order of user pain:
    scheduled tasks/subtasks skips the occurrence-scope question.
 5. **Notes / Settings / Plan render desktop layouts** inside the mobile shell.
 6. **Schedule-goal-task-to-date** (`ScheduleGoalTaskButton`) is desktop-only.
+7. **Goal sharing is desktop-only:** `GoalDetailMobile` / `GoalsMobileList` have no
+   share control, no requests list, no member avatars, and no "completed by"
+   attribution. The data is all there server-side — mobile just doesn't render it.
+8. **Minor:** completing a goal task from Today (`completion_scope='whole'`)
+   doesn't set `completed_by`.
 
 ### Unwired components (exist in repo, rendered nowhere)
 

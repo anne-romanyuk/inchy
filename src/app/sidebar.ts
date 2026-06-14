@@ -1,4 +1,13 @@
-export type SidebarItemId = "today" | "goals" | "plan" | "focus" | "progress" | "notes" | "templates" | "settings";
+export type SidebarItemId =
+  | "today"
+  | "goals"
+  | "plan"
+  | "focus"
+  | "progress"
+  | "notes"
+  | "friends"
+  | "templates"
+  | "settings";
 
 export const sidebarItems: Array<{ id: SidebarItemId; label: string; path: string; disabled?: boolean }> = [
   { id: "today", label: "Today", path: "/today" },
@@ -7,6 +16,7 @@ export const sidebarItems: Array<{ id: SidebarItemId; label: string; path: strin
   { id: "focus", label: "Focus", path: "/focus" },
   { id: "progress", label: "Progress", path: "/progress", disabled: true },
   { id: "notes", label: "Notes", path: "/notes" },
+  { id: "friends", label: "Friends", path: "/friends" },
   { id: "templates", label: "Templates", path: "/templates", disabled: true },
   { id: "settings", label: "Settings", path: "/settings" },
 ];

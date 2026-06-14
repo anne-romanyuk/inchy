@@ -197,25 +197,31 @@ textarea.ui-field__control,
 select.ui-field__control {
   min-height: 40px;
   padding: var(--space-3) var(--space-5);
-  background: var(--c-surface-soft);
-  border: 1px solid var(--c-border);
+  background: var(--field-control-bg);
+  border: 1px solid var(--field-control-border);
   border-radius: var(--radius-sm);
   color: var(--c-text-primary);
   font: var(--text-body-weight) var(--text-body-size) / var(--text-body-line) var(--font-base);
+  box-shadow: none;
   transition: border-color var(--dur-fast) var(--ease-soft), box-shadow var(--dur-fast) var(--ease-soft);
 }
 textarea.ui-field__control { min-height: 88px; resize: vertical; }
 .ui-field__control::placeholder { color: var(--c-text-muted); }
+.ui-field__control:hover {
+  border-color: var(--field-control-border-hover);
+  background: var(--field-control-bg-active);
+}
 .ui-field__control:focus-visible,
 .ui-field__control:focus {
   outline: none;
-  border-color: var(--c-focus);
+  border-color: var(--field-control-border-focus);
+  background: var(--field-control-bg-active);
   box-shadow: var(--shadow-focus-ring);
 }
 .ui-field__control:disabled { opacity: 0.55; cursor: not-allowed; }
 .ui-field__helper { font-size: var(--text-caption-size); color: var(--c-text-muted); }
 .ui-field__error { font-size: var(--text-caption-size); color: var(--c-danger); }
-.ui-field.is-invalid .ui-field__control { border-color: var(--c-danger); box-shadow: 0 0 0 3px var(--c-danger-soft); }
+.ui-field.is-invalid .ui-field__control { border-color: var(--c-danger); box-shadow: 0 0 0 1.5px var(--c-danger-soft); }
 
 /* ----------------------------------------------------------------------------
    CATEGORY PICKER

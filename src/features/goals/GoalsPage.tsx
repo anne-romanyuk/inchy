@@ -25,50 +25,37 @@ import {
   useUpdateGoal,
 } from "./useGoals";
 import { defaultGoalIcon, forestGoalIcons, getForestGoalIconId, getGoalIconSrc } from "./goalIcons";
-import { ScheduleGoalTaskButton } from "./ScheduleGoalTaskButton";
+import { CompletedByTag, GoalMembersBar, GoalRequestsSection, ShareGoalControl } from "./GoalSharing";
+import { CalendarScheduleIcon, ScheduleGoalTaskButton } from "./ScheduleGoalTaskButton";
 import { GoalDatePicker } from "./GoalDatePicker";
+import { GoalStarterOptions, type GoalStarterKind } from "./GoalStarterOptions";
 import { useIsMobile } from "../../shared/hooks/useIsMobile";
 import { ApiError } from "../../shared/api/client";
 import { fetchGoalLinkedSchedule } from "../today/occurrencesApi";
+import { todayDateKey, useCreateOccurrence } from "../today/useOccurrences";
+import { AddTaskModal, type AddTaskModalCreateInput } from "../today/AddTaskModal";
+import { useTaskCategories } from "../today/useTasks";
 
 const MOBILE_SWIPE_TRIGGER = 112;
 const MOBILE_SWIPE_LIMIT = 128;
 
-function createDraftId() {
-  return globalThis.crypto?.randomUUID?.() ?? `draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+function resetGoalDetailScroll() {
+  window.scrollTo(0, 0);
+  document.querySelector<HTMLElement>(".home-content")?.scrollTo(0, 0);
+  document.querySelector<HTMLElement>(".tasks-shell")?.scrollTo(0, 0);
 }
-
-type DraftTask = {
-  id: string;
-  title: string;
-  deadline: string;
-  completed: boolean;
-  iconId: string | null;
-};
 
 type DraftGoal = {
   title: string;
   deadline: string;
   iconId: string | null;
-  tasks: DraftTask[];
 };
 
 const emptyDraft = (): DraftGoal => ({
   title: "",
   deadline: "",
   iconId: null,
-  tasks: [],
 });
-
-function newDraftTask(): DraftTask {
-  return {
-    id: createDraftId(),
-    title: "",
-    deadline: "",
-    completed: false,
-    iconId: null,
-  };
-}
 
 function toDraft(goal?: Goal): DraftGoal {
   if (!goal) return emptyDraft();
@@ -76,13 +63,6 @@ function toDraft(goal?: Goal): DraftGoal {
     title: goal.title,
     deadline: goal.deadline ?? "",
     iconId: goal.iconId ?? null,
-    tasks: goal.tasks.map((task) => ({
-      id: task.id,
-      title: task.title,
-      deadline: task.deadline ?? "",
-      completed: task.completed,
-      iconId: task.iconId ?? null,
-    })),
   };
 }
 
@@ -315,204 +295,38 @@ function GoalActionIcon({
   );
 }
 
-function GoalTaskEditor({
-  task,
-  onChange,
-  onRemove,
-  disableRemove,
-  mobileCreateMode = false,
-}: {
-  task: DraftTask;
-  onChange: (updates: Partial<DraftTask>) => void;
-  onRemove: () => void;
-  disableRemove: boolean;
-  mobileCreateMode?: boolean;
-}) {
-  const dragControls = useDragControls();
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [isEditingMobile, setIsEditingMobile] = useState(false);
-  const iconButtonRef = useRef<HTMLButtonElement | null>(null);
-  const x = useMotionValue(0);
-  const editWidth = useTransform(x, (value) => Math.min(MOBILE_SWIPE_LIMIT, Math.max(0, value)));
-  const deleteWidth = useTransform(x, (value) => Math.min(MOBILE_SWIPE_LIMIT, Math.max(0, -value)));
-  const editVisibility = useTransform(x, (value) => (value > 1 ? "visible" : "hidden"));
-  const deleteVisibility = useTransform(x, (value) => (value < -1 ? "visible" : "hidden"));
-
-  if (mobileCreateMode) {
-    return (
-      <Reorder.Item
-        value={task}
-        dragListener={false}
-        dragControls={dragControls}
-        className={`goal-task-editor goal-task-editor--mobile-swipe ${isEditingMobile ? "is-editing" : ""} ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-      >
-        <motion.span
-          className="goal-task-swipe-action goal-task-swipe-action--edit"
-          style={{ width: editWidth, visibility: editVisibility }}
-          aria-hidden="true"
-        >
-          <GoalMobileEditIcon />
-          <span>EDIT</span>
-        </motion.span>
-        <motion.span
-          className="goal-task-swipe-action goal-task-swipe-action--delete"
-          style={{ width: deleteWidth, visibility: deleteVisibility }}
-          aria-hidden="true"
-        >
-          <GoalMobileTrashIcon />
-          <span>DELETE</span>
-        </motion.span>
-
-        <motion.div
-          className="goal-task-editor__swipe-surface"
-          drag="x"
-          style={{ x }}
-          dragConstraints={{ left: -MOBILE_SWIPE_LIMIT, right: MOBILE_SWIPE_LIMIT }}
-          dragElastic={0.08}
-          onDragEnd={() => {
-            const swipe = x.get();
-            animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
-            if (swipe >= MOBILE_SWIPE_TRIGGER) {
-              setIsEditingMobile(true);
-              return;
-            }
-            if (swipe <= -MOBILE_SWIPE_TRIGGER && !disableRemove) {
-              onRemove();
-            }
-          }}
-        >
-          {isEditingMobile ? (
-            <>
-              <div className={`goal-task-editor__icon-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
-                <button
-                  ref={iconButtonRef}
-                  type="button"
-                  className="goal-task-editor__icon"
-                  onClick={() => setPickerOpen((current) => !current)}
-                  aria-label="Choose task icon"
-                >
-                  <GoalTaskIcon iconId={task.iconId} />
-                </button>
-                {pickerOpen ? (
-                  <IconPickerPopover
-                    anchorRef={iconButtonRef}
-                    className="goal-task-editor__popover"
-                    value={task.iconId}
-                    onChange={(iconId) => {
-                      onChange({ iconId });
-                      setPickerOpen(false);
-                    }}
-                  />
-                ) : null}
-              </div>
-              <div className="goal-task-editor__field-stack">
-                <input
-                  value={task.title}
-                  onChange={(event) => onChange({ title: event.target.value })}
-                  placeholder="Task name"
-                  maxLength={MAX_TITLE_LENGTH}
-                  className="goal-input goal-task-editor__title"
-                />
-                <GoalDatePicker
-                  value={task.deadline}
-                  onChange={(deadline) => onChange({ deadline })}
-                  className="goal-task-editor__date"
-                  ariaLabel="Task deadline"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="goal-task-editor__mobile-drag-icon"
-                aria-label="Drag task to reorder"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  dragControls.start(event);
-                }}
-              >
-                <GoalTaskIcon iconId={task.iconId} />
-              </button>
-              <div className="goal-task-editor__readonly-fields" aria-label={task.title}>
-                <span className="goal-task-editor__readonly-title">{task.title}</span>
-                <span className="goal-task-editor__readonly-date">
-                  {task.deadline ? formatDate(task.deadline) : "No due date"}
-                </span>
-              </div>
-            </>
-          )}
-        </motion.div>
-      </Reorder.Item>
-    );
-  }
-
+function GoalTaskMoreIcon() {
   return (
-    <Reorder.Item
-      value={task}
-      dragListener={false}
-      dragControls={dragControls}
-      className={`goal-task-editor ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-    >
-      <button
-        type="button"
-        className="goal-task-editor__drag"
-        aria-label="Drag task to reorder"
-        onPointerDown={(event) => dragControls.start(event)}
-      >
-        <span />
-        <span />
-        <span />
-      </button>
-      <div className={`goal-task-editor__icon-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
-        <button
-          ref={iconButtonRef}
-          type="button"
-          className="goal-task-editor__icon"
-          onClick={() => setPickerOpen((current) => !current)}
-          aria-label="Choose task icon"
-        >
-          <GoalTaskIcon iconId={task.iconId} />
-        </button>
-        {pickerOpen ? (
-          <IconPickerPopover
-            anchorRef={iconButtonRef}
-            className="goal-task-editor__popover"
-            value={task.iconId}
-            onChange={(iconId) => {
-              onChange({ iconId });
-              setPickerOpen(false);
-            }}
-          />
-        ) : null}
-      </div>
-      <input
-        value={task.title}
-        onChange={(event) => onChange({ title: event.target.value })}
-        placeholder="Task name"
-        maxLength={MAX_TITLE_LENGTH}
-        className="goal-input goal-task-editor__title"
-      />
-      <GoalDatePicker
-        value={task.deadline}
-        onChange={(deadline) => onChange({ deadline })}
-        className="goal-task-editor__date"
-        ariaLabel="Task deadline"
-      />
-      <GoalActionIcon
-        type="delete"
-        label="Remove task"
-        onClick={onRemove}
-        disabled={disableRemove}
-        className="goal-task-editor__remove"
-      />
-    </Reorder.Item>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="18" cy="12" r="1" />
+    </svg>
+  );
+}
+
+function GoalTaskChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function GoalTaskMenuEditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M5 17.5 4.5 20l2.5-.5L17.8 8.7l-2-2L5 17.5Z" />
+      <path d="M14.8 7.7 16.9 5.6c.6-.6 1.5-.6 2.1 0l.4.4c.6.6.6 1.5 0 2.1l-2.1 2.1" />
+    </svg>
+  );
+}
+
+function GoalTaskMenuTrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 13h8l1-13" />
+    </svg>
   );
 }
 
@@ -526,8 +340,6 @@ function GoalEditorModal({
   const [draft, setDraft] = useState<DraftGoal>(() =>
     toDraft(goal ?? undefined),
   );
-  const [newTask, setNewTask] = useState<DraftTask>(() => newDraftTask());
-  const [newTaskPickerOpen, setNewTaskPickerOpen] = useState(false);
   const [goalIconPickerOpen, setGoalIconPickerOpen] = useState(false);
   const goalIconButtonRef = useRef<HTMLButtonElement | null>(null);
   const [mobileCreateStep, setMobileCreateStep] = useState(0);
@@ -535,54 +347,16 @@ function GoalEditorModal({
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const isEditing = Boolean(goal);
   const isSaving = createGoal.isPending || updateGoal.isPending;
   const isMobileCreate = isMobile && !isEditing;
-  const mobileCreateStepCount = 3;
+  const mobileCreateStepCount = 2;
   const mobileCreateProgress = `${((mobileCreateStep + 1) / mobileCreateStepCount) * 100}%`;
-
-  const updateTask = (id: string, updates: Partial<DraftTask>) => {
-    setDraft((current) => ({
-      ...current,
-      tasks: current.tasks.map((task) =>
-        task.id === id ? { ...task, ...updates } : task,
-      ),
-    }));
-  };
-
-  const addTask = () => {
-    const title = newTask.title.trim();
-    if (!title) {
-      setError("Task needs a name before it joins the mission.");
-      return;
-    }
-    setError("");
-    setDraft((current) => ({
-      ...current,
-      tasks: [...current.tasks, { ...newTask, id: createDraftId(), title }],
-    }));
-    setNewTask(newDraftTask());
-  };
-
-  const removeTask = (id: string) => {
-    setDraft((current) => ({
-      ...current,
-      tasks: current.tasks.filter((task) => task.id !== id),
-    }));
-  };
 
   const save = async () => {
     const title = draft.title.trim();
     const deadline = draft.deadline || null;
-    const tasks = draft.tasks
-      .map((task) => ({
-        id: task.id,
-        title: task.title.trim(),
-        deadline: task.deadline || null,
-        completed: task.completed,
-        iconId: task.iconId || null,
-      }))
-      .filter((task) => task.title);
 
     if (!title) {
       setError("Goal needs a name — even a tiny heroic one.");
@@ -595,10 +369,17 @@ function GoalEditorModal({
           id: goal.id,
           input: { title, deadline, iconId: draft.iconId || null },
         });
+        onClose();
       } else {
-        await createGoal.mutateAsync({ title, deadline, iconId: draft.iconId || null, tasks });
+        const { goal: createdGoal } = await createGoal.mutateAsync({
+          title,
+          deadline,
+          iconId: draft.iconId || null,
+          tasks: [],
+        });
+        onClose();
+        navigate(`/goals/${createdGoal.id}`);
       }
-      onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save goal.");
     }
@@ -768,119 +549,6 @@ function GoalEditorModal({
             </div>
           ) : null}
 
-          {(!isEditing && (!isMobileCreate || mobileCreateStep === 2)) ? (
-            <div className="goal-editor-section">
-              <div className="goal-editor-section__head">
-                <div>
-                  <h3>Break it into steps</h3>
-                </div>
-                <span className="goal-editor-section__count">
-                  {draft.tasks.length} step{draft.tasks.length === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <Reorder.Group
-                axis="y"
-                values={draft.tasks}
-                onReorder={(tasks) =>
-                  setDraft((current) => ({ ...current, tasks }))
-                }
-                className="goal-task-editor-list"
-              >
-                <AnimatePresence initial={false}>
-                  {draft.tasks.map((task) => (
-                    <GoalTaskEditor
-                      key={task.id}
-                      task={task}
-                      onChange={(updates) => updateTask(task.id, updates)}
-                      onRemove={() => removeTask(task.id)}
-                      disableRemove={false}
-                      mobileCreateMode={isMobileCreate}
-                    />
-                  ))}
-                </AnimatePresence>
-              </Reorder.Group>
-
-              <div className={`goal-task-add-row ${newTaskPickerOpen ? "is-icon-picker-open" : ""}`.trim()} aria-label="Add task to goal">
-                <span className="goal-task-add-row__label">Add a new step</span>
-                <div className={`goal-task-editor__icon-wrap goal-task-add-row__icon-wrap ${newTaskPickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
-                  <button
-                    type="button"
-                    className="goal-task-editor__icon goal-task-add-row__icon"
-                    onClick={() => setNewTaskPickerOpen((current) => !current)}
-                    aria-expanded={newTaskPickerOpen}
-                    aria-label="Choose new task icon"
-                    title="Choose icon"
-                  >
-                    <span className="goal-task-add-row__icon-preview" aria-hidden="true">
-                      <GoalTaskIcon iconId={newTask.iconId} />
-                    </span>
-                    <span className="goal-task-add-row__icon-label">Pick an icon</span>
-                    <svg className="goal-task-add-row__icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </button>
-                  {newTaskPickerOpen ? (
-                    <motion.div
-                      className="goal-task-editor__popover goal-task-add-row__icon-picker"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.14, ease: "easeOut" }}
-                    >
-                      <IconPicker
-                        value={newTask.iconId}
-                        onChange={(iconId) => {
-                          setNewTask((current) => ({ ...current, iconId }));
-                          setNewTaskPickerOpen(false);
-                        }}
-                      />
-                    </motion.div>
-                  ) : null}
-                </div>
-                <div className="goal-task-add-row__fields">
-                  <input
-                    value={newTask.title}
-                    onChange={(event) =>
-                      setNewTask((current) => ({
-                        ...current,
-                        title: event.target.value,
-                      }))
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addTask();
-                      }
-                    }}
-                    placeholder="Task name"
-                    maxLength={MAX_TITLE_LENGTH}
-                    className="goal-input goal-task-editor__title"
-                  />
-                  <GoalDatePicker
-                    value={newTask.deadline}
-                    onChange={(deadline) =>
-                      setNewTask((current) => ({
-                        ...current,
-                        deadline,
-                      }))
-                    }
-                    className="goal-task-editor__date"
-                    ariaLabel="New task deadline"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="task-add goal-task-add-row__add"
-                  onClick={addTask}
-                  aria-label="Add task"
-                >
-                  <span aria-hidden="true">+</span>
-                  Add step
-                </button>
-              </div>
-            </div>
-          ) : null}
         </div>
 
         <p className="goal-error" aria-live="polite">
@@ -1385,8 +1053,14 @@ type DetailTaskDraft = {
   completed: boolean;
   iconId: string | null;
   note?: string | null;
-  subtasks?: Array<{ id?: string; title: string; completed: boolean }>;
+  subtasks?: Array<{ id?: string; draftId?: string; title: string; completed: boolean }>;
 };
+
+type DetailTaskDraftSubtask = NonNullable<DetailTaskDraft["subtasks"]>[number];
+
+function createDraftSubtaskId() {
+  return globalThis.crypto?.randomUUID?.() ?? `draft-subtask-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 function emptyDetailTaskDraft(): DetailTaskDraft {
   return { title: "", deadline: "", completed: false, iconId: null };
@@ -1597,9 +1271,131 @@ function GoalOccurrenceDeleteConfirm({
   );
 }
 
+function GoalTaskActionsMenu({
+  open,
+  onOpenChange,
+  onEdit,
+  onDelete,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({ visibility: "hidden" });
+
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const place = () => {
+      const trigger = triggerRef.current?.getBoundingClientRect();
+      const dropdown = dropdownRef.current;
+      if (!trigger || !dropdown) return;
+
+      const gap = 8;
+      const margin = 8;
+      const dropdownWidth = dropdown.offsetWidth || 176;
+      const dropdownHeight = dropdown.offsetHeight || 96;
+      const left = Math.max(margin, Math.min(trigger.right - dropdownWidth, window.innerWidth - dropdownWidth - margin));
+      const spaceBelow = window.innerHeight - trigger.bottom;
+      const openUp = spaceBelow < dropdownHeight + gap && trigger.top > spaceBelow;
+
+      setDropdownStyle({
+        position: "fixed",
+        zIndex: 10000,
+        left,
+        right: "auto",
+        top: openUp ? "auto" : trigger.bottom + gap,
+        bottom: openUp ? window.innerHeight - trigger.top + gap : "auto",
+        visibility: "visible",
+      });
+    };
+
+    place();
+    const frame = window.requestAnimationFrame(place);
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeMenu = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || dropdownRef.current?.contains(target)) return;
+      onOpenChange(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+    };
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onOpenChange, open]);
+
+  return (
+    <div className="goal-task-menu">
+      <button
+        ref={triggerRef}
+        type="button"
+        className="ui-icon-btn ui-icon-btn--sm ui-icon-btn--subtle goal-task-menu__trigger"
+        aria-label="Task actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => onOpenChange(!open)}
+      >
+        <GoalTaskMoreIcon />
+      </button>
+      {open
+        ? createPortal(
+            <div ref={dropdownRef} className="goal-task-menu__dropdown goal-task-menu__dropdown--portal" role="menu" style={dropdownStyle}>
+              <button
+                type="button"
+                role="menuitem"
+                className="goal-task-menu__item"
+                onClick={() => {
+                  onOpenChange(false);
+                  onEdit();
+                }}
+              >
+                <GoalTaskMenuEditIcon />
+                Edit task
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="goal-task-menu__item goal-task-menu__item--danger"
+                onClick={() => {
+                  onOpenChange(false);
+                  onDelete();
+                }}
+              >
+                <GoalTaskMenuTrashIcon />
+                Delete task
+              </button>
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
+}
+
 function GoalDetailTaskRow({
   goal,
   task,
+  canManage = true,
   expanded,
   onToggleExpand,
   onDelete,
@@ -1608,6 +1404,7 @@ function GoalDetailTaskRow({
 }: {
   goal: Goal;
   task: GoalTask;
+  canManage?: boolean;
   expanded: boolean;
   onToggleExpand: () => void;
   onDelete: () => void;
@@ -1619,12 +1416,14 @@ function GoalDetailTaskRow({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<DetailTaskDraft>(() => toDetailTaskDraft(task));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [error, setError] = useState("");
   const [pendingCompletionCleanup, setPendingCompletionCleanup] = useState(false);
   const [completionCleanupPending, setCompletionCleanupPending] = useState(false);
   const iconButtonRef = useRef<HTMLButtonElement | null>(null);
   const subtaskCount = task.subtasks?.length ?? 0;
   const doneSubtasks = task.subtasks?.filter((s) => s.completed).length ?? 0;
+  const hasNote = Boolean(task.note?.trim());
   const complete = isTaskComplete(task);
   const health = getTaskHealth(task);
 
@@ -1632,6 +1431,7 @@ function GoalDetailTaskRow({
     if (!isEditing) {
       setDraft(toDetailTaskDraft(task));
       setPickerOpen(false);
+      setActionsMenuOpen(false);
       setError("");
     }
   }, [isEditing, task]);
@@ -1682,6 +1482,7 @@ function GoalDetailTaskRow({
     onStartEdit();
     setDraft(toDetailTaskDraft(task));
     setPickerOpen(false);
+    setActionsMenuOpen(false);
     setError("");
     setIsEditing(true);
   };
@@ -1711,7 +1512,7 @@ function GoalDetailTaskRow({
       dragListener={false}
       dragControls={dragControls}
       onDragEnd={onPersistOrder}
-      className={`goal-detail-task ${isEditing ? "is-editing" : ""} ${complete ? "is-complete" : ""} ${expanded ? "is-expanded" : ""} ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}
+      className={`goal-detail-task ${isEditing ? "is-editing" : ""} ${complete ? "is-complete" : ""} ${expanded ? "is-expanded" : ""} ${pickerOpen ? "is-icon-picker-open" : ""} ${actionsMenuOpen ? "is-menu-open" : ""}`.trim()}
     >
       <div className="goal-detail-task__head">
         <button
@@ -1719,9 +1520,9 @@ function GoalDetailTaskRow({
           className="goal-detail-task__drag"
           aria-label="Drag task to reorder"
           onPointerDown={(event) => {
-            if (!isEditing) dragControls.start(event);
+            if (!isEditing && canManage) dragControls.start(event);
           }}
-          disabled={isEditing}
+          disabled={isEditing || !canManage}
           title="Drag to reorder"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -1781,11 +1582,22 @@ function GoalDetailTaskRow({
             <span className="goal-detail-task__icon-bubble">
               <GoalTaskIcon iconId={task.iconId} />
             </span>
-            <span>
-              <strong>{task.title}</strong>
+            <span className="goal-detail-task__inline-chevron" aria-hidden="true">
+              <GoalTaskChevronIcon />
+            </span>
+            <span className="goal-detail-task__copy">
+              <span className="goal-detail-task__title-line">
+                <strong>{task.title}</strong>
+                {hasNote ? (
+                  <span className="goal-detail-task__note-indicator" aria-label="Has note" title="Has note">
+                    <FirstStepNoteIcon />
+                  </span>
+                ) : null}
+              </span>
               {subtaskCount > 0 ? (
                 <small>{doneSubtasks}/{subtaskCount} subtasks</small>
               ) : null}
+              {complete && task.completedBy ? <CompletedByTag actor={task.completedBy} /> : null}
             </span>
           </button>
         )}
@@ -1848,7 +1660,7 @@ function GoalDetailTaskRow({
           ) : null}
         </div>
         <div className="goal-detail-task__actions">
-          {isEditing ? (
+          {!canManage ? null : isEditing ? (
             <>
               <button
                 type="button"
@@ -1864,8 +1676,12 @@ function GoalDetailTaskRow({
             </>
           ) : (
             <>
-              <GoalActionIcon type="edit" label="Edit task" onClick={startEditing} />
-              <GoalActionIcon type="delete" label="Delete task" onClick={onDelete} />
+              <GoalTaskActionsMenu
+                open={actionsMenuOpen}
+                onOpenChange={setActionsMenuOpen}
+                onEdit={startEditing}
+                onDelete={onDelete}
+              />
             </>
           )}
         </div>
@@ -2412,6 +2228,461 @@ function GoalDetailTaskAddRow({
   );
 }
 
+function FirstStepDateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M7 4.5v3" />
+      <path d="M17 4.5v3" />
+      <path d="M5 8h14" />
+      <rect x="4.5" y="6" width="15" height="14" rx="3" />
+    </svg>
+  );
+}
+
+function FirstStepNoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M7 4.5h8.2L19 8.3V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V6a1.5 1.5 0 0 1 1.5-1.5Z" />
+      <path d="M15 4.8V8h3.2" />
+      <path d="M8.5 12h7" />
+      <path d="M8.5 15.5h5" />
+    </svg>
+  );
+}
+
+function FirstStepSubtasksIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m5 7.2 1.4 1.4 2.6-3" />
+      <path d="M11 7h8" />
+      <path d="m5 15.2 1.4 1.4 2.6-3" />
+      <path d="M11 15h8" />
+    </svg>
+  );
+}
+
+function FirstStepChangeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M17.5 8.4H8.7a4.2 4.2 0 0 0-4.2 4.2v.2" />
+      <path d="m14.8 5.7 2.8 2.7-2.8 2.7" />
+      <path d="M6.5 15.6h8.8a4.2 4.2 0 0 0 4.2-4.2v-.2" />
+      <path d="m9.2 18.3-2.8-2.7 2.8-2.7" />
+    </svg>
+  );
+}
+
+function GoalFirstStepDraftSubtaskRow({
+  subtask,
+  index,
+  onRename,
+  onRemove,
+}: {
+  subtask: DetailTaskDraftSubtask;
+  index: number;
+  onRename: (title: string) => void;
+  onRemove: () => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      as="li"
+      value={subtask}
+      dragListener={false}
+      dragControls={dragControls}
+      className="goal-first-step__subtask"
+    >
+      <button
+        type="button"
+        className="goal-first-step__subtask-drag"
+        aria-label="Drag to reorder subtask"
+        onPointerDown={(event) => dragControls.start(event)}
+      >
+        <svg viewBox="0 0 12 18" focusable="false" aria-hidden="true">
+          <circle cx="4" cy="4" r="1.25" />
+          <circle cx="8" cy="4" r="1.25" />
+          <circle cx="4" cy="9" r="1.25" />
+          <circle cx="8" cy="9" r="1.25" />
+          <circle cx="4" cy="14" r="1.25" />
+          <circle cx="8" cy="14" r="1.25" />
+        </svg>
+      </button>
+      <input
+        className="goal-first-step__subtask-title"
+        value={subtask.title}
+        onChange={(event) => onRename(event.target.value.slice(0, MAX_GOAL_SUBTASK_TITLE))}
+        maxLength={MAX_GOAL_SUBTASK_TITLE}
+        aria-label={`Subtask ${index + 1}`}
+      />
+      <button type="button" className="goal-first-step__subtask-remove" onClick={onRemove} aria-label="Remove subtask">
+        ×
+      </button>
+    </Reorder.Item>
+  );
+}
+
+function GoalFirstStepStarter({
+  goal,
+  onChangeType,
+  onCreated,
+}: {
+  goal: Goal;
+  onChangeType: () => void;
+  onCreated: () => void;
+}) {
+  const updateGoal = useUpdateGoal();
+  const createOccurrence = useCreateOccurrence();
+  const categoriesQuery = useTaskCategories();
+  const [draft, setDraft] = useState<DetailTaskDraft>(() => emptyDetailTaskDraft());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const [scheduleDraft, setScheduleDraft] = useState<AddTaskModalCreateInput | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [error, setError] = useState("");
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const iconButtonRef = useRef<HTMLButtonElement | null>(null);
+  const pending = updateGoal.isPending || createOccurrence.isPending;
+
+  useEffect(() => {
+    window.setTimeout(() => titleInputRef.current?.focus({ preventScroll: true }), 180);
+  }, []);
+
+  const resetDraft = () => {
+    setDraft(emptyDetailTaskDraft());
+    setPickerOpen(false);
+    setShowSubtasks(false);
+    setShowNote(false);
+    setScheduleDraft(null);
+    setScheduleOpen(false);
+    setNewSubtaskTitle("");
+    setError("");
+  };
+
+  const cancel = () => {
+    resetDraft();
+    onChangeType();
+  };
+
+  const addSubtask = () => {
+    const trimmed = newSubtaskTitle.trim().slice(0, MAX_GOAL_SUBTASK_TITLE);
+    if (!trimmed) return;
+    if ((draft.subtasks?.length ?? 0) >= MAX_GOAL_SUBTASKS) return;
+    setDraft((current) => ({
+      ...current,
+      subtasks: [...(current.subtasks ?? []), { draftId: createDraftSubtaskId(), title: trimmed, completed: false }],
+    }));
+    setNewSubtaskTitle("");
+  };
+
+  const renameSubtask = (target: DetailTaskDraftSubtask, title: string) => {
+    setDraft((current) => ({
+      ...current,
+      subtasks: (current.subtasks ?? []).map((item) =>
+        (target.id && item.id === target.id) || (target.draftId && item.draftId === target.draftId)
+          ? { ...item, title }
+          : item,
+      ),
+    }));
+  };
+
+  const removeSubtask = (target: DetailTaskDraftSubtask) => {
+    setDraft((current) => ({
+      ...current,
+      subtasks: (current.subtasks ?? []).filter((item) =>
+        target.id ? item.id !== target.id : item.draftId !== target.draftId,
+      ),
+    }));
+  };
+
+  const reorderSubtasks = (items: DetailTaskDraftSubtask[]) => {
+    setDraft((current) => ({ ...current, subtasks: items }));
+  };
+
+  const saveFirstStep = async () => {
+    const title = draft.title.trim();
+    const subtasks = (draft.subtasks ?? [])
+      .map((subtask) => ({ title: subtask.title.trim().slice(0, MAX_GOAL_SUBTASK_TITLE), completed: false }))
+      .filter((subtask) => subtask.title);
+    const note = (draft.note ?? "").slice(0, MAX_GOAL_TASK_NOTE).trim();
+
+    if (!title) {
+      setError("First step needs a name.");
+      return;
+    }
+
+    setError("");
+    const { goal: updatedGoal } = await updateGoal.mutateAsync({
+      id: goal.id,
+      input: {
+        tasks: serializeTasks(goal.tasks, {
+          ...draft,
+          title,
+          note: note || null,
+          subtasks,
+        }),
+      },
+    });
+
+    const createdTask = updatedGoal.tasks[updatedGoal.tasks.length - 1];
+    if (scheduleDraft && createdTask) {
+      await createOccurrence.mutateAsync({
+        sourceKind: "goal_task",
+        occurrenceDate: scheduleDraft.occurrenceDate,
+        goalTaskId: createdTask.id,
+        duration: scheduleDraft.duration,
+        time: scheduleDraft.time,
+        repeatFrequency: scheduleDraft.repeatFrequency,
+        repeatInterval: scheduleDraft.repeatInterval,
+        repeatWeekdays: scheduleDraft.repeatWeekdays,
+        repeatMonthDays: scheduleDraft.repeatMonthDays,
+        repeatMonthOverflow: scheduleDraft.repeatMonthOverflow,
+        repeatYearMonths: scheduleDraft.repeatYearMonths,
+        repeatEndDate: scheduleDraft.repeatEndDate,
+      });
+    }
+
+    resetDraft();
+    onCreated();
+  };
+
+  const subtasksFull = (draft.subtasks?.length ?? 0) >= MAX_GOAL_SUBTASKS;
+
+  return (
+    <section className="goal-first-step tasks-panel tasks-panel--today" aria-label="Create first goal step">
+      <header className="goal-first-step__header">
+        <div className="goal-first-step__choice">
+          <span>Starting with:</span>
+          <strong>First step</strong>
+        </div>
+        <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text goal-first-step__change" onClick={onChangeType}>
+          <FirstStepChangeIcon />
+          Change start type
+        </button>
+      </header>
+
+      <p className="goal-first-step__intro">Create one small task to get this goal moving.</p>
+
+      <div className={`goal-first-step__composer ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
+        <div className={`goal-detail-task__icon-edit-wrap goal-first-step__icon-wrap ${pickerOpen ? "is-icon-picker-open" : ""}`.trim()}>
+          <button
+            ref={iconButtonRef}
+            type="button"
+            className="goal-first-step__icon"
+            onClick={() => setPickerOpen((current) => !current)}
+            aria-label="Choose first step icon"
+            disabled={pending}
+          >
+            <GoalTaskIcon iconId={draft.iconId ?? goal.iconId} />
+          </button>
+          {pickerOpen ? (
+            <IconPickerPopover
+              anchorRef={iconButtonRef}
+              className="goal-detail-task__icon-popover goal-first-step__icon-popover"
+              value={draft.iconId ?? goal.iconId ?? null}
+              onChange={(iconId) => {
+                setDraft((current) => ({ ...current, iconId }));
+                setPickerOpen(false);
+              }}
+            />
+          ) : null}
+        </div>
+
+        <div className="goal-first-step__body">
+          <div className="goal-first-step__top-line">
+            <div className="goal-first-step__title-edit">
+              <input
+                ref={titleInputRef}
+                value={draft.title}
+                onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value.slice(0, MAX_TITLE_LENGTH) }))}
+                onKeyDown={(event) => {
+                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    void saveFirstStep();
+                  }
+                }}
+                maxLength={MAX_TITLE_LENGTH}
+                placeholder="e.g. Find a driving school"
+                aria-label="First step title"
+                disabled={pending}
+              />
+            </div>
+            <GoalDatePicker
+              value={draft.deadline}
+              onChange={(deadline) => setDraft((current) => ({ ...current, deadline }))}
+              className="goal-first-step__date"
+              ariaLabel="First step due date"
+            />
+            <button
+              type="button"
+              className={`goal-first-step__tool goal-first-step__schedule ${scheduleDraft ? "is-active" : ""}`.trim()}
+              onClick={() => setScheduleOpen(true)}
+              disabled={pending || !draft.title.trim()}
+            >
+              <span className="schedule-goal-task__icon goal-first-step__schedule-icon" aria-hidden="true">
+                <CalendarScheduleIcon />
+              </span>
+              Schedule
+            </button>
+          </div>
+
+          <div className="goal-first-step__tools" aria-label="First step options">
+            <button
+              type="button"
+              className={`goal-first-step__tool ${showNote ? "is-active" : ""}`.trim()}
+              onClick={() => setShowNote((current) => !current)}
+              aria-expanded={showNote}
+              disabled={pending}
+            >
+              <FirstStepNoteIcon />
+              {showNote ? "Hide note" : "Add note"}
+            </button>
+            <button
+              type="button"
+              className={`goal-first-step__tool ${showSubtasks ? "is-active" : ""}`.trim()}
+              onClick={() => setShowSubtasks((current) => !current)}
+              aria-expanded={showSubtasks}
+              disabled={pending}
+            >
+              <FirstStepSubtasksIcon />
+              {showSubtasks ? "Hide subtasks" : "Add subtasks"}
+            </button>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {showSubtasks ? (
+              <motion.div
+                className="goal-first-step__details"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="goal-task-expand__field goal-task-expand__field--subtasks">
+                  <span className="goal-task-expand__label">Subtasks</span>
+                  {(draft.subtasks ?? []).length > 0 ? (
+                    <Reorder.Group
+                      as="ul"
+                      axis="y"
+                      values={draft.subtasks ?? []}
+                      onReorder={reorderSubtasks}
+                      className="goal-first-step__subtask-list"
+                      aria-label="Draft subtasks"
+                    >
+                      {(draft.subtasks ?? []).map((subtask, index) => (
+                        <GoalFirstStepDraftSubtaskRow
+                          key={subtask.id ?? subtask.draftId ?? `${subtask.title}-${index}`}
+                          subtask={subtask}
+                          index={index}
+                          onRename={(title) => renameSubtask(subtask, title)}
+                          onRemove={() => removeSubtask(subtask)}
+                        />
+                      ))}
+                    </Reorder.Group>
+                  ) : null}
+                  <form
+                    className="goal-subtask-add"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      addSubtask();
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={newSubtaskTitle}
+                      onChange={(event) => setNewSubtaskTitle(event.target.value.slice(0, MAX_GOAL_SUBTASK_TITLE))}
+                      maxLength={MAX_GOAL_SUBTASK_TITLE}
+                      placeholder={subtasksFull ? `Limit reached (${MAX_GOAL_SUBTASKS})` : "Add a subtask"}
+                      aria-label="New subtask title"
+                      disabled={subtasksFull || pending}
+                    />
+                    <button className="task-add" type="submit" disabled={!newSubtaskTitle.trim() || subtasksFull || pending}>
+                      <span aria-hidden="true">+</span> Add
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            ) : null}
+
+            {showNote ? (
+              <motion.div
+                className="goal-first-step__details"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="goal-task-expand__field goal-task-expand__field--note">
+                  <span className="goal-task-expand__label">
+                    Note
+                    <em>{(draft.note ?? "").length}/{MAX_GOAL_TASK_NOTE}</em>
+                  </span>
+                  <textarea
+                    className="goal-task-expand__note"
+                    value={draft.note ?? ""}
+                    onChange={(event) => setDraft((current) => ({ ...current, note: event.target.value.slice(0, MAX_GOAL_TASK_NOTE) }))}
+                    rows={5}
+                    maxLength={MAX_GOAL_TASK_NOTE}
+                    placeholder="Anything to remember about this first step?"
+                    disabled={pending}
+                  />
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+          {error ? <p className="goal-detail-task__error goal-first-step__error" aria-live="polite">{error}</p> : null}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {scheduleOpen ? (
+          <AddTaskModal
+            variant="dialog"
+            context="plan"
+            modalTitle={scheduleDraft ? "Edit schedule" : "Schedule first step"}
+            submitLabel={scheduleDraft ? "Save schedule" : "Schedule task"}
+            pendingLabel="Saving..."
+            onClose={() => setScheduleOpen(false)}
+            categories={categoriesQuery.data ?? []}
+            defaultTasks={[]}
+            initialTask={{
+              title: draft.title.trim(),
+              category: goal.title,
+              occurrenceDate: scheduleDraft?.occurrenceDate ?? todayDateKey(),
+              duration: scheduleDraft?.duration ?? "",
+              time: scheduleDraft?.time ?? "",
+              repeatFrequency: scheduleDraft?.repeatFrequency ?? null,
+              repeatInterval: scheduleDraft?.repeatInterval ?? 1,
+              repeatWeekdays: scheduleDraft?.repeatWeekdays ?? [],
+              repeatMonthDays: scheduleDraft?.repeatMonthDays ?? [],
+              repeatMonthOverflow: scheduleDraft?.repeatMonthOverflow ?? "skip",
+              repeatYearMonths: scheduleDraft?.repeatYearMonths ?? [],
+              repeatEndDate: scheduleDraft?.repeatEndDate ?? null,
+            }}
+            lockedFields={{ title: true, category: true }}
+            onCreateTask={(input) => {
+              setScheduleDraft(input);
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <footer className="goal-first-step__footer">
+        <button type="button" className="task-add goal-first-step__submit" onClick={() => void saveFirstStep()} disabled={pending}>
+          {pending ? "Adding..." : "Add first step"}
+          <span aria-hidden="true">→</span>
+        </button>
+        <button type="button" className="pomodoro-btn pomodoro-btn--ghost-text goal-first-step__cancel" onClick={cancel} disabled={pending}>
+          Cancel
+        </button>
+      </footer>
+    </section>
+  );
+}
+
 export function GoalDetailPage() {
   const { goalId } = useParams();
   const navigate = useNavigate();
@@ -2423,17 +2694,28 @@ export function GoalDetailPage() {
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [orderedTaskIds, setOrderedTaskIds] = useState<string[]>([]);
   const [editorGoal, setEditorGoal] = useState<Goal | null | undefined>(undefined);
-  const [pendingAddRowScroll, setPendingAddRowScroll] = useState(false);
+  const [emptyGoalStarterMode, setEmptyGoalStarterMode] = useState<"choose" | "steps">("choose");
   const [pendingTaskDelete, setPendingTaskDelete] = useState<GoalTask | null>(null);
   const [taskDeletePending, setTaskDeletePending] = useState(false);
   const addRowRef = useRef<HTMLLIElement | null>(null);
   const addTitleInputRef = useRef<HTMLInputElement | null>(null);
+
+  useLayoutEffect(() => {
+    resetGoalDetailScroll();
+    const frame = window.requestAnimationFrame(resetGoalDetailScroll);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [goalId]);
 
   useEffect(() => {
     if (goal) {
       setOrderedTaskIds(goal.tasks.map((task) => task.id));
     }
   }, [goal?.id, goal?.tasks.map((task) => task.id).join("|")]);
+
+  useEffect(() => {
+    setEmptyGoalStarterMode("choose");
+  }, [goal?.id]);
 
   const scrollToAddRow = (focus = true) => {
     window.requestAnimationFrame(() => {
@@ -2444,14 +2726,10 @@ export function GoalDetailPage() {
     });
   };
 
-  useEffect(() => {
-    if (!pendingAddRowScroll) return;
-    const timeout = window.setTimeout(() => {
-      scrollToAddRow(true);
-      setPendingAddRowScroll(false);
-    }, 120);
-    return () => window.clearTimeout(timeout);
-  }, [pendingAddRowScroll, goal?.tasks.length]);
+  const handleStarterSelect = (kind: GoalStarterKind) => {
+    if (kind !== "steps") return;
+    setEmptyGoalStarterMode("steps");
+  };
 
   if (goalsQuery.isLoading) {
     return <p className="goals-empty">Loading goal...</p>;
@@ -2470,6 +2748,10 @@ export function GoalDetailPage() {
   }
 
   const progress = getProgress(goal.tasks);
+  // Accepted shared-goal members are content admins for tasks, subtasks, and
+  // task notes. Goal metadata, sharing, and deleting the goal stay owner-only.
+  const canEditGoalMeta = goal.viewerRole !== "member";
+  const canManageGoalContent = true;
   const doneTasks = goal.tasks.filter((task) => task.completed).length;
   const taskById = new Map(goal.tasks.map((task) => [task.id, task]));
   const orderedTasks = orderedTaskIds
@@ -2478,6 +2760,9 @@ export function GoalDetailPage() {
   const orderedTaskIdKey = orderedTasks.map((task) => task.id).join("|");
   const serverTaskIdKey = goal.tasks.map((task) => task.id).join("|");
   const nextTask = goal.tasks.find((task) => !task.completed) ?? goal.tasks[goal.tasks.length - 1];
+  const showStarterOptions = orderedTasks.length === 0 && emptyGoalStarterMode === "choose";
+  const showFirstStepStarter = orderedTasks.length === 0 && emptyGoalStarterMode === "steps";
+  const showTaskProgressSummary = !showStarterOptions;
 
   const persistTaskOrder = async () => {
     if (!orderedTasks.length || orderedTaskIdKey === serverTaskIdKey) return;
@@ -2522,15 +2807,11 @@ export function GoalDetailPage() {
           <Link className="goal-back-link" to="/goals">← All Goals</Link>
         </div>
 
-        <motion.div
+        <div
           className="goal-detail-workspace"
-          layout
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         >
-          <motion.div
+          <div
             className="goal-detail-main-stack"
-            layout
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <section className="goal-detail-hero tasks-panel tasks-panel--today" aria-label="Goal summary">
           <div className="goal-detail-hero__image">
@@ -2545,17 +2826,23 @@ export function GoalDetailPage() {
                 </div>
               </div>
               <div className="goal-detail-hero__actions">
-                <GoalActionIcon type="edit" label="Edit goal" onClick={() => setEditorGoal(goal)} />
-                <GoalActionIcon
-                  type="delete"
-                  label="Delete goal"
-                  onClick={async () => {
-                    const confirmed = window.confirm(`Delete “${goal.title}”? This will also remove all tasks inside this goal.`);
-                    if (!confirmed) return;
-                    await deleteGoal.mutateAsync(goal.id);
-                    navigate("/goals");
-                  }}
-                />
+                <GoalMembersBar goal={goal} />
+                {canEditGoalMeta ? (
+                  <>
+                    <ShareGoalControl goal={goal} />
+                    <GoalActionIcon type="edit" label="Edit goal" onClick={() => setEditorGoal(goal)} />
+                    <GoalActionIcon
+                      type="delete"
+                      label="Delete goal"
+                      onClick={async () => {
+                        const confirmed = window.confirm(`Delete “${goal.title}”? This will also remove all tasks inside this goal.`);
+                        if (!confirmed) return;
+                        await deleteGoal.mutateAsync(goal.id);
+                        navigate("/goals");
+                      }}
+                    />
+                  </>
+                ) : null}
               </div>
             </div>
             <p className="goal-detail-hero__description">
@@ -2568,89 +2855,115 @@ export function GoalDetailPage() {
             <div className="goal-progress" aria-label={`${progress}% completed`}>
               <span style={{ width: `${progress}%` }} />
             </div>
-            <div className="goal-detail-hero__stats">
-              {goal.deadline ? <span>📅 {formatDate(goal.deadline)}</span> : null}
-              <span>☑ {doneTasks}/{goal.tasks.length} tasks</span>
-              {(() => {
-                const open = goal.tasks.filter((t) => !isTaskComplete(t));
-                const overdue = open.filter((t) => getTaskHealth(t) === "overdue").length;
-                const dueToday = open.filter((t) => getTaskHealth(t) === "due-today").length;
-                const dueSoon = open.filter((t) => getTaskHealth(t) === "due-soon").length;
-                return (
-                  <>
-                    {overdue > 0 ? (
-                      <span className="goal-health-alert goal-health-alert--overdue">
-                        {overdue} Overdue
-                      </span>
-                    ) : null}
-                    {dueToday > 0 ? (
-                      <span className="goal-health-alert goal-health-alert--due-today">
-                        {dueToday} Due today
-                      </span>
-                    ) : null}
-                    {dueSoon > 0 ? (
-                      <span className="goal-health-alert goal-health-alert--due-soon">
-                        {dueSoon} Due soon
-                      </span>
-                    ) : null}
-                  </>
-                );
-              })()}
-            </div>
+            {goal.deadline || showTaskProgressSummary ? (
+              <div className="goal-detail-hero__stats">
+                {goal.deadline ? <span>📅 {formatDate(goal.deadline)}</span> : null}
+                {showTaskProgressSummary ? <span>☑ {doneTasks}/{goal.tasks.length} tasks</span> : null}
+                {showTaskProgressSummary
+                  ? (() => {
+                      const open = goal.tasks.filter((t) => !isTaskComplete(t));
+                      const overdue = open.filter((t) => getTaskHealth(t) === "overdue").length;
+                      const dueToday = open.filter((t) => getTaskHealth(t) === "due-today").length;
+                      const dueSoon = open.filter((t) => getTaskHealth(t) === "due-soon").length;
+                      return (
+                        <>
+                          {overdue > 0 ? (
+                            <span className="goal-health-alert goal-health-alert--overdue">
+                              {overdue} Overdue
+                            </span>
+                          ) : null}
+                          {dueToday > 0 ? (
+                            <span className="goal-health-alert goal-health-alert--due-today">
+                              {dueToday} Due today
+                            </span>
+                          ) : null}
+                          {dueSoon > 0 ? (
+                            <span className="goal-health-alert goal-health-alert--due-soon">
+                              {dueSoon} Due soon
+                            </span>
+                          ) : null}
+                        </>
+                      );
+                    })()
+                  : null}
+              </div>
+            ) : null}
           </div>
             </section>
 
-            <section className="goal-detail-tasks tasks-panel tasks-panel--today" aria-label="Goal tasks">
-            <header className="goal-detail-section-header">
-              <div>
-                <h2>Steps to achieve your goal</h2>
-              </div>
-              <button
-                type="button"
-                className="task-add"
-                onClick={() => scrollToAddRow(true)}
-                disabled={goal.tasks.length >= MAX_GOAL_TASKS}
-                title={goal.tasks.length >= MAX_GOAL_TASKS ? `Limit reached (${MAX_GOAL_TASKS})` : undefined}
-              >
-                <span aria-hidden="true">+</span> Add goal task
-              </button>
-            </header>
-
-            <Reorder.Group
-              as="ol"
-              axis="y"
-              values={orderedTasks}
-              onReorder={(tasks) => setOrderedTaskIds(tasks.map((task) => task.id))}
-              className="goal-detail-task-list"
-            >
-              <AnimatePresence initial={false}>
-                {orderedTasks.map((task) => (
-                  <GoalDetailTaskRow
-                    key={task.id}
-                    goal={goal}
-                    task={task}
-                    expanded={expandedTaskId === task.id}
-                    onToggleExpand={() =>
-                      setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
-                    }
-                    onDelete={() => void deleteTask(task)}
-                    onPersistOrder={persistTaskOrder}
-                    onStartEdit={() => undefined}
+            {showStarterOptions || showFirstStepStarter ? (
+              <div className="goal-start-slot">
+                {showStarterOptions ? (
+                  <GoalStarterOptions
+                    onSelect={handleStarterSelect}
+                    disabledKinds={["number", "milestones", "repeat"]}
                   />
-                ))}
-              </AnimatePresence>
-              <GoalDetailTaskAddRow
-                goal={goal}
-                disabled={goal.tasks.length >= MAX_GOAL_TASKS}
-                addRowRef={addRowRef}
-                titleInputRef={addTitleInputRef}
-                onSaved={() => setPendingAddRowScroll(true)}
-              />
-            </Reorder.Group>
-            </section>
+                ) : (
+                  <GoalFirstStepStarter
+                    goal={goal}
+                    onChangeType={() => setEmptyGoalStarterMode("choose")}
+                    onCreated={() => setEmptyGoalStarterMode("choose")}
+                  />
+                )}
+              </div>
+            ) : (
+              <section className="goal-detail-tasks tasks-panel tasks-panel--today" aria-label="Goal tasks">
+              <header className="goal-detail-section-header">
+                <div>
+                  <h2>Steps to achieve your goal</h2>
+                </div>
+                {canManageGoalContent ? (
+                  <button
+                    type="button"
+                    className="task-add"
+                    onClick={() => scrollToAddRow(true)}
+                    disabled={goal.tasks.length >= MAX_GOAL_TASKS}
+                    title={goal.tasks.length >= MAX_GOAL_TASKS ? `Limit reached (${MAX_GOAL_TASKS})` : undefined}
+                  >
+                    <span aria-hidden="true">+</span> Add goal task
+                  </button>
+                ) : null}
+              </header>
 
-          </motion.div>
-        </motion.div>
+              <Reorder.Group
+                as="ol"
+                axis="y"
+                values={orderedTasks}
+                onReorder={(tasks) => setOrderedTaskIds(tasks.map((task) => task.id))}
+                className="goal-detail-task-list"
+              >
+                <AnimatePresence initial={false}>
+                  {orderedTasks.map((task) => (
+                    <GoalDetailTaskRow
+                      key={task.id}
+                      goal={goal}
+                      task={task}
+                      canManage={canManageGoalContent}
+                      expanded={expandedTaskId === task.id}
+                      onToggleExpand={() =>
+                        setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
+                      }
+                      onDelete={() => void deleteTask(task)}
+                      onPersistOrder={persistTaskOrder}
+                      onStartEdit={() => undefined}
+                    />
+                  ))}
+                </AnimatePresence>
+                {canManageGoalContent ? (
+                  <GoalDetailTaskAddRow
+                    goal={goal}
+                    disabled={goal.tasks.length >= MAX_GOAL_TASKS}
+                    addRowRef={addRowRef}
+                    titleInputRef={addTitleInputRef}
+                    onSaved={() => window.setTimeout(() => scrollToAddRow(true), 120)}
+                  />
+                ) : null}
+              </Reorder.Group>
+              </section>
+            )}
+
+          </div>
+        </div>
       </motion.section>
 
       <AnimatePresence>
@@ -2748,6 +3061,8 @@ export function GoalsPage() {
             </button>
           ) : null}
         </div>
+
+        <GoalRequestsSection />
 
         {goalsQuery.isLoading ? <p className="goals-empty">Loading goals...</p> : null}
         {!goalsQuery.isLoading && goals.length === 0 ? (
